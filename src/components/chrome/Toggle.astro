@@ -15,10 +15,14 @@ const {
   disabled = false,
   label,
   class: className = '',
+  ...rest
 } = Astro.props;
 ---
 
-<label class:list={['chrome-toggle inline-flex items-center gap-3 cursor-pointer select-none', disabled && 'opacity-40 cursor-not-allowed pointer-events-none', className]}>
+<label
+  class:list={['chrome-toggle inline-flex items-center gap-3 cursor-pointer select-none', disabled && 'opacity-40 cursor-not-allowed pointer-events-none', className]}
+  {...rest}
+>
   <input
     type="checkbox"
     id={id}

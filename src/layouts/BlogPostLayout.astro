@@ -17,7 +17,7 @@ import GiscusComments from '@/components/GiscusComments.astro';
 import CodeBlockEnhancer from '@/components/CodeBlockEnhancer.astro';
 import { getReadingTime } from '@/lib/reading-time';
 import { getSeriesInfo } from '@/lib/series';
-import { getRelativePath } from '@/site.config';
+import { siteConfig, getRelativePath } from '@/site.config';
 
 interface Props {
   post: CollectionEntry<'blog'>;
@@ -43,6 +43,18 @@ const updatedDateStr = post.data.updatedDate
 const normalizedId = post.id.replace(/\\/g, '/');
 const dirSegments = normalizedId.split('/');
 const rootUrl = getRelativePath('/');
+
+const features = {
+  audioReader: true,
+  readerMode: true,
+  textMagnifier: true,
+  copyLink: true,
+  copyMarkdown: true,
+  tableOfContents: true,
+  readingProgressBar: true,
+  relatedPosts: true,
+  ...(siteConfig.features || {}),
+};
 ---
 
 <BaseLayout
@@ -55,7 +67,11 @@ const rootUrl = getRelativePath('/');
   theme={theme}
   mode={mode}
 >
-  <ReadingProgressBar />
+  {features.readingProgressBar && (
+    <div data-feature="readingProgressBar">
+      <ReadingProgressBar />
+    </div>
+  )}
 
   <div class="max-w-[1040px] mx-auto px-4 md:px-8 py-8">
     <!-- Directory of the blog -->
@@ -76,10 +92,17 @@ const rootUrl = getRelativePath('/');
       ))}
     </div>
 
-    <!-- Main 2-column layout (content + sticky TOC) -->
-    <div class="relative grid grid-cols-1 lg:grid-cols-[1fr_240px] gap-10">
+    <!-- Main layout (content + sticky TOC) -->
+    <div
+      id="blog-post-grid"
+      class={`relative grid grid-cols-1 ${features.tableOfContents ? 'lg:grid-cols-[1fr_240px]' : 'max-w-[760px] mx-auto'} gap-10`}
+    >
       <!-- Article Column -->
-      <article class="max-w-[680px] w-full min-w-0" data-pagefind-body>
+      <article
+        id="blog-post-article"
+        class={features.tableOfContents ? 'max-w-[680px] w-full min-w-0' : 'max-w-[760px] w-full min-w-0 mx-auto'}
+        data-pagefind-body
+      >
         <!-- Header -->
         <header class="mb-8 font-mono">
           <h1
@@ -120,11 +143,11 @@ const rootUrl = getRelativePath('/');
 
             <!-- Right: Play Audio -> Reader's Mode (Eye Comfort) -> Text Magnifier -> Copy Link -> Copy as Markdown -->
             <div class="flex items-center gap-2">
-              <AudioReader />
-              <ReaderModeButton />
-              <TextMagnifier />
-              <CopyLinkButton />
-              <CopyMarkdownButton rawContent={post.body || ''} />
+              {features.audioReader && <div data-feature="audioReader"><AudioReader /></div>}
+              {features.readerMode && <div data-feature="readerMode"><ReaderModeButton /></div>}
+              {features.textMagnifier && <div data-feature="textMagnifier"><TextMagnifier /></div>}
+              {features.copyLink && <div data-feature="copyLink"><CopyLinkButton /></div>}
+              {features.copyMarkdown && <div data-feature="copyMarkdown"><CopyMarkdownButton rawContent={post.body || ''} /></div>}
             </div>
           </div>
 
@@ -133,7 +156,11 @@ const rootUrl = getRelativePath('/');
         </header>
 
         <!-- Inline Table of Contents for viewports <1280px -->
-        <TableOfContents headings={headings} mode="inline" />
+        {features.tableOfContents && (
+          <div data-feature="tableOfContents">
+            <TableOfContents headings={headings} mode="inline" />
+          </div>
+        )}
 
         <!-- Prose Article Body -->
         <section class="prose prose-invert max-w-none text-on-surface leading-relaxed text-[14px]">
@@ -146,9 +173,11 @@ const rootUrl = getRelativePath('/');
         </div>
 
         <!-- Related Teardowns & Research -->
-        <div class="reader-mode-hide">
-          <RelatedPosts currentPost={post} allPosts={allPosts} />
-        </div>
+        {features.relatedPosts && (
+          <div class="reader-mode-hide" data-feature="relatedPosts">
+            <RelatedPosts currentPost={post} allPosts={allPosts} />
+          </div>
+        )}
 
         <!-- Comments Section (Powered by Giscus, Zero Server) -->
         <div class="reader-mode-hide">
@@ -157,7 +186,11 @@ const rootUrl = getRelativePath('/');
       </article>
 
       <!-- Sticky Rail Table of Contents for viewports >=1280px -->
-      <TableOfContents headings={headings} mode="rail" />
+      {features.tableOfContents && (
+        <div data-feature="tableOfContents">
+          <TableOfContents headings={headings} mode="rail" />
+        </div>
+      )}
     </div>
   </div>
 
@@ -207,12 +240,60 @@ const rootUrl = getRelativePath('/');
       });
     }
 
+    function applyLiveFeatureToggles() {
+      try {
+        const raw = localStorage.getItem('blogly_features');
+        if (raw) {
+          const map = JSON.parse(raw);
+          for (const [key, enabled] of Object.entries(map)) {
+            const els = document.querySelectorAll(`[data-feature="${key}"]`);
+            els.forEach((el) => {
+              if (!enabled) {
+                el.setAttribute('style', 'display: none !important');
+              } else {
+                el.style.removeProperty('display');
+              }
+            });
+
+            if (key === 'tableOfContents') {
+              const grid = document.getElementById('blog-post-grid');
+              const article = document.getElementById('blog-post-article');
+              if (grid && article) {
+                if (enabled) {
+                  grid.classList.add('lg:grid-cols-[1fr_240px]');
+                  grid.classList.remove('max-w-[760px]', 'mx-auto');
+                  article.classList.add('max-w-[680px]');
+                  article.classList.remove('max-w-[760px]', 'mx-auto');
+                } else {
+                  grid.classList.remove('lg:grid-cols-[1fr_240px]');
+                  grid.classList.add('max-w-[760px]', 'mx-auto');
+                  article.classList.remove('max-w-[680px]');
+                  article.classList.add('max-w-[760px]', 'mx-auto');
+                }
+              }
+            }
+          }
+        }
+      } catch {}
+    }
+
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initHeadingAnchors);
+      document.addEventListener('DOMContentLoaded', () => {
+        initHeadingAnchors();
+        applyLiveFeatureToggles();
+      });
     } else {
       initHeadingAnchors();
+      applyLiveFeatureToggles();
     }
-    document.addEventListener('astro:page-load', initHeadingAnchors);
-    document.addEventListener('astro:after-swap', initHeadingAnchors);
+    document.addEventListener('astro:page-load', () => {
+      initHeadingAnchors();
+      applyLiveFeatureToggles();
+    });
+    document.addEventListener('astro:after-swap', () => {
+      initHeadingAnchors();
+      applyLiveFeatureToggles();
+    });
+    window.addEventListener('storage', applyLiveFeatureToggles);
   </script>
 </BaseLayout>

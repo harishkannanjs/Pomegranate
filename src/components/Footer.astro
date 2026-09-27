@@ -1,6 +1,7 @@
 ---
 import { siteConfig, getRelativePath } from '@/site.config';
 const currentYear = new Date().getFullYear();
+const showFooterPrivacyNote = siteConfig.privacy?.footerNote !== false;
 ---
 
 <footer class="w-full bg-surface border-t border-outline-variant py-8 mt-16 transition-colors">
@@ -10,6 +11,13 @@ const currentYear = new Date().getFullYear();
       <span class="text-primary font-bold">&gt;</span>
       <span class="text-on-surface font-medium" data-footer-brand>© {currentYear} {siteConfig.name}</span>
     </div>
+
+    <!-- Center: Privacy Note (if enabled) -->
+    {showFooterPrivacyNote && (
+      <div data-footer-privacy-note class="text-[11px] text-outline font-mono text-center">
+        Privacy-first blog · No cookies or trackers
+      </div>
+    )}
 
     <!-- Right: Terminal Social & Feed Coordinates -->
     <div class="flex flex-wrap items-center justify-center sm:justify-end gap-3 text-on-surface-variant text-[12px]">
@@ -59,4 +67,26 @@ const currentYear = new Date().getFullYear();
       </a>
     </div>
   </div>
+
+  <script is:inline>
+    function updateFooterPrivacy() {
+      try {
+        const raw = localStorage.getItem('blogly_privacy');
+        if (raw) {
+          const p = JSON.parse(raw);
+          const noteEl = document.querySelector('[data-footer-privacy-note]');
+          if (noteEl) {
+            if (p.footerNote === false) {
+              noteEl.style.display = 'none';
+            } else {
+              noteEl.style.display = '';
+            }
+          }
+        }
+      } catch {}
+    }
+    updateFooterPrivacy();
+    document.addEventListener('astro:page-load', updateFooterPrivacy);
+    window.addEventListener('storage', updateFooterPrivacy);
+  </script>
 </footer>

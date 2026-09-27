@@ -1,0 +1,827 @@
+---
+import fs from 'node:fs';
+import path from 'node:path';
+import Button from '@/components/chrome/Button.astro';
+import Input from '@/components/chrome/Input.astro';
+import Panel from '@/components/chrome/Panel.astro';
+
+interface SeriesItem {
+  name: string;
+  displayName: string;
+  totalEpisodes: number;
+  nextEpisode: number;
+}
+
+const seriesList: SeriesItem[] = [];
+try {
+  const seriesDir = path.resolve(process.cwd(), 'Blogs', 'series');
+  if (fs.existsSync(seriesDir)) {
+    const folders = fs.readdirSync(seriesDir, { withFileTypes: true })
+      .filter((d) => d.isDirectory())
+      .map((d) => d.name);
+
+    for (const folder of folders) {
+      const folderPath = path.join(seriesDir, folder);
+      const files = fs.readdirSync(folderPath).filter((f) => /\.(md|mdx)$/i.test(f));
+      const displayName = folder
+        .split(/[-_]+/)
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ');
+      seriesList.push({
+        name: folder,
+        displayName,
+        totalEpisodes: Math.max(files.length, 1),
+        nextEpisode: files.length + 1,
+      });
+    }
+  }
+} catch {}
+---
+
+<div class="file-upload-tab-container space-y-6">
+  <!-- Top Command Toolbar -->
+  <div class="flex flex-wrap items-center justify-between gap-3 p-3 bg-read-bg-surface-raised border border-read-border rounded-[2px]">
+    <div class="flex items-center gap-2 text-xs font-mono">
+      <span class="text-read-accent font-bold">$</span>
+      <span class="text-read-text-primary font-semibold">blogly upload --split-editor</span>
+      <span id="editor-dirty-indicator" class="hidden text-read-accent text-[10px] px-1.5 py-0.2 border border-read-accent rounded-[2px]">[modified]</span>
+    </div>
+
+    <div class="flex items-center gap-2 flex-wrap">
+      <Button variant="secondary" data-action="new-draft" shortcut="Ctrl+N">
+        New Draft
+      </Button>
+      <Button variant="secondary" data-action="open-file" shortcut="Ctrl+O">
+        Open File
+      </Button>
+      <Button variant="secondary" data-action="preview-blog-site" shortcut="Alt+P">
+        Preview Blog site
+      </Button>
+      <Button variant="primary" data-action="save-post" shortcut="Ctrl+S">
+        Save Post
+      </Button>
+      <Button variant="secondary" data-action="open-git-push-modal" shortcut="Ctrl+G">
+        Push to GitHub
+      </Button>
+    </div>
+  </div>
+
+  <!-- Notification Banner -->
+  <div id="upload-alert-banner" class="hidden p-3 border rounded-[2px] text-xs font-mono flex items-start justify-between gap-2">
+    <div class="flex items-center gap-2">
+      <span id="upload-alert-icon" class="font-bold">ℹ</span>
+      <span id="upload-alert-text"></span>
+    </div>
+    <button type="button" id="close-alert-btn" class="text-read-text-tertiary hover:text-read-text-primary font-bold cursor-pointer">✕</button>
+  </div>
+
+  <!-- File Dropzone -->
+  <div
+    id="file-dropzone"
+    class="relative border-2 border-dashed border-read-border-strong hover:border-read-accent transition-colors bg-read-bg-surface/50 rounded-[2px] p-6 text-center cursor-pointer group"
+  >
+    <input type="file" id="file-picker-input" class="hidden" accept="*/*" />
+    <div class="flex flex-col items-center justify-center space-y-2 pointer-events-none">
+      <div class="w-10 h-10 rounded-full bg-read-bg-surface-raised flex items-center justify-center text-read-accent text-lg font-mono border border-read-border group-hover:scale-105 transition-transform">
+        ↓
+      </div>
+      <div class="text-xs font-mono text-read-text-primary font-semibold">
+        Drag &amp; drop any writeup, document, or audio file here
+      </div>
+      <p class="text-[11px] font-mono text-read-text-secondary max-w-md">
+        Direct pass-through for <span class="text-read-accent font-semibold">.md</span> &amp; <span class="text-read-accent font-semibold">.mdx</span> files.
+        <span class="text-read-text-tertiary block mt-0.5">DOCX, PDF, OCR, and Audio files activate the Phase 5 conversion seam.</span>
+      </p>
+    </div>
+  </div>
+
+  <!-- Article Metadata Configuration Panel -->
+  <Panel title="Article Metadata">
+    <div class="space-y-4 text-xs font-mono">
+      <!-- Article Type Switcher -->
+      <div class="flex flex-wrap items-center justify-between gap-4 pb-3 border-b border-read-border">
+        <div class="flex items-center gap-3">
+          <span class="text-read-text-secondary">Publishing Track:</span>
+          <div class="inline-flex rounded-[2px] border border-read-border p-0.5 bg-read-bg-base">
+            <button
+              type="button"
+              id="track-standalone-btn"
+              class="px-3 py-1 text-xs font-mono rounded-[2px] bg-read-accent text-read-bg-base font-bold transition-all cursor-pointer"
+            >
+              Standalone
+            </button>
+            <button
+              type="button"
+              id="track-series-btn"
+              class="px-3 py-1 text-xs font-mono rounded-[2px] text-read-text-secondary hover:text-read-text-primary transition-all cursor-pointer"
+            >
+              Series Entry
+            </button>
+          </div>
+        </div>
+
+        <div id="target-path-pill" class="text-[11px] text-read-text-tertiary">
+          Target: <code class="text-read-accent font-bold" id="target-path-display">Blogs/standalone/untitled.md</code>
+        </div>
+      </div>
+
+      <!-- Series Specific Settings (shown when series track selected) -->
+      <div id="series-metadata-box" class="hidden p-3 bg-read-bg-base border border-read-border rounded-[2px] space-y-3">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="sm:col-span-1 space-y-1">
+            <label for="meta-series-name" class="text-[11px] text-read-text-secondary">Series Name:</label>
+            <Input id="meta-series-name" placeholder="e.g. distributed-systems" list="existing-series-datalist" />
+            <datalist id="existing-series-datalist">
+              {seriesList.map((s) => (
+                <option value={s.name}>{s.displayName}</option>
+              ))}
+            </datalist>
+          </div>
+          <div class="space-y-1">
+            <label for="meta-series-part" class="text-[11px] text-read-text-secondary">Episode Number:</label>
+            <Input id="meta-series-part" type="number" value="1" min="1" />
+          </div>
+          <div class="space-y-1">
+            <label for="meta-series-total" class="text-[11px] text-read-text-secondary">Total Episodes in Series:</label>
+            <Input id="meta-series-total" type="number" value="1" min="1" />
+          </div>
+        </div>
+      </div>
+
+      <!-- General Metadata Fields -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="space-y-1">
+          <label for="meta-title" class="text-[11px] text-read-text-secondary">Article Title:</label>
+          <Input id="meta-title" placeholder="Understanding Linux Namespaces" required />
+        </div>
+        <div class="space-y-1">
+          <label for="meta-filename" class="text-[11px] text-read-text-secondary">Filename (.md/.mdx):</label>
+          <Input id="meta-filename" placeholder="understanding-linux-namespaces.md" required />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div class="sm:col-span-2 space-y-1">
+          <label for="meta-tags" class="text-[11px] text-read-text-secondary">Tags (comma-separated):</label>
+          <Input id="meta-tags" placeholder="linux, kernel, security, systems" />
+        </div>
+        <div class="space-y-1">
+          <label for="meta-date" class="text-[11px] text-read-text-secondary">Publish Date:</label>
+          <Input id="meta-date" type="date" />
+        </div>
+      </div>
+
+      <div class="space-y-1">
+        <label for="meta-desc" class="text-[11px] text-read-text-secondary">Brief Description / Subtitle:</label>
+        <Input id="meta-desc" placeholder="A deep-dive investigation into Linux isolation primitives..." />
+      </div>
+    </div>
+  </Panel>
+
+  <!-- Raw / Rendered Split Editor -->
+  <div class="split-editor-container border border-read-border rounded-[2px] overflow-hidden bg-read-bg-surface">
+    <!-- Editor Header & View Mode Switcher -->
+    <div class="flex items-center justify-between px-3 py-2 bg-read-bg-surface-raised border-b border-read-border font-mono text-xs">
+      <div class="flex items-center gap-3">
+        <span class="text-read-accent font-bold">&gt;</span>
+        <span class="font-semibold text-read-text-primary">Split Editor</span>
+        <span id="editor-stats" class="text-read-text-tertiary text-[11px]">0 words · ~0 min read</span>
+      </div>
+
+      <!-- Quick formatting helpers -->
+      <div class="flex items-center gap-1 text-[11px]">
+        <button type="button" class="px-2 py-0.5 hover:bg-read-bg-base border border-transparent hover:border-read-border rounded-[2px] text-read-text-secondary cursor-pointer" data-fmt="h1" title="Heading 1">H1</button>
+        <button type="button" class="px-2 py-0.5 hover:bg-read-bg-base border border-transparent hover:border-read-border rounded-[2px] text-read-text-secondary cursor-pointer" data-fmt="h2" title="Heading 2">H2</button>
+        <button type="button" class="px-2 py-0.5 hover:bg-read-bg-base border border-transparent hover:border-read-border rounded-[2px] text-read-text-secondary cursor-pointer" data-fmt="bold" title="Bold">**B**</button>
+        <button type="button" class="px-2 py-0.5 hover:bg-read-bg-base border border-transparent hover:border-read-border rounded-[2px] text-read-text-secondary cursor-pointer" data-fmt="italic" title="Italic">*I*</button>
+        <button type="button" class="px-2 py-0.5 hover:bg-read-bg-base border border-transparent hover:border-read-border rounded-[2px] text-read-text-secondary cursor-pointer" data-fmt="code" title="Code">`code`</button>
+        <button type="button" class="px-2 py-0.5 hover:bg-read-bg-base border border-transparent hover:border-read-border rounded-[2px] text-read-text-secondary cursor-pointer" data-fmt="quote" title="Quote">&gt; quote</button>
+        <button type="button" class="px-2 py-0.5 hover:bg-read-bg-base border border-transparent hover:border-read-border rounded-[2px] text-read-text-secondary cursor-pointer" data-fmt="list" title="Unordered list">- list</button>
+        <button type="button" class="px-2 py-0.5 hover:bg-read-bg-base border border-transparent hover:border-read-border rounded-[2px] text-read-text-secondary cursor-pointer" data-fmt="link" title="Link">[link]</button>
+      </div>
+    </div>
+
+    <!-- 2-Pane Editor / Preview Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-read-border min-h-[500px]">
+      <!-- Left Pane: Raw Markdown Editor -->
+      <div class="flex flex-col bg-read-bg-base">
+        <div class="px-3 py-1.5 bg-read-bg-surface/50 border-b border-read-border flex items-center justify-between text-[11px] font-mono text-read-text-secondary">
+          <span>Raw Markdown &amp; Frontmatter</span>
+          <span class="text-read-text-tertiary">Live Sync</span>
+        </div>
+        <textarea
+          id="raw-markdown-input"
+          class="w-full flex-1 p-4 bg-transparent text-read-text-primary font-mono text-xs leading-relaxed resize-none focus:outline-none placeholder:text-read-text-tertiary selection:bg-read-accent selection:text-read-bg-base"
+          placeholder="Write or paste your Markdown content here..."
+          spellcheck="false"
+        ></textarea>
+      </div>
+
+      <!-- Right Pane: Live Rendered Preview -->
+      <div class="flex flex-col bg-read-bg-surface overflow-hidden">
+        <div class="px-3 py-1.5 bg-read-bg-surface/50 border-b border-read-border flex items-center justify-between text-[11px] font-mono text-read-text-secondary">
+          <span>Rendered HTML Preview</span>
+          <span class="text-read-accent font-semibold">[Client Render]</span>
+        </div>
+        <div
+          id="rendered-markdown-output"
+          class="flex-1 p-6 overflow-y-auto prose prose-invert max-w-none text-read-text-primary text-[13px] leading-relaxed select-text"
+        >
+          <p class="text-read-text-tertiary italic font-mono text-xs">Preview will appear here as you type...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live Blog Site Preview Modal -->
+  <div id="live-preview-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
+    <div class="bg-read-bg-base border border-read-border-strong w-full max-w-5xl h-[92vh] flex flex-col rounded-[2px] shadow-2xl overflow-hidden font-mono">
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between px-4 py-2.5 bg-read-bg-surface border-b border-read-border">
+        <div class="flex items-center gap-2 text-xs">
+          <span class="text-read-accent font-bold">&gt;</span>
+          <span class="text-read-text-primary font-semibold">Live Site Preview (Real Layout)</span>
+          <span class="text-read-text-tertiary text-[10px]">[Theme Active]</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <Button variant="secondary" data-action="close-preview-modal">Close Preview</Button>
+          <Button variant="primary" data-action="save-from-preview">Save &amp; Publish</Button>
+        </div>
+      </div>
+
+      <!-- Simulated Real Blog Post Frame -->
+      <div class="flex-1 overflow-y-auto p-6 md:p-10 space-y-6">
+        <div class="max-w-[760px] mx-auto space-y-6">
+          <!-- Article Breadcrumb -->
+          <div class="flex items-center gap-1.5 text-[11px] text-read-text-tertiary">
+            <span class="text-read-accent font-bold">&gt;</span>
+            <span>ROOT</span>
+            <span>/</span>
+            <span>Blogs</span>
+            <span>/</span>
+            <span id="preview-meta-dir" class="text-read-text-primary">standalone</span>
+          </div>
+
+          <!-- Article Header -->
+          <header class="space-y-3 pb-4 border-b border-read-border">
+            <h1 id="preview-modal-title" class="text-2xl sm:text-3xl font-bold text-read-text-primary leading-tight">
+              Article Title
+            </h1>
+            <div class="flex flex-wrap items-center gap-3 text-xs text-read-text-secondary">
+              <span id="preview-modal-date"># Published Today</span>
+              <span>·</span>
+              <span id="preview-modal-words">0 words</span>
+            </div>
+            <!-- Interactive Tools Bar -->
+            <div class="flex items-center justify-between p-2.5 bg-read-bg-surface border border-read-border rounded-[2px] text-xs">
+              <div id="preview-modal-tags" class="flex items-center gap-1.5 flex-wrap">
+                <span class="px-2 py-0.5 bg-read-bg-base border border-read-border text-read-accent rounded-[2px]">tag</span>
+              </div>
+              <div class="flex items-center gap-2 text-read-text-secondary">
+                <span class="text-[11px] px-2 py-0.5 border border-read-border rounded-[2px]">[Audio]</span>
+                <span class="text-[11px] px-2 py-0.5 border border-read-border rounded-[2px]">[Eye Comfort]</span>
+                <span class="text-[11px] px-2 py-0.5 border border-read-border rounded-[2px]">[Magnifier]</span>
+              </div>
+            </div>
+          </header>
+
+          <!-- Rendered Article Body -->
+          <div id="preview-modal-body" class="prose prose-invert max-w-none text-read-text-primary text-[14px] leading-relaxed"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Git Push Confirmation Modal -->
+  <div id="git-push-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 font-mono">
+    <div class="bg-read-bg-surface border border-read-border-strong w-full max-w-lg p-5 rounded-[2px] space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between pb-2 border-b border-read-border">
+        <div class="flex items-center gap-2 text-xs font-bold text-read-text-primary">
+          <span class="text-read-accent">&gt;</span>
+          <span>Push to GitHub Repository</span>
+        </div>
+        <button type="button" data-action="close-git-push-modal" class="text-read-text-tertiary hover:text-read-text-primary font-bold cursor-pointer">✕</button>
+      </div>
+
+      <p class="text-xs text-read-text-secondary leading-relaxed">
+        Commit and push your changes directly to your GitHub repository to update your live blog.
+      </p>
+
+      <div class="space-y-3 text-xs">
+        <div class="space-y-1">
+          <label class="text-[11px] text-read-text-secondary">Target Branch:</label>
+          <select id="git-target-branch-select" class="w-full bg-read-bg-base border border-read-border px-3 py-1.5 text-read-text-primary text-xs focus:border-read-accent focus:outline-none">
+            <option value="master">master</option>
+            <option value="main">main</option>
+          </select>
+        </div>
+
+        <div class="space-y-1">
+          <label class="text-[11px] text-read-text-secondary">Commit Message:</label>
+          <input
+            type="text"
+            id="git-commit-msg-inp"
+            class="w-full bg-read-bg-base border border-read-border px-3 py-1.5 text-read-text-primary text-xs focus:border-read-accent focus:outline-none"
+            placeholder="feat: publish new article via blogly dashboard"
+          />
+        </div>
+
+        <div class="space-y-1">
+          <label class="text-[11px] text-read-text-secondary">Terminal Command Preview:</label>
+          <pre id="git-cmd-preview-box" class="p-2.5 bg-read-bg-base border border-read-border text-[11px] text-read-text-tertiary overflow-x-auto whitespace-pre-wrap">git add -A &amp;&amp; git commit -m "..." &amp;&amp; git push origin master</pre>
+        </div>
+
+        <div id="git-push-status-log" class="hidden p-2.5 bg-read-bg-base border border-read-border text-[11px] text-read-accent max-h-32 overflow-y-auto whitespace-pre-wrap"></div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-read-border">
+        <Button variant="secondary" data-action="close-git-push-modal">Cancel</Button>
+        <Button variant="primary" data-action="execute-git-push">Execute Git Push</Button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Seam for multi-format conversion pipeline (Phase 5)
+  async function convertToMarkdown(file: File): Promise<{ content: string; filename: string; warning?: string }> {
+    const name = file.name || 'untitled.md';
+    const ext = name.split('.').pop()?.toLowerCase() || '';
+    if (['md', 'mdx', 'markdown', 'txt'].includes(ext)) {
+      const text = await file.text();
+      return { content: text, filename: name };
+    }
+
+    const comingSoonMap: Record<string, string> = {
+      docx: 'DOCX document conversion (Mammoth)',
+      pdf: 'PDF text extraction (pdf-parse)',
+      png: 'Image OCR text extraction (Tesseract.js)',
+      jpg: 'Image OCR text extraction (Tesseract.js)',
+      jpeg: 'Image OCR text extraction (Tesseract.js)',
+      webp: 'Image OCR text extraction (Tesseract.js)',
+      csv: 'CSV structured table conversion (Papaparse)',
+      json: 'JSON structured data conversion',
+      mp3: 'Audio transcription (Groq Whisper)',
+      wav: 'Audio transcription (Groq Whisper)',
+      m4a: 'Audio transcription (Groq Whisper)',
+    };
+
+    const toolName = comingSoonMap[ext] || `Conversion for .${ext} files`;
+    const baseName = name.replace(/\.[^/.]+$/, '');
+    const starterContent = `# ${baseName}\n\n> ⚠️ **Notice**: Multi-format conversion for **.${ext}** (${toolName}) will be available in Phase 5.\n> Direct pass-through is active for Markdown (.md/.mdx). You can draft or edit your content below.\n\n`;
+
+    return {
+      content: starterContent,
+      filename: `${baseName}.md`,
+      warning: `${toolName} is coming in Phase 5. A Markdown starter draft was prepared for ${name}.`,
+    };
+  }
+
+  // Lightweight client-side Markdown to HTML renderer for split editor
+  function renderMarkdownToHtml(markdown: string): string {
+    if (!markdown || !markdown.trim()) {
+      return '<p class="text-read-text-tertiary italic font-mono text-xs">Preview will appear here as you type...</p>';
+    }
+
+    // Strip frontmatter if present
+    let content = markdown;
+    if (content.startsWith('---')) {
+      const endFm = content.indexOf('---', 3);
+      if (endFm !== -1) {
+        content = content.slice(endFm + 3).trim();
+      }
+    }
+
+    // Escape raw HTML entities
+    const escapeHtml = (str: string) =>
+      str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
+    // Handle code blocks first to protect code content
+    const codeBlocks: string[] = [];
+    content = content.replace(/```([a-zA-Z0-9_-]*)\r?\n([\s\S]*?)```/g, (_, lang, code) => {
+      const idx = codeBlocks.length;
+      const langBadge = lang ? `<span class="text-xs text-read-accent font-mono block pb-1 border-b border-read-border mb-2">${escapeHtml(lang)}</span>` : '';
+      codeBlocks.push(
+        `<pre class="bg-read-bg-base border border-read-border p-3.5 my-3 rounded-[2px] overflow-x-auto text-xs font-mono">${langBadge}<code>${escapeHtml(code.trim())}</code></pre>`
+      );
+      return `__CODE_BLOCK_${idx}__`;
+    });
+
+    // Handle inline code to protect inline code content
+    const inlineCodes: string[] = [];
+    content = content.replace(/`([^`]+)`/g, (_, code) => {
+      const idx = inlineCodes.length;
+      inlineCodes.push(`<code class="px-1.5 py-0.5 bg-read-bg-base border border-read-border rounded-[2px] text-read-accent font-mono text-xs">${escapeHtml(code)}</code>`);
+      return `__INLINE_CODE_${idx}__`;
+    });
+
+    // Escape all raw HTML characters in the remaining markdown text
+    content = escapeHtml(content);
+
+    // Sanitize URL helper
+    const cleanUrl = (url: string) => {
+      const trimmed = url.trim();
+      if (/^javascript:/i.test(trimmed) || /^vbscript:/i.test(trimmed)) return '#';
+      return trimmed;
+    };
+
+    // Headers
+    content = content.replace(/^######\s+(.+)$/gm, '<h6 class="text-sm font-bold text-read-text-primary mt-4 mb-2">$1</h6>');
+    content = content.replace(/^#####\s+(.+)$/gm, '<h5 class="text-sm font-bold text-read-text-primary mt-4 mb-2">$1</h5>');
+    content = content.replace(/^####\s+(.+)$/gm, '<h4 class="text-base font-bold text-read-text-primary mt-4 mb-2">$1</h4>');
+    content = content.replace(/^###\s+(.+)$/gm, '<h3 class="text-lg font-bold text-read-text-primary mt-5 mb-2">$1</h3>');
+    content = content.replace(/^##\s+(.+)$/gm, '<h2 class="text-xl font-bold text-read-text-primary mt-6 mb-3 pb-1 border-b border-read-border">$1</h2>');
+    content = content.replace(/^#\s+(.+)$/gm, '<h1 class="text-2xl font-bold text-read-text-primary mt-6 mb-3 pb-2 border-b border-read-border">$1</h1>');
+
+    // Blockquotes
+    content = content.replace(/^&gt;\s+(.+)$/gm, '<blockquote class="border-l-2 border-read-accent pl-3.5 my-2.5 text-read-text-secondary italic font-mono text-xs">$1</blockquote>');
+
+    // Horizontal Rule
+    content = content.replace(/^---$/gm, '<hr class="border-t border-read-border my-5" />');
+
+    // Bold & Italics
+    content = content.replace(/\*\*([^*]+)\*\*/g, '<strong class="font-bold text-read-text-primary">$1</strong>');
+    content = content.replace(/\*([^*]+)\*/g, '<em class="italic">$1</em>');
+    content = content.replace(/~~([^~]+)~~/g, '<del class="line-through text-read-text-tertiary">$1</del>');
+
+    // Links & Images
+    content = content.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_, alt, url) => `<img src="${cleanUrl(url)}" alt="${alt}" class="max-w-full my-3 rounded-[2px] border border-read-border" />`);
+    content = content.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, text, url) => `<a href="${cleanUrl(url)}" target="_blank" rel="noopener" class="text-read-accent underline underline-offset-4 hover:opacity-80">${text}</a>`);
+
+    // Lists
+    content = content.replace(/^\s*[-*]\s+(.+)$/gm, '<li class="ml-4 list-disc text-read-text-primary">$1</li>');
+    content = content.replace(/^\s*(\d+)\.\s+(.+)$/gm, '<li class="ml-4 list-decimal text-read-text-primary">$2</li>');
+
+    // Paragraphs: split by double newlines
+    const paragraphs = content.split(/\n\n+/);
+    const htmlParts = paragraphs.map((para) => {
+      para = para.trim();
+      if (!para) return '';
+      if (
+        para.startsWith('<h') ||
+        para.startsWith('<blockquote') ||
+        para.startsWith('<hr') ||
+        para.startsWith('<li') ||
+        para.startsWith('__CODE_BLOCK_')
+      ) {
+        return para;
+      }
+      return `<p class="my-2.5 text-read-text-primary leading-relaxed">${para.replace(/\n/g, '<br/>')}</p>`;
+    });
+
+    let rendered = htmlParts.join('\n');
+    // Restore inline code
+    inlineCodes.forEach((ic, idx) => {
+      rendered = rendered.replace(`__INLINE_CODE_${idx}__`, ic);
+    });
+    // Restore code blocks
+    codeBlocks.forEach((block, idx) => {
+      rendered = rendered.replace(`__CODE_BLOCK_${idx}__`, block);
+    });
+
+    return rendered;
+  }
+
+  function initFileUploadTab() {
+    const rawInput = document.getElementById('raw-markdown-input') as HTMLTextAreaElement | null;
+    const renderedOutput = document.getElementById('rendered-markdown-output');
+    const statsEl = document.getElementById('editor-stats');
+    const dirtyIndicator = document.getElementById('editor-dirty-indicator');
+    const dropzone = document.getElementById('file-dropzone');
+    const filePicker = document.getElementById('file-picker-input') as HTMLInputElement | null;
+    const alertBanner = document.getElementById('upload-alert-banner');
+    const alertText = document.getElementById('upload-alert-text');
+    const closeAlertBtn = document.getElementById('close-alert-btn');
+
+    // Metadata inputs
+    const titleInp = document.getElementById('meta-title') as HTMLInputElement | null;
+    const filenameInp = document.getElementById('meta-filename') as HTMLInputElement | null;
+    const tagsInp = document.getElementById('meta-tags') as HTMLInputElement | null;
+    const dateInp = document.getElementById('meta-date') as HTMLInputElement | null;
+    const descInp = document.getElementById('meta-desc') as HTMLInputElement | null;
+    const seriesNameInp = document.getElementById('meta-series-name') as HTMLInputElement | null;
+    const seriesPartInp = document.getElementById('meta-series-part') as HTMLInputElement | null;
+    const seriesTotalInp = document.getElementById('meta-series-total') as HTMLInputElement | null;
+    const targetPathDisplay = document.getElementById('target-path-display');
+    const seriesMetadataBox = document.getElementById('series-metadata-box');
+    const trackStandaloneBtn = document.getElementById('track-standalone-btn');
+    const trackSeriesBtn = document.getElementById('track-series-btn');
+
+    // Modals
+    const livePreviewModal = document.getElementById('live-preview-modal');
+    const gitPushModal = document.getElementById('git-push-modal');
+
+    let currentTrack: 'standalone' | 'series' = 'standalone';
+
+    function setAlert(message: string, isWarning = false) {
+      if (!alertBanner || !alertText) return;
+      alertText.textContent = message;
+      alertBanner.classList.remove('hidden', 'bg-read-accent/10', 'border-read-accent', 'bg-amber-500/10', 'border-amber-500');
+      if (isWarning) {
+        alertBanner.classList.add('bg-amber-500/10', 'border-amber-500', 'text-amber-400');
+      } else {
+        alertBanner.classList.add('bg-read-accent/10', 'border-read-accent', 'text-read-accent');
+      }
+    }
+
+    if (closeAlertBtn) {
+      closeAlertBtn.onclick = () => alertBanner?.classList.add('hidden');
+    }
+
+    // Default publish date to today
+    if (dateInp && !dateInp.value) {
+      dateInp.value = new Date().toISOString().split('T')[0];
+    }
+
+    function updateTargetPath() {
+      if (!targetPathDisplay) return;
+      const rawName = (filenameInp?.value || 'untitled.md').trim();
+      const cleanName = rawName.endsWith('.md') || rawName.endsWith('.mdx') ? rawName : `${rawName}.md`;
+      if (currentTrack === 'series') {
+        const sName = (seriesNameInp?.value || 'series-track').trim().toLowerCase().replace(/[^a-z0-9_-]+/g, '-');
+        targetPathDisplay.textContent = `Blogs/series/${sName}/${cleanName}`;
+      } else {
+        targetPathDisplay.textContent = `Blogs/standalone/${cleanName}`;
+      }
+    }
+
+    // Track switcher
+    if (trackStandaloneBtn && trackSeriesBtn && seriesMetadataBox) {
+      trackStandaloneBtn.onclick = () => {
+        currentTrack = 'standalone';
+        trackStandaloneBtn.classList.add('bg-read-accent', 'text-read-bg-base', 'font-bold');
+        trackStandaloneBtn.classList.remove('text-read-text-secondary');
+        trackSeriesBtn.classList.remove('bg-read-accent', 'text-read-bg-base', 'font-bold');
+        trackSeriesBtn.classList.add('text-read-text-secondary');
+        seriesMetadataBox.classList.add('hidden');
+        updateTargetPath();
+      };
+
+      trackSeriesBtn.onclick = () => {
+        currentTrack = 'series';
+        trackSeriesBtn.classList.add('bg-read-accent', 'text-read-bg-base', 'font-bold');
+        trackSeriesBtn.classList.remove('text-read-text-secondary');
+        trackStandaloneBtn.classList.remove('bg-read-accent', 'text-read-bg-base', 'font-bold');
+        trackStandaloneBtn.classList.add('text-read-text-secondary');
+        seriesMetadataBox.classList.remove('hidden');
+        updateTargetPath();
+      };
+    }
+
+    // Live split editor sync
+    function updateLivePreview() {
+      if (!rawInput || !renderedOutput) return;
+      const text = rawInput.value;
+      renderedOutput.innerHTML = renderMarkdownToHtml(text);
+
+      // Calculate stats
+      const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+      const readMinutes = Math.ceil(words / 200) || 1;
+      if (statsEl) {
+        statsEl.textContent = `${words} words · ~${readMinutes} min read`;
+      }
+      if (dirtyIndicator) {
+        dirtyIndicator.classList.remove('hidden');
+      }
+      updateTargetPath();
+    }
+
+    if (rawInput) {
+      rawInput.addEventListener('input', updateLivePreview);
+    }
+    if (filenameInp) filenameInp.addEventListener('input', updateTargetPath);
+    if (seriesNameInp) seriesNameInp.addEventListener('input', updateTargetPath);
+
+    // Markdown quick formatting buttons
+    document.querySelectorAll('[data-fmt]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        if (!rawInput) return;
+        const fmt = (btn as HTMLElement).dataset.fmt;
+        const start = rawInput.selectionStart;
+        const end = rawInput.selectionEnd;
+        const val = rawInput.value;
+        const selected = val.substring(start, end);
+        let insert = '';
+
+        switch (fmt) {
+          case 'h1': insert = `# ${selected || 'Heading 1'}`; break;
+          case 'h2': insert = `## ${selected || 'Heading 2'}`; break;
+          case 'bold': insert = `**${selected || 'bold text'}**`; break;
+          case 'italic': insert = `*${selected || 'italic text'}*`; break;
+          case 'code': insert = `\`${selected || 'code'}\``; break;
+          case 'quote': insert = `> ${selected || 'quote'}`; break;
+          case 'list': insert = `- ${selected || 'list item'}`; break;
+          case 'link': insert = `[${selected || 'link text'}](https://)`; break;
+          default: break;
+        }
+
+        rawInput.value = val.substring(0, start) + insert + val.substring(end);
+        rawInput.focus();
+        updateLivePreview();
+      });
+    });
+
+    // File loading and conversion dispatcher
+    async function handleLoadedFile(file: File) {
+      try {
+        const { content, filename, warning } = await convertToMarkdown(file);
+        if (rawInput) {
+          rawInput.value = content;
+        }
+        if (filenameInp) {
+          filenameInp.value = filename;
+        }
+
+        // Auto-extract title from first heading
+        const titleMatch = content.match(/^#\s+(.+)$/m);
+        if (titleMatch && titleInp) {
+          titleInp.value = titleMatch[1].trim();
+        }
+
+        // Extract description if blockquote follows title
+        const descMatch = content.match(/^#\s+.+\r?\n\r?\n>\s+(.+)$/m);
+        if (descMatch && descInp) {
+          descInp.value = descMatch[1].trim();
+        }
+
+        updateLivePreview();
+        if (warning) {
+          setAlert(warning, true);
+        } else {
+          setAlert(`Loaded "${file.name}" into split editor.`);
+        }
+      } catch (err: any) {
+        setAlert(`Failed to process file: ${err.message}`, true);
+      }
+    }
+
+    if (dropzone && filePicker) {
+      dropzone.onclick = () => filePicker.click();
+      filePicker.onchange = () => {
+        if (filePicker.files && filePicker.files[0]) {
+          handleLoadedFile(filePicker.files[0]);
+        }
+      };
+
+      dropzone.ondragover = (e) => {
+        e.preventDefault();
+        dropzone.classList.add('border-read-accent', 'bg-read-accent/5');
+      };
+      dropzone.ondragleave = () => {
+        dropzone.classList.remove('border-read-accent', 'bg-read-accent/5');
+      };
+      dropzone.ondrop = (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('border-read-accent', 'bg-read-accent/5');
+        if (e.dataTransfer?.files && e.dataTransfer.files[0]) {
+          handleLoadedFile(e.dataTransfer.files[0]);
+        }
+      };
+    }
+
+    // Button delegation for actions
+    document.addEventListener('click', async (e) => {
+      const target = (e.target as HTMLElement).closest('[data-action]');
+      if (!target) return;
+      const action = target.getAttribute('data-action');
+
+      if (action === 'new-draft') {
+        if (rawInput) rawInput.value = '# New Article Title\n\nA brief introductory summary of this writeup.\n\n## Section 1\n\nStart writing in Markdown...';
+        if (titleInp) titleInp.value = 'New Article Title';
+        if (filenameInp) filenameInp.value = 'new-article.md';
+        if (tagsInp) tagsInp.value = 'technical, research';
+        if (descInp) descInp.value = 'A brief introductory summary of this writeup.';
+        updateLivePreview();
+        setAlert('Started fresh draft in split editor.');
+      } else if (action === 'open-file') {
+        filePicker?.click();
+      } else if (action === 'preview-blog-site') {
+        // Open live site preview modal
+        if (!livePreviewModal) return;
+        const modalTitle = document.getElementById('preview-modal-title');
+        const modalDate = document.getElementById('preview-modal-date');
+        const modalWords = document.getElementById('preview-modal-words');
+        const modalTags = document.getElementById('preview-modal-tags');
+        const modalBody = document.getElementById('preview-modal-body');
+        const modalDir = document.getElementById('preview-meta-dir');
+
+        if (modalTitle) modalTitle.textContent = titleInp?.value || 'Untitled Post';
+        if (modalDate) modalDate.textContent = `# Published ${dateInp?.value || 'Today'}`;
+        if (modalWords && statsEl) modalWords.textContent = statsEl.textContent || '';
+        if (modalDir) modalDir.textContent = currentTrack === 'series' ? `series/${seriesNameInp?.value || 'track'}` : 'standalone';
+        if (modalTags) {
+          const tags = (tagsInp?.value || 'draft').split(',').map((t) => t.trim()).filter(Boolean);
+          modalTags.innerHTML = tags.map((t) => `<span class="px-2 py-0.5 bg-read-bg-base border border-read-border text-read-accent rounded-[2px]">${t}</span>`).join('');
+        }
+        if (modalBody && rawInput) {
+          modalBody.innerHTML = renderMarkdownToHtml(rawInput.value);
+        }
+
+        livePreviewModal.classList.remove('hidden');
+      } else if (action === 'close-preview-modal') {
+        livePreviewModal?.classList.add('hidden');
+      } else if (action === 'save-post' || action === 'save-from-preview') {
+        // Save post via /api/upload-blog
+        const rawContent = rawInput?.value || '';
+        const title = (titleInp?.value || 'Untitled Post').trim();
+        let filename = (filenameInp?.value || 'untitled.md').trim();
+        if (!filename.endsWith('.md') && !filename.endsWith('.mdx')) {
+          filename += '.md';
+        }
+
+        const tags = (tagsInp?.value || 'standalone').split(',').map((t) => t.trim()).filter(Boolean);
+        const description = (descInp?.value || '').trim();
+        const pubDate = dateInp?.value || new Date().toISOString().split('T')[0];
+
+        const payload = {
+          type: currentTrack,
+          seriesName: currentTrack === 'series' ? (seriesNameInp?.value || '').trim() : undefined,
+          episode: currentTrack === 'series' ? parseInt(seriesPartInp?.value || '1', 10) : undefined,
+          totalEpisodes: currentTrack === 'series' ? parseInt(seriesTotalInp?.value || '1', 10) : undefined,
+          filename,
+          content: rawContent,
+          title,
+          tags,
+          description,
+          pubDate,
+        };
+
+        try {
+          const res = await fetch('/api/upload-blog', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          const result = await res.json();
+          if (res.ok && result.success) {
+            livePreviewModal?.classList.add('hidden');
+            dirtyIndicator?.classList.add('hidden');
+            setAlert(`Successfully saved to ${result.filePath}! You can now push to GitHub.`);
+            // Automatically prompt with Git Push modal
+            if (gitPushModal) {
+              const previewEl = document.getElementById('git-cmd-preview-box');
+              if (previewEl) {
+                previewEl.textContent = `git add -A && git commit -m "feat(blog): publish ${filename}" && git push -u origin master`;
+              }
+              gitPushModal.classList.remove('hidden');
+            }
+          } else {
+            setAlert(`Save error: ${result.error || 'Failed to save post'}`, true);
+          }
+        } catch (err: any) {
+          setAlert(`Network error while saving: ${err.message}`, true);
+        }
+      } else if (action === 'open-git-push-modal') {
+        if (gitPushModal) gitPushModal.classList.remove('hidden');
+      } else if (action === 'close-git-push-modal') {
+        if (gitPushModal) gitPushModal.classList.add('hidden');
+      } else if (action === 'execute-git-push') {
+        const branchSelect = document.getElementById('git-target-branch-select') as HTMLSelectElement | null;
+        const msgInp = document.getElementById('git-commit-msg-inp') as HTMLInputElement | null;
+        const statusLog = document.getElementById('git-push-status-log');
+        const branch = branchSelect?.value || 'master';
+        const message = (msgInp?.value || '').trim() || 'feat(blog): publish writeup via blogly dashboard';
+
+        if (statusLog) {
+          statusLog.classList.remove('hidden');
+          statusLog.textContent = `[1/3] Staging changes...\n[2/3] Committing with "${message}"...\n[3/3] Pushing to origin/${branch}...`;
+        }
+
+        try {
+          const res = await fetch('/api/git-push', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ branch, message }),
+          });
+          const data = await res.json();
+          if (statusLog) {
+            if (res.ok && data.success) {
+              statusLog.textContent = `✓ ${data.message}\nCommit: ${data.lastCommit || 'Clean'}\n\n${data.pushOutput || ''}`;
+              setAlert(`Pushed successfully to origin/${branch}! Live deploy initiated.`);
+            } else {
+              statusLog.textContent = `✗ Error: ${data.error || 'Git push encountered an error'}`;
+              setAlert(`Git push failed: ${data.error || 'Check terminal status'}`, true);
+            }
+          }
+        } catch (err: any) {
+          if (statusLog) statusLog.textContent = `✗ Connection error: ${err.message}`;
+        }
+      }
+    });
+
+    // Populate initial draft
+    if (rawInput && !rawInput.value.trim()) {
+      rawInput.value = `# Welcome to Blogly Editor\n\nA distraction-free terminal-grade writing environment.\n\n- Write or paste Markdown on the left\n- View instant rendered output on the right\n- Click "Preview Blog site" to preview with your active theme\n- Click "Save Post" to store in repository and push to GitHub\n`;
+      if (titleInp && !titleInp.value) titleInp.value = 'Welcome to Blogly Editor';
+      if (filenameInp && !filenameInp.value) filenameInp.value = 'welcome-to-blogly-editor.md';
+      updateLivePreview();
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initFileUploadTab);
+  } else {
+    initFileUploadTab();
+  }
+  document.addEventListener('astro:page-load', initFileUploadTab);
+</script>

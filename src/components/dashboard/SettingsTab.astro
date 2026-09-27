@@ -1,0 +1,1013 @@
+---
+import { getAllThemes } from '@/lib/themes';
+import Button from '@/components/chrome/Button.astro';
+import Input from '@/components/chrome/Input.astro';
+import Panel from '@/components/chrome/Panel.astro';
+import Toggle from '@/components/chrome/Toggle.astro';
+import { siteConfig } from '@/site.config';
+
+const themes = getAllThemes();
+
+const fontOptions = [
+  { id: 'monocraft', name: 'Monocraft', family: 'Monocraft, monospace', desc: 'Retro pixelated terminal monospace font (Blogly signature)' },
+  { id: 'jetbrains-mono', name: 'JetBrains Mono', family: '"JetBrains Mono", monospace', desc: 'Modern developer monospace font with clear ligatures' },
+  { id: 'fira-code', name: 'Fira Code', family: '"Fira Code", monospace', desc: 'Monospace font with programming ligatures' },
+  { id: 'cascadia-code', name: 'Cascadia Code', family: '"Cascadia Code", monospace', desc: 'Modern monospace font designed by Microsoft' },
+  { id: 'ibm-plex-mono', name: 'IBM Plex Mono', family: '"IBM Plex Mono", monospace', desc: 'Engineered corporate monospace typeface' },
+  { id: 'source-code-pro', name: 'Source Code Pro', family: '"Source Code Pro", monospace', desc: 'Classic Adobe monospace font designed for code' },
+];
+
+const featuresConfig = siteConfig.features || {
+  audioReader: true,
+  readerMode: true,
+  textMagnifier: true,
+  copyLink: true,
+  copyMarkdown: true,
+  tableOfContents: true,
+  readingProgressBar: true,
+  relatedPosts: true,
+  highlighter: false,
+};
+
+const privacyConfig = siteConfig.privacy || {
+  analytics: false,
+  footerNote: true,
+};
+---
+
+<div class="settings-tab-container space-y-8 font-mono">
+  <!-- Status Message Banner -->
+  <div id="settings-status-banner" class="hidden p-3 border rounded-[2px] text-xs flex items-center justify-between gap-2">
+    <span id="settings-status-text"></span>
+    <button type="button" id="close-settings-banner-btn" class="text-read-text-tertiary hover:text-read-text-primary cursor-pointer font-bold">✕</button>
+  </div>
+
+  <!-- 1. Appearance Section -->
+  <section class="space-y-4">
+    <div class="flex items-center justify-between pb-2 border-b border-read-border">
+      <div class="flex items-center gap-2">
+        <span class="text-read-accent font-bold">&gt;</span>
+        <h2 class="text-base font-bold text-read-text-primary">Appearance &amp; Theming</h2>
+      </div>
+      <Button variant="secondary" data-action="reset-appearance" shortcut="Reset">
+        Reset to Defaults
+      </Button>
+    </div>
+
+    <Panel title="Active Theme Picker">
+      <p class="text-xs text-read-text-secondary mb-4">
+        Select a theme-pack to restyle the entire reading experience and dashboard simultaneously.
+      </p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3" id="theme-selector-grid">
+        {themes.map((t) => {
+          const darkRead = t.tokens.dark.read;
+          return (
+            <div
+              data-theme-id={t.id}
+              data-theme-mode={t.mode}
+              class="theme-card relative border border-read-border hover:border-read-accent p-3.5 rounded-[2px] cursor-pointer transition-all bg-read-bg-base select-none group"
+            >
+              <div class="flex items-center justify-between mb-2">
+                <span class="font-bold text-xs text-read-text-primary group-hover:text-read-accent transition-colors">{t.name}</span>
+                <span class="text-[10px] px-1.5 py-0.2 border border-read-border rounded-[2px] text-read-text-tertiary">
+                  {t.mode.toUpperCase()} MODE
+                </span>
+              </div>
+
+              <!-- Color Swatches Preview -->
+              <div class="flex items-center gap-1.5 my-2.5">
+                <div class="w-6 h-6 rounded-[2px] border border-black/20" style={`background-color: ${darkRead['bg-base']};`} title="Base BG" />
+                <div class="w-6 h-6 rounded-[2px] border border-black/20" style={`background-color: ${darkRead['bg-surface']};`} title="Surface BG" />
+                <div class="w-6 h-6 rounded-[2px] border border-black/20" style={`background-color: ${darkRead.accent};`} title="Accent" />
+                <div class="w-6 h-6 rounded-[2px] border border-black/20" style={`background-color: ${darkRead['text-primary']};`} title="Text Primary" />
+              </div>
+
+              <!-- Font & Sample Code -->
+              <div class="text-[11px] text-read-text-secondary truncate pt-1 border-t border-read-border/60">
+                Font: <span class="text-read-text-primary">{t.fontFamily.split(',')[0]}</span>
+              </div>
+              <div class="text-[10px] text-read-text-tertiary font-mono pt-1">
+                <code>const site = new Blogly();</code>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </Panel>
+
+    <Panel title="Typography / Font Picker">
+      <p class="text-xs text-read-text-secondary mb-4">
+        Choose the typography stylesheet for blog content and interface elements.
+      </p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="font-selector-grid">
+        {fontOptions.map((f) => (
+          <div
+            data-font-id={f.id}
+            class="font-card border border-read-border hover:border-read-accent p-3 rounded-[2px] cursor-pointer transition-all bg-read-bg-base select-none group"
+          >
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-bold text-xs text-read-text-primary group-hover:text-read-accent transition-colors">{f.name}</span>
+            </div>
+            <p class="text-[11px] text-read-text-secondary mb-2">{f.desc}</p>
+            <div class="text-xs p-2 bg-read-bg-surface border border-read-border/60 rounded-[2px] text-read-text-primary overflow-hidden whitespace-nowrap" style={`font-family: ${f.family};`}>
+              The quick brown fox jumps over the lazy dog. 0123456789
+            </div>
+          </div>
+        ))}
+      </div>
+    </Panel>
+  </section>
+
+  <!-- 2. Reader Features Toggles List -->
+  <section class="space-y-4">
+    <div class="flex items-center justify-between pb-2 border-b border-read-border">
+      <div class="flex items-center gap-2">
+        <span class="text-read-accent font-bold">&gt;</span>
+        <h2 class="text-base font-bold text-read-text-primary">Reader Features</h2>
+      </div>
+      <span class="text-xs text-read-text-tertiary">Real-time live preview enabled</span>
+    </div>
+
+    <Panel title="Reader Tool Configuration">
+      <p class="text-xs text-read-text-secondary mb-4">
+        Individually enable or disable reader tools shown on published articles. Changes take effect on live preview immediately.
+      </p>
+
+      <div class="space-y-3 divide-y divide-read-border/60">
+        <!-- 1. AudioReader -->
+        <div class="pt-3 first:pt-0 flex items-center justify-between gap-4">
+          <div class="space-y-0.5">
+            <div class="text-xs font-bold text-read-text-primary">Listen (Audio Reader)</div>
+            <div class="text-[11px] text-read-text-secondary">Synthesizes and speaks blog article content using on-device text-to-speech.</div>
+          </div>
+          <Toggle id="feature-audioReader" checked={featuresConfig.audioReader} data-feature-key="audioReader" />
+        </div>
+
+        <!-- 2. Eye Comfort / Reader Mode -->
+        <div class="pt-3 flex items-center justify-between gap-4">
+          <div class="space-y-0.5">
+            <div class="text-xs font-bold text-read-text-primary">Eye Comfort (Reader Mode)</div>
+            <div class="text-[11px] text-read-text-secondary">Distraction-free reading view with reduced blue light palette (Alt+R).</div>
+          </div>
+          <Toggle id="feature-readerMode" checked={featuresConfig.readerMode} data-feature-key="readerMode" />
+        </div>
+
+        <!-- 3. Text Magnifier -->
+        <div class="pt-3 flex items-center justify-between gap-4">
+          <div class="space-y-0.5">
+            <div class="text-xs font-bold text-read-text-primary">Text Magnifier</div>
+            <div class="text-[11px] text-read-text-secondary">Hover magnifying glass inspect tool for intricate code blocks and diagrams.</div>
+          </div>
+          <Toggle id="feature-textMagnifier" checked={featuresConfig.textMagnifier} data-feature-key="textMagnifier" />
+        </div>
+
+        <!-- 4. Copy Page Link -->
+        <div class="pt-3 flex items-center justify-between gap-4">
+          <div class="space-y-0.5">
+            <div class="text-xs font-bold text-read-text-primary">Copy Page Link</div>
+            <div class="text-[11px] text-read-text-secondary">Quick button to copy the direct URL with confirmation feedback.</div>
+          </div>
+          <Toggle id="feature-copyLink" checked={featuresConfig.copyLink} data-feature-key="copyLink" />
+        </div>
+
+        <!-- 5. Copy as Markdown -->
+        <div class="pt-3 flex items-center justify-between gap-4">
+          <div class="space-y-0.5">
+            <div class="text-xs font-bold text-read-text-primary">Copy as Markdown</div>
+            <div class="text-[11px] text-read-text-secondary">One-click copy of the raw Markdown source code for offline reference.</div>
+          </div>
+          <Toggle id="feature-copyMarkdown" checked={featuresConfig.copyMarkdown} data-feature-key="copyMarkdown" />
+        </div>
+
+        <!-- 6. Table of Contents -->
+        <div class="pt-3 flex items-center justify-between gap-4">
+          <div class="space-y-0.5">
+            <div class="text-xs font-bold text-read-text-primary">Table of Contents</div>
+            <div class="text-[11px] text-read-text-secondary">Sticky side rail and inline outline for navigating long-form articles.</div>
+          </div>
+          <Toggle id="feature-tableOfContents" checked={featuresConfig.tableOfContents} data-feature-key="tableOfContents" />
+        </div>
+
+        <!-- 7. Reading Progress Bar -->
+        <div class="pt-3 flex items-center justify-between gap-4">
+          <div class="space-y-0.5">
+            <div class="text-xs font-bold text-read-text-primary">Reading Progress Bar</div>
+            <div class="text-[11px] text-read-text-secondary">Top viewport progression line indicating how far the visitor has read.</div>
+          </div>
+          <Toggle id="feature-readingProgressBar" checked={featuresConfig.readingProgressBar} data-feature-key="readingProgressBar" />
+        </div>
+
+        <!-- 8. Related Posts -->
+        <div class="pt-3 flex items-center justify-between gap-4">
+          <div class="space-y-0.5">
+            <div class="text-xs font-bold text-read-text-primary">Related Posts</div>
+            <div class="text-[11px] text-read-text-secondary">Automated topic-matched related teardowns and series next reads.</div>
+          </div>
+          <Toggle id="feature-relatedPosts" checked={featuresConfig.relatedPosts} data-feature-key="relatedPosts" />
+        </div>
+
+        <!-- 9. Highlighter (Coming Soon in Phase 8) -->
+        <div class="pt-3 flex items-center justify-between gap-4 opacity-60">
+          <div class="space-y-0.5">
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-bold text-read-text-primary">Highlighter</span>
+              <span class="text-[10px] px-1.5 py-0.2 bg-amber-500/10 border border-amber-500/40 text-amber-400 rounded-[2px] font-bold">
+                Coming Soon (Phase 8)
+              </span>
+            </div>
+            <div class="text-[11px] text-read-text-secondary">Visitor passage highlighter with client-side localStorage persistence.</div>
+          </div>
+          <Toggle id="feature-highlighter" checked={false} disabled={true} data-feature-key="highlighter" />
+        </div>
+      </div>
+    </Panel>
+  </section>
+
+  <!-- 3. Post Management Section -->
+  <section class="space-y-4">
+    <div class="flex items-center justify-between pb-2 border-b border-read-border">
+      <div class="flex items-center gap-2">
+        <span class="text-read-accent font-bold">&gt;</span>
+        <h2 class="text-base font-bold text-read-text-primary">Post Management</h2>
+      </div>
+      <Button variant="secondary" data-action="refresh-posts-list" shortcut="Refresh">
+        Refresh List
+      </Button>
+    </div>
+
+    <Panel title="Repository Articles (Blogs/)">
+      <!-- Sub-tabs: Standalone vs Series -->
+      <div class="flex items-center gap-2 mb-4 pb-2 border-b border-read-border text-xs">
+        <button
+          type="button"
+          id="post-subtab-standalone"
+          class="px-3 py-1 font-bold rounded-[2px] bg-read-accent text-read-bg-base cursor-pointer"
+        >
+          Standalone Writeups (<span id="count-standalone">0</span>)
+        </button>
+        <button
+          type="button"
+          id="post-subtab-series"
+          class="px-3 py-1 text-read-text-secondary hover:text-read-text-primary rounded-[2px] cursor-pointer"
+        >
+          Series Tracks (<span id="count-series">0</span>)
+        </button>
+      </div>
+
+      <!-- Standalone Posts List -->
+      <div id="posts-list-standalone" class="space-y-2">
+        <div class="text-xs text-read-text-tertiary italic p-3">Loading articles from repository...</div>
+      </div>
+
+      <!-- Series Tracks List -->
+      <div id="posts-list-series" class="hidden space-y-4">
+        <div class="text-xs text-read-text-tertiary italic p-3">Loading series from repository...</div>
+      </div>
+    </Panel>
+  </section>
+
+  <!-- 4. Deployment Section -->
+  <section class="space-y-4">
+    <div class="flex items-center gap-2 pb-2 border-b border-read-border">
+      <span class="text-read-accent font-bold">&gt;</span>
+      <h2 class="text-base font-bold text-read-text-primary">Deploy Status (GitHub Pages)</h2>
+    </div>
+
+    <Panel title="Live Deployment Overview">
+      <div class="space-y-3 text-xs">
+        <div class="flex items-center gap-2 text-read-accent font-bold">
+          <span class="w-2 h-2 rounded-full bg-read-accent animate-pulse"></span>
+          <span id="deploy-status-badge">GitHub Pages Pipeline Configured</span>
+        </div>
+
+        <p class="text-read-text-secondary leading-relaxed">
+          Your site automatically builds and publishes via the continuous integration pipeline
+          (<code class="text-read-accent">.github/workflows/deploy.yml</code>) whenever changes are pushed to your remote repository.
+        </p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+          <div class="p-3 bg-read-bg-base border border-read-border rounded-[2px]">
+            <div class="text-[10px] text-read-text-tertiary uppercase">Target Site URL</div>
+            <a id="deploy-target-url" href={siteConfig.siteUrl} target="_blank" rel="noopener" class="text-read-accent font-bold hover:underline block truncate mt-1">
+              {siteConfig.siteUrl}
+            </a>
+          </div>
+
+          <div class="p-3 bg-read-bg-base border border-read-border rounded-[2px]">
+            <div class="text-[10px] text-read-text-tertiary uppercase">Remote Repository</div>
+            <a id="deploy-remote-repo" href={siteConfig.githubUrl} target="_blank" rel="noopener" class="text-read-text-primary font-bold hover:underline block truncate mt-1">
+              {siteConfig.githubUrl || 'https://github.com/harishkannanjs/glyph.sh'}
+            </a>
+          </div>
+        </div>
+
+        <div class="pt-2">
+          <a id="deploy-workflow-url" href="#" target="_blank" rel="noopener" class="text-[11px] text-read-accent hover:underline hidden">
+            → View GitHub Actions Deployments Workflow
+          </a>
+        </div>
+      </div>
+    </Panel>
+  </section>
+
+  <!-- 5. Privacy Section -->
+  <section class="space-y-4">
+    <div class="flex items-center gap-2 pb-2 border-b border-read-border">
+      <span class="text-read-accent font-bold">&gt;</span>
+      <h2 class="text-base font-bold text-read-text-primary">Privacy &amp; Data Storage</h2>
+    </div>
+
+    <Panel title="Visitor Data Explainer">
+      <div class="space-y-4 text-xs">
+        <p class="text-read-text-secondary leading-relaxed">
+          Blogly is designed around a zero-knowledge, visitor-first privacy architecture:
+        </p>
+        <ul class="list-disc pl-4 space-y-1.5 text-read-text-secondary text-[11px]">
+          <li><strong>Visitor Preferences</strong> (theme mode, active font, reading position, and highlights) live exclusively in the visitor's local browser (<code class="text-read-accent">localStorage</code>).</li>
+          <li><strong>Zero Tracking Telemetry:</strong> No remote logging servers, third-party analytics cookies, or behavioral trackers are loaded.</li>
+          <li><strong>Author Identity:</strong> Contained entirely in <code class="text-read-accent">profile.json</code> within your repository.</li>
+        </ul>
+
+        <div class="pt-3 border-t border-read-border space-y-3">
+          <div class="flex items-center justify-between gap-4">
+            <div class="space-y-0.5">
+              <div class="text-xs font-bold text-read-text-primary">Opt-in Cookie-Free Analytics</div>
+              <div class="text-[11px] text-read-text-secondary">Allow aggregate, privacy-preserving visits without tracking individual identities.</div>
+            </div>
+            <Toggle id="privacy-analytics" checked={privacyConfig.analytics} data-privacy-key="analytics" />
+          </div>
+
+          <div class="flex items-center justify-between gap-4">
+            <div class="space-y-0.5">
+              <div class="text-xs font-bold text-read-text-primary">Footer Privacy Notice</div>
+              <div class="text-[11px] text-read-text-secondary">Display a badge in the blog footer: "Privacy-first blog · No cookies or trackers".</div>
+            </div>
+            <Toggle id="privacy-footerNote" checked={privacyConfig.footerNote} data-privacy-key="footerNote" />
+          </div>
+        </div>
+      </div>
+    </Panel>
+  </section>
+
+  <!-- 6. Advanced Section -->
+  <section class="space-y-4">
+    <div class="flex items-center gap-2 pb-2 border-b border-read-border">
+      <span class="text-read-accent font-bold">&gt;</span>
+      <h2 class="text-base font-bold text-read-text-primary">Advanced Operations</h2>
+    </div>
+
+    <Panel title="Data Tools &amp; Recovery">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+        <!-- Export Site ZIP -->
+        <div class="p-3 bg-read-bg-base border border-read-border rounded-[2px] space-y-2">
+          <div class="font-bold text-read-text-primary">Export Site Archive</div>
+          <p class="text-[11px] text-read-text-secondary">Download a compressed ZIP containing your entire blog posts, configuration, and assets.</p>
+          <Button variant="secondary" data-action="export-site-zip">Export Site as ZIP</Button>
+        </div>
+
+        <!-- Undo Last Change (Git Revert) -->
+        <div class="p-3 bg-read-bg-base border border-read-border rounded-[2px] space-y-2">
+          <div class="font-bold text-read-text-primary">Undo Last Change (Git Revert)</div>
+          <p class="text-[11px] text-read-text-secondary">Create a safe revert commit for the most recent repository commit.</p>
+          <Button variant="secondary" data-action="undo-last-change">Revert Last Commit</Button>
+        </div>
+      </div>
+
+      <!-- Raw Configuration Viewer -->
+      <div class="mt-4 pt-4 border-t border-read-border space-y-2">
+        <div class="flex items-center justify-between text-xs">
+          <span class="font-bold text-read-text-primary">Raw Configuration (profile.json)</span>
+          <Button variant="secondary" data-action="save-raw-config">Save Raw JSON</Button>
+        </div>
+        <textarea
+          id="raw-config-editor"
+          class="w-full h-44 p-3 bg-read-bg-base border border-read-border text-xs font-mono text-read-text-primary rounded-[2px] focus:border-read-accent focus:outline-none"
+          spellcheck="false"
+        >{JSON.stringify(siteConfig, null, 2)}</textarea>
+      </div>
+
+      <!-- Danger Zone -->
+      <div class="mt-4 pt-4 border-t border-red-500/30 space-y-3 text-xs">
+        <div class="text-xs font-bold text-red-400 uppercase tracking-wider">Danger Zone</div>
+        <div class="flex flex-wrap items-center justify-between gap-3 p-3 bg-red-500/5 border border-red-500/30 rounded-[2px]">
+          <div>
+            <div class="font-bold text-red-400">Disconnect GitHub</div>
+            <div class="text-[11px] text-read-text-secondary">Unlink GitHub authentication credentials. Device Flow auth lands in Phase 7.</div>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] px-1.5 py-0.5 bg-amber-500/10 border border-amber-500/30 text-amber-400 font-bold rounded-[2px]">Coming Soon (Phase 7)</span>
+            <Button variant="danger" disabled={true} data-action="disconnect-github">Disconnect</Button>
+          </div>
+        </div>
+      </div>
+    </Panel>
+  </section>
+
+  <!-- 7. Author Profile Identity Section -->
+  <section class="space-y-4">
+    <div class="flex items-center gap-2 pb-2 border-b border-read-border">
+      <span class="text-read-accent font-bold">&gt;</span>
+      <h2 class="text-base font-bold text-read-text-primary">Author Profile Details</h2>
+    </div>
+
+    <Panel title="Author Bio &amp; Coordinates">
+      <div class="space-y-3 text-xs">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="space-y-1">
+            <label for="prof-author-name" class="text-[11px] text-read-text-secondary">Author Name:</label>
+            <Input id="prof-author-name" value={siteConfig.author} />
+          </div>
+          <div class="space-y-1">
+            <label for="prof-author-handle" class="text-[11px] text-read-text-secondary">Handle (@username):</label>
+            <Input id="prof-author-handle" value={siteConfig.handle} />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="space-y-1">
+            <label for="prof-author-role" class="text-[11px] text-read-text-secondary">Role / Tagline:</label>
+            <Input id="prof-author-role" value={siteConfig.role} />
+          </div>
+          <div class="space-y-1">
+            <label for="prof-author-email" class="text-[11px] text-read-text-secondary">Email:</label>
+            <Input id="prof-author-email" value={siteConfig.email} />
+          </div>
+        </div>
+
+        <div class="space-y-1">
+          <label for="prof-author-bio" class="text-[11px] text-read-text-secondary">Bio / Description:</label>
+          <textarea
+            id="prof-author-bio"
+            class="w-full h-20 p-2.5 bg-read-bg-base border border-read-border text-xs text-read-text-primary rounded-[2px] focus:border-read-accent focus:outline-none"
+          >{siteConfig.description}</textarea>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="space-y-1">
+            <label for="prof-author-github" class="text-[11px] text-read-text-secondary">GitHub Profile URL:</label>
+            <Input id="prof-author-github" value={siteConfig.githubUrl} />
+          </div>
+          <div class="space-y-1">
+            <label for="prof-author-twitter" class="text-[11px] text-read-text-secondary">Twitter / X URL:</label>
+            <Input id="prof-author-twitter" value={siteConfig.twitterUrl} />
+          </div>
+        </div>
+
+        <div class="pt-2 flex justify-end">
+          <Button variant="primary" data-action="save-author-profile">Save Author Profile</Button>
+        </div>
+      </div>
+    </Panel>
+  </section>
+</div>
+
+<script>
+  function initSettingsTab() {
+    const statusBanner = document.getElementById('settings-status-banner');
+    const statusText = document.getElementById('settings-status-text');
+    const closeBannerBtn = document.getElementById('close-settings-banner-btn');
+
+    function notify(msg: string, isError = false) {
+      if (!statusBanner || !statusText) return;
+      statusText.textContent = msg;
+      statusBanner.classList.remove('hidden', 'bg-read-accent/10', 'border-read-accent', 'bg-red-500/10', 'border-red-500', 'text-red-400');
+      if (isError) {
+        statusBanner.classList.add('bg-red-500/10', 'border-red-500', 'text-red-400');
+      } else {
+        statusBanner.classList.add('bg-read-accent/10', 'border-read-accent', 'text-read-accent');
+      }
+    }
+
+    if (closeBannerBtn) {
+      closeBannerBtn.onclick = () => statusBanner?.classList.add('hidden');
+    }
+
+    // 1. Theme and Font Selection
+    const themeCards = document.querySelectorAll('.theme-card');
+    const fontCards = document.querySelectorAll('.font-card');
+
+    function highlightActiveThemeAndFont() {
+      const currentTheme = document.documentElement.getAttribute('data-theme') || localStorage.getItem('blogly_theme') || 'blogly';
+      const currentFont = document.documentElement.getAttribute('data-font') || localStorage.getItem('blogly_font') || 'monocraft';
+
+      themeCards.forEach((c) => {
+        const id = c.getAttribute('data-theme-id');
+        if (id === currentTheme) {
+          c.classList.add('border-read-accent', 'ring-1', 'ring-read-accent');
+        } else {
+          c.classList.remove('border-read-accent', 'ring-1', 'ring-read-accent');
+        }
+      });
+
+      fontCards.forEach((c) => {
+        const id = c.getAttribute('data-font-id');
+        if (id === currentFont) {
+          c.classList.add('border-read-accent', 'ring-1', 'ring-read-accent');
+        } else {
+          c.classList.remove('border-read-accent', 'ring-1', 'ring-read-accent');
+        }
+      });
+    }
+
+    highlightActiveThemeAndFont();
+
+    themeCards.forEach((card) => {
+      card.addEventListener('click', async () => {
+        const themeId = card.getAttribute('data-theme-id') || 'blogly';
+        document.documentElement.setAttribute('data-theme', themeId);
+        localStorage.setItem('blogly_theme', themeId);
+        highlightActiveThemeAndFont();
+        notify(`Switched theme to ${themeId}.`);
+
+        const currentFont = document.documentElement.getAttribute('data-font') || localStorage.getItem('blogly_font') || 'monocraft';
+        try {
+          await fetch('/api/save-profile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ appearance: { theme: themeId, font: currentFont } }),
+          });
+        } catch {}
+      });
+    });
+
+    fontCards.forEach((card) => {
+      card.addEventListener('click', async () => {
+        const fontId = card.getAttribute('data-font-id') || 'monocraft';
+        document.documentElement.setAttribute('data-font', fontId);
+        localStorage.setItem('blogly_font', fontId);
+        highlightActiveThemeAndFont();
+        notify(`Switched typography font to ${fontId}.`);
+
+        const currentTheme = document.documentElement.getAttribute('data-theme') || localStorage.getItem('blogly_theme') || 'blogly';
+        try {
+          await fetch('/api/save-profile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ appearance: { theme: currentTheme, font: fontId } }),
+          });
+        } catch {}
+      });
+    });
+
+    // 2. Feature Toggles
+    const featureToggles = document.querySelectorAll('[data-feature-key]');
+    featureToggles.forEach((toggleEl) => {
+      const input = toggleEl.querySelector('input[type="checkbox"]') as HTMLInputElement | null;
+      if (!input) return;
+      const key = toggleEl.getAttribute('data-feature-key');
+
+      // Initialize from localStorage if present
+      try {
+        const raw = localStorage.getItem('blogly_features');
+        if (raw) {
+          const map = JSON.parse(raw);
+          if (key && key in map) {
+            input.checked = Boolean(map[key]);
+          }
+        }
+      } catch {}
+
+      input.addEventListener('change', async () => {
+        if (!key) return;
+        const enabled = input.checked;
+        let map: Record<string, boolean> = {};
+        try {
+          map = JSON.parse(localStorage.getItem('blogly_features') || '{}');
+        } catch {}
+        map[key] = enabled;
+        localStorage.setItem('blogly_features', JSON.stringify(map));
+
+        notify(`Feature "${key}" ${enabled ? 'enabled' : 'disabled'}. Live preview updated.`);
+
+        try {
+          await fetch('/api/save-profile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ features: map }),
+          });
+        } catch {}
+      });
+    });
+
+    // 3. Privacy Toggles
+    const privacyToggles = document.querySelectorAll('[data-privacy-key]');
+    privacyToggles.forEach((toggleEl) => {
+      const input = toggleEl.querySelector('input[type="checkbox"]') as HTMLInputElement | null;
+      if (!input) return;
+      const key = toggleEl.getAttribute('data-privacy-key');
+
+      input.addEventListener('change', async () => {
+        if (!key) return;
+        const enabled = input.checked;
+        let map: Record<string, boolean> = {};
+        try {
+          map = JSON.parse(localStorage.getItem('blogly_privacy') || '{}');
+        } catch {}
+        map[key] = enabled;
+        localStorage.setItem('blogly_privacy', JSON.stringify(map));
+
+        notify(`Privacy option "${key}" updated.`);
+
+        try {
+          await fetch('/api/save-profile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ privacy: map }),
+          });
+        } catch {}
+      });
+    });
+
+    // 4. Post Management Loading & Interactions
+    const standaloneListEl = document.getElementById('posts-list-standalone');
+    const seriesListEl = document.getElementById('posts-list-series');
+    const countStandaloneEl = document.getElementById('count-standalone');
+    const countSeriesEl = document.getElementById('count-series');
+    const subtabStandaloneBtn = document.getElementById('post-subtab-standalone');
+    const subtabSeriesBtn = document.getElementById('post-subtab-series');
+
+    async function loadPostsList() {
+      try {
+        const res = await fetch('/api/list-blogs');
+        const data = await res.json();
+        if (!res.ok || !data.success) return;
+
+        const blogs = data.blogs || [];
+        const standalonePosts = blogs.filter((b: any) => b.type === 'standalone');
+        const seriesPosts = blogs.filter((b: any) => b.type === 'series');
+
+        if (countStandaloneEl) countStandaloneEl.textContent = String(standalonePosts.length);
+        if (countSeriesEl) countSeriesEl.textContent = String(seriesPosts.length);
+
+        const escapeHtml = (str: any) =>
+          String(str || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+
+        // Render standalone
+        if (standaloneListEl) {
+          if (standalonePosts.length === 0) {
+            standaloneListEl.innerHTML = '<div class="text-xs text-read-text-tertiary p-3">No standalone articles found in Blogs/standalone/.</div>';
+          } else {
+            standaloneListEl.innerHTML = standalonePosts.map((p: any) => `
+              <div class="p-3 bg-read-bg-base border border-read-border rounded-[2px] flex items-center justify-between gap-3 text-xs">
+                <div class="space-y-0.5 truncate">
+                  <div class="font-bold text-read-text-primary truncate">${escapeHtml(p.title)}</div>
+                  <div class="text-[11px] text-read-text-tertiary truncate"><code>${escapeHtml(p.relPath)}</code> · ${escapeHtml(p.date || 'Unpublished')}</div>
+                </div>
+                <div class="flex items-center gap-1.5 shrink-0">
+                  <a href="${escapeHtml(p.url)}" target="_blank" class="px-2 py-1 bg-read-bg-surface border border-read-border hover:border-read-accent text-read-text-secondary hover:text-read-accent rounded-[2px] text-[11px]">View</a>
+                  <button type="button" data-edit-post="${escapeHtml(p.relPath)}" class="px-2 py-1 bg-read-bg-surface border border-read-border hover:border-read-accent text-read-text-secondary hover:text-read-accent rounded-[2px] text-[11px] cursor-pointer">Edit</button>
+                  <button type="button" data-delete-post="${escapeHtml(p.relPath)}" data-post-title="${escapeHtml(p.title)}" class="px-2 py-1 bg-read-bg-surface border border-red-500/30 hover:border-red-500 text-red-400 rounded-[2px] text-[11px] cursor-pointer">Delete</button>
+                </div>
+              </div>
+            `).join('');
+          }
+        }
+
+        // Render series grouped
+        if (seriesListEl) {
+          const seriesGroup: Record<string, any[]> = {};
+          seriesPosts.forEach((p: any) => {
+            const sName = p.seriesName || 'general';
+            if (!seriesGroup[sName]) seriesGroup[sName] = [];
+            seriesGroup[sName].push(p);
+          });
+
+          const seriesNames = Object.keys(seriesGroup);
+          if (seriesNames.length === 0) {
+            seriesListEl.innerHTML = '<div class="text-xs text-read-text-tertiary p-3">No series tracks found in Blogs/series/.</div>';
+          } else {
+            seriesListEl.innerHTML = seriesNames.map((sName) => {
+              const entries = seriesGroup[sName].sort((a, b) => (a.episode || 1) - (b.episode || 1));
+              return `
+                <div class="p-3 bg-read-bg-base border border-read-border rounded-[2px] space-y-2.5 text-xs">
+                  <div class="flex items-center justify-between pb-1.5 border-b border-read-border">
+                    <span class="font-bold text-read-accent uppercase text-[11px]">Series: "${escapeHtml(sName)}" (${entries.length} episodes)</span>
+                  </div>
+                  <div class="space-y-1.5" data-series-container="${escapeHtml(sName)}">
+                    ${entries.map((ep, idx) => `
+                      <div class="p-2 bg-read-bg-surface border border-read-border/70 rounded-[2px] flex items-center justify-between gap-2" data-series-file="${escapeHtml(ep.filename)}" data-ep-idx="${idx}">
+                        <div class="truncate text-read-text-primary text-[11px]">
+                          <span class="text-read-accent font-bold">[Ep ${ep.episode || idx + 1}]</span> ${escapeHtml(ep.title)}
+                        </div>
+                        <div class="flex items-center gap-1 shrink-0">
+                          <button type="button" data-reorder-up="${escapeHtml(sName)}" data-file="${escapeHtml(ep.filename)}" class="px-1.5 py-0.5 bg-read-bg-base border border-read-border text-read-text-secondary hover:text-read-accent cursor-pointer ${idx === 0 ? 'opacity-30 pointer-events-none' : ''}">↑</button>
+                          <button type="button" data-reorder-down="${escapeHtml(sName)}" data-file="${escapeHtml(ep.filename)}" class="px-1.5 py-0.5 bg-read-bg-base border border-read-border text-read-text-secondary hover:text-read-accent cursor-pointer ${idx === entries.length - 1 ? 'opacity-30 pointer-events-none' : ''}">↓</button>
+                          <button type="button" data-edit-post="${escapeHtml(ep.relPath)}" class="px-1.5 py-0.5 bg-read-bg-base border border-read-border text-read-text-secondary hover:text-read-accent cursor-pointer text-[10px]">Edit</button>
+                          <button type="button" data-delete-post="${escapeHtml(ep.relPath)}" data-post-title="${escapeHtml(ep.title)}" class="px-1.5 py-0.5 bg-read-bg-base border border-red-500/30 text-red-400 hover:text-red-300 cursor-pointer text-[10px]">✕</button>
+                        </div>
+                      </div>
+                    `).join('')}
+                  </div>
+                </div>
+              `;
+            }).join('');
+          }
+        }
+      } catch {}
+    }
+
+    loadPostsList();
+
+    if (subtabStandaloneBtn && subtabSeriesBtn && standaloneListEl && seriesListEl) {
+      subtabStandaloneBtn.onclick = () => {
+        subtabStandaloneBtn.className = 'px-3 py-1 font-bold rounded-[2px] bg-read-accent text-read-bg-base cursor-pointer';
+        subtabSeriesBtn.className = 'px-3 py-1 text-read-text-secondary hover:text-read-text-primary rounded-[2px] cursor-pointer';
+        standaloneListEl.classList.remove('hidden');
+        seriesListEl.classList.add('hidden');
+      };
+
+      subtabSeriesBtn.onclick = () => {
+        subtabSeriesBtn.className = 'px-3 py-1 font-bold rounded-[2px] bg-read-accent text-read-bg-base cursor-pointer';
+        subtabStandaloneBtn.className = 'px-3 py-1 text-read-text-secondary hover:text-read-text-primary rounded-[2px] cursor-pointer';
+        seriesListEl.classList.remove('hidden');
+        standaloneListEl.classList.add('hidden');
+      };
+    }
+
+    // Reorder episodes handler
+    document.addEventListener('click', async (e) => {
+      const upBtn = (e.target as HTMLElement).closest('[data-reorder-up]');
+      const downBtn = (e.target as HTMLElement).closest('[data-reorder-down]');
+      const btn = upBtn || downBtn;
+      if (!btn) return;
+
+      const sName = btn.getAttribute('data-reorder-up') || btn.getAttribute('data-reorder-down');
+      const filename = btn.getAttribute('data-file');
+      if (!sName || !filename) return;
+
+      const container = document.querySelector(`[data-series-container="${sName}"]`);
+      if (!container) return;
+
+      const rows = Array.from(container.querySelectorAll('[data-series-file]'));
+      const filenames = rows.map((r) => r.getAttribute('data-series-file') || '');
+      const idx = filenames.indexOf(filename);
+      if (idx === -1) return;
+
+      if (upBtn && idx > 0) {
+        const tmp = filenames[idx - 1];
+        filenames[idx - 1] = filenames[idx];
+        filenames[idx] = tmp;
+      } else if (downBtn && idx < filenames.length - 1) {
+        const tmp = filenames[idx + 1];
+        filenames[idx + 1] = filenames[idx];
+        filenames[idx] = tmp;
+      }
+
+      try {
+        const res = await fetch('/api/reorder-series', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ seriesName: sName, episodeOrder: filenames }),
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          notify(data.message || 'Series episodes reordered successfully.');
+          loadPostsList();
+        } else {
+          notify(`Failed to reorder: ${data.error || 'Unknown error'}`, true);
+        }
+      } catch (err: any) {
+        notify(`Reorder error: ${err.message}`, true);
+      }
+    });
+
+    // Delete post handler
+    document.addEventListener('click', async (e) => {
+      const btn = (e.target as HTMLElement).closest('[data-delete-post]');
+      if (!btn) return;
+      const relPath = btn.getAttribute('data-delete-post');
+      const title = btn.getAttribute('data-post-title') || 'this post';
+      if (!relPath) return;
+
+      if (!confirm(`Are you sure you want to delete "${title}" (${relPath})? This action removes the file from repository.`)) {
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/delete-blog', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ relPath }),
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          notify(data.message || `Deleted ${relPath}`);
+          loadPostsList();
+        } else {
+          notify(`Delete error: ${data.error || 'Failed to delete'}`, true);
+        }
+      } catch (err: any) {
+        notify(`Delete error: ${err.message}`, true);
+      }
+    });
+
+    // Edit post in FileUploadTab
+    document.addEventListener('click', async (e) => {
+      const btn = (e.target as HTMLElement).closest('[data-edit-post]');
+      if (!btn) return;
+      const relPath = btn.getAttribute('data-edit-post');
+      if (!relPath) return;
+
+      try {
+        const res = await fetch(`/api/get-blog?relPath=${encodeURIComponent(relPath)}`);
+        const data = await res.json();
+        if (res.ok && data.success) {
+          // Switch to File Upload Tab
+          const uploadTabTrigger = (document.querySelector('[data-tab-id="file-upload"]') || document.querySelector('[data-tab-target="file-upload"]')) as HTMLElement | null;
+          if (uploadTabTrigger) uploadTabTrigger.click();
+
+          const rawInput = document.getElementById('raw-markdown-input') as HTMLTextAreaElement | null;
+          const filenameInp = document.getElementById('meta-filename') as HTMLInputElement | null;
+          const titleInp = document.getElementById('meta-title') as HTMLInputElement | null;
+          const descInp = document.getElementById('meta-desc') as HTMLInputElement | null;
+          const tagsInp = document.getElementById('meta-tags') as HTMLInputElement | null;
+          const dateInp = document.getElementById('meta-date') as HTMLInputElement | null;
+
+          if (rawInput) {
+            rawInput.value = data.content || '';
+            rawInput.dispatchEvent(new Event('input'));
+          }
+          if (filenameInp && data.filename) {
+            filenameInp.value = data.filename;
+          }
+          if (titleInp && data.title) {
+            titleInp.value = data.title;
+          }
+          if (descInp && data.description) {
+            descInp.value = data.description;
+          }
+          if (tagsInp && data.tags) {
+            tagsInp.value = Array.isArray(data.tags) ? data.tags.join(', ') : data.tags;
+          }
+          if (dateInp && data.pubDate) {
+            dateInp.value = String(data.pubDate).split('T')[0];
+          }
+
+          if (data.isSeries || relPath.startsWith('Blogs/series/')) {
+            const trackSeriesBtn = document.getElementById('track-series-btn');
+            if (trackSeriesBtn) trackSeriesBtn.click();
+            const seriesNameInp = document.getElementById('meta-series-name') as HTMLInputElement | null;
+            const seriesPartInp = document.getElementById('meta-series-part') as HTMLInputElement | null;
+            const seriesTotalInp = document.getElementById('meta-series-total') as HTMLInputElement | null;
+            if (seriesNameInp && data.seriesName) seriesNameInp.value = data.seriesName;
+            if (seriesPartInp && data.seriesPart) seriesPartInp.value = String(data.seriesPart);
+            if (seriesTotalInp && data.seriesTotal) seriesTotalInp.value = String(data.seriesTotal);
+          } else {
+            const trackStandaloneBtn = document.getElementById('track-standalone-btn');
+            if (trackStandaloneBtn) trackStandaloneBtn.click();
+          }
+          notify(`Loaded ${relPath} into split editor.`);
+        }
+      } catch (err: any) {
+        notify(`Could not load post: ${err.message}`, true);
+      }
+    });
+
+    // 5. Global Actions in Settings
+    document.addEventListener('click', async (e) => {
+      const target = (e.target as HTMLElement).closest('[data-action]');
+      if (!target) return;
+      const action = target.getAttribute('data-action');
+
+      if (action === 'reset-appearance') {
+        document.documentElement.setAttribute('data-theme', 'blogly');
+        document.documentElement.setAttribute('data-font', 'monocraft');
+        localStorage.setItem('blogly_theme', 'blogly');
+        localStorage.setItem('blogly_font', 'monocraft');
+        highlightActiveThemeAndFont();
+        notify('Appearance reset to Blogly default palette & Monocraft font.');
+        try {
+          await fetch('/api/save-profile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ appearance: { theme: 'blogly', font: 'monocraft' } }),
+          });
+        } catch {}
+      } else if (action === 'refresh-posts-list') {
+        loadPostsList();
+        notify('Refreshed articles list from repository.');
+      } else if (action === 'export-site-zip') {
+        notify('Packaging repository into ZIP archive...');
+        window.location.href = '/api/export-zip';
+      } else if (action === 'undo-last-change') {
+        if (!confirm('Undo the most recent git commit using "git revert HEAD"? This creates a revert commit in your repository.')) {
+          return;
+        }
+        try {
+          const res = await fetch('/api/git-revert', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ confirm: true }),
+          });
+          const data = await res.json();
+          if (res.ok && data.success) {
+            notify(data.message || 'Reverted last commit successfully.');
+            loadPostsList();
+          } else {
+            notify(`Revert failed: ${data.error || 'Unable to revert commit'}`, true);
+          }
+        } catch (err: any) {
+          notify(`Revert connection error: ${err.message}`, true);
+        }
+      } else if (action === 'save-raw-config') {
+        const rawEl = document.getElementById('raw-config-editor') as HTMLTextAreaElement | null;
+        if (!rawEl) return;
+        try {
+          const parsed = JSON.parse(rawEl.value);
+          const res = await fetch('/api/save-profile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(parsed),
+          });
+          const data = await res.json();
+          if (res.ok && data.success) {
+            notify('Successfully saved profile.json!');
+          } else {
+            notify(`Save failed: ${data.error || 'Invalid configuration'}`, true);
+          }
+        } catch (err: any) {
+          notify(`JSON parsing error: ${err.message}`, true);
+        }
+      } else if (action === 'save-author-profile') {
+        const nameInp = document.getElementById('prof-author-name') as HTMLInputElement | null;
+        const handleInp = document.getElementById('prof-author-handle') as HTMLInputElement | null;
+        const roleInp = document.getElementById('prof-author-role') as HTMLInputElement | null;
+        const emailInp = document.getElementById('prof-author-email') as HTMLInputElement | null;
+        const bioInp = document.getElementById('prof-author-bio') as HTMLTextAreaElement | null;
+        const githubInp = document.getElementById('prof-author-github') as HTMLInputElement | null;
+        const twitterInp = document.getElementById('prof-author-twitter') as HTMLInputElement | null;
+
+        const payload = {
+          author: nameInp?.value || '',
+          handle: handleInp?.value || '',
+          role: roleInp?.value || '',
+          email: emailInp?.value || '',
+          description: bioInp?.value || '',
+          githubUrl: githubInp?.value || '',
+          twitterUrl: twitterInp?.value || '',
+        };
+
+        try {
+          const res = await fetch('/api/save-profile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          const data = await res.json();
+          if (res.ok && data.success) {
+            notify('Saved author profile details to repository!');
+          } else {
+            notify(`Save failed: ${data.error || 'Unknown error'}`, true);
+          }
+        } catch (err: any) {
+          notify(`Save error: ${err.message}`, true);
+        }
+      }
+    });
+
+    async function checkDeployStatus() {
+      try {
+        const res = await fetch('/api/deploy-status');
+        const data = await res.json();
+        if (res.ok && data.success) {
+          const targetUrlEl = document.getElementById('deploy-target-url') as HTMLAnchorElement | null;
+          const remoteRepoEl = document.getElementById('deploy-remote-repo') as HTMLAnchorElement | null;
+          const workflowLinkEl = document.getElementById('deploy-workflow-url') as HTMLAnchorElement | null;
+          const statusBadge = document.getElementById('deploy-status-badge');
+          if (targetUrlEl && data.pagesUrl) {
+            targetUrlEl.href = data.pagesUrl;
+            targetUrlEl.textContent = data.pagesUrl;
+          }
+          if (remoteRepoEl && data.remote) {
+            const webUrl = data.remote.replace(/^git@github\.com:/, 'https://github.com/').replace(/\.git$/, '');
+            remoteRepoEl.href = webUrl;
+            remoteRepoEl.textContent = data.remote;
+          }
+          if (workflowLinkEl && data.workflowUrl) {
+            workflowLinkEl.href = data.workflowUrl;
+            workflowLinkEl.classList.remove('hidden');
+          }
+          if (statusBadge) {
+            statusBadge.textContent = 'GitHub Pages Pipeline Active';
+          }
+        }
+      } catch {}
+    }
+
+    checkDeployStatus();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initSettingsTab);
+  } else {
+    initSettingsTab();
+  }
+  document.addEventListener('astro:page-load', initSettingsTab);
+</script>

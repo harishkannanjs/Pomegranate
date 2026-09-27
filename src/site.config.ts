@@ -8,6 +8,23 @@ export interface GiscusConfig {
   categoryId: string;
 }
 
+export interface FeaturesConfig {
+  audioReader?: boolean;
+  readerMode?: boolean;
+  textMagnifier?: boolean;
+  copyLink?: boolean;
+  copyMarkdown?: boolean;
+  tableOfContents?: boolean;
+  readingProgressBar?: boolean;
+  relatedPosts?: boolean;
+  highlighter?: boolean;
+}
+
+export interface PrivacyConfig {
+  analytics?: boolean;
+  footerNote?: boolean;
+}
+
 export interface SiteConfig {
   name: string;
   author: string;
@@ -25,6 +42,8 @@ export interface SiteConfig {
   email: string;
   postsPerPage: number;
   giscus: GiscusConfig;
+  features?: FeaturesConfig;
+  privacy?: PrivacyConfig;
 }
 
 function extractGithubUsername(githubUrl?: string, handle?: string): string {
@@ -62,6 +81,23 @@ export const siteConfig: SiteConfig = {
     repoId: "",
     category: "General",
     categoryId: "",
+  },
+  features: {
+    audioReader: true,
+    readerMode: true,
+    textMagnifier: true,
+    copyLink: true,
+    copyMarkdown: true,
+    tableOfContents: true,
+    readingProgressBar: true,
+    relatedPosts: true,
+    highlighter: false,
+    ...((profileData as any).features || {}),
+  },
+  privacy: {
+    analytics: false,
+    footerNote: true,
+    ...((profileData as any).privacy || {}),
   },
 };
 

@@ -3,12 +3,13 @@ import { getCollection } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import PostCard from '@/components/PostCard.astro';
 import TagBadge from '@/components/TagBadge.astro';
-import ProfileEditor from '@/components/ProfileEditor.astro';
-import BlogUploader from '@/components/BlogUploader.astro';
+import FileUploadTab from '@/components/dashboard/FileUploadTab.astro';
+import SettingsTab from '@/components/dashboard/SettingsTab.astro';
+import TabBar from '@/components/chrome/TabBar.astro';
 import { siteConfig, getRelativePath } from '@/site.config';
 import { getReadingTime } from '@/lib/reading-time';
 
-// Strictly fetch all published posts from repository, identical to index.astro
+// Fetch all published posts from repository
 const userPosts = await getCollection('blog', ({ data }) => !data.draft);
 userPosts.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
 
@@ -39,32 +40,64 @@ userPosts.forEach((post) => {
   });
 });
 const authorTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+
+const isDev = import.meta.env.DEV;
+
+const dashboardTabs = [
+  { id: 'file-upload', label: 'File Upload', active: isDev },
+  { id: 'settings', label: 'Settings', active: false },
+  { id: 'public-profile', label: 'Public Profile View', active: !isDev },
+];
 ---
 
-<BaseLayout title="Profile" activePath="/profile">
-  <div class="max-w-[720px] mx-auto px-4 md:px-0 py-8 font-mono">
-    <div class="flex flex-col space-y-10">
-      <!-- Terminal Prompt Context & Dynamic Profile Actions -->
-      <section class="flex flex-col space-y-3">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <div class="flex items-center gap-2 text-primary text-[13px]">
-            <span class="font-bold">$</span>
-            <span class="text-on-surface">whoami --profile</span>
-          </div>
-          <ProfileEditor />
-        </div>
-        <h1 class="text-[26px] sm:text-[28px] text-on-surface font-semibold tracking-tight">
-          Author Profile
+<BaseLayout title={isDev ? "Dashboard & Profile" : "Author Profile"} activePath="/profile">
+  <div class="max-w-[1040px] mx-auto px-4 md:px-8 py-8 font-mono space-y-6">
+    <!-- Dashboard Top Header Bar & Mode-Aware TabBar -->
+    <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-read-border">
+      <div class="flex items-center gap-2">
+        <span class="text-read-accent font-bold text-base">&gt;</span>
+        <h1 class="text-xl sm:text-2xl font-bold text-read-text-primary tracking-tight">
+          {isDev ? 'Blogly Dashboard' : 'Author Profile'}
         </h1>
+        <span class="text-read-accent text-[10px] font-bold px-2 py-0.5 border border-read-border rounded-[2px] bg-read-bg-surface select-none">
+          {isDev ? 'DEV // LOCALHOST' : 'PUBLIC PROFILE'}
+        </span>
+      </div>
+
+      <!-- Mode-Aware Tab Navigation (TUI & Standard) -->
+      <TabBar tabs={dashboardTabs} />
+    </div>
+
+    <!-- Tab 1: File Upload Tab (Split Editor + Seam) -->
+    <div id="tab-content-file-upload" class={isDev ? '' : 'hidden'}>
+      <FileUploadTab />
+    </div>
+
+    <!-- Tab 2: Settings Tab (Appearance, Features, Posts, Deploy, Privacy, Advanced) -->
+    <div id="tab-content-settings" class="hidden">
+      <SettingsTab />
+    </div>
+
+    <!-- Tab 3: Public Profile View (Visitor Perspective & Published Feed) -->
+    <div id="tab-content-public-profile" class={isDev ? 'hidden max-w-[760px] mx-auto space-y-10' : 'max-w-[760px] mx-auto space-y-10'}>
+      <!-- Public Profile Context -->
+      <section class="flex flex-col space-y-3">
+        <div class="flex items-center gap-2 text-read-accent text-[13px]">
+          <span class="font-bold">$</span>
+          <span class="text-read-text-primary">whoami --profile</span>
+        </div>
+        <h2 class="text-[24px] sm:text-[26px] text-read-text-primary font-semibold tracking-tight">
+          Public Author Profile
+        </h2>
       </section>
 
       <!-- Profile Header Block -->
-      <section class="flex flex-col sm:flex-row gap-6 items-start p-4 bg-surface-container-low border border-outline-variant rounded-[2px]">
-        <!-- Avatar / Logo Container (Uploadable in localhost only, stored in repo) -->
-        <div class="relative group/logo shrink-0" id="profile-avatar-wrapper">
+      <section class="flex flex-col sm:flex-row gap-6 items-start p-5 bg-read-bg-surface border border-read-border rounded-[2px]">
+        <!-- Avatar / Logo Container -->
+        <div class="relative shrink-0" id="profile-avatar-wrapper">
           <div
             id="profile-avatar-box"
-            class="w-[100px] h-[100px] bg-surface-container border border-outline-variant relative overflow-hidden select-none flex flex-col items-center justify-center rounded-[2px]"
+            class="w-[100px] h-[100px] bg-read-bg-base border border-read-border relative overflow-hidden select-none flex flex-col items-center justify-center rounded-[2px]"
           >
             <img
               id="profile-avatar-img"
@@ -79,79 +112,66 @@ const authorTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1] || a[0].
               class={`flex flex-col items-center justify-center w-full h-full p-2 ${siteConfig.avatar || siteConfig.logo ? 'hidden' : ''}`}
               data-profile-logo-fallback
             >
-              <span class="text-primary text-[32px] font-bold leading-none">&gt;_</span>
-              <span class="text-primary font-semibold text-[11px] mt-1.5 truncate max-w-full" data-profile-handle>{siteConfig.handle}</span>
+              <span class="text-read-accent text-[32px] font-bold leading-none">&gt;_</span>
+              <span class="text-read-accent font-semibold text-[11px] mt-1.5 truncate max-w-full" data-profile-handle>{siteConfig.handle}</span>
             </div>
           </div>
-
-          <!-- Localhost Upload Overlay Trigger (Strictly visible & active in localhost only) -->
-          <button
-            type="button"
-            id="logo-upload-overlay-btn"
-            class="hidden absolute inset-0 bg-black/75 backdrop-blur-[2px] opacity-0 hover:opacity-100 focus:opacity-100 transition-opacity cursor-pointer flex-col items-center justify-center text-center p-1 font-mono text-white rounded-[2px] border border-primary z-10"
-            title="Upload new logo to repository (Localhost only)"
-          >
-            <span class="text-primary text-[16px] leading-none">📷</span>
-            <span class="font-semibold text-primary text-[10px] mt-1">Upload Logo</span>
-            <span class="text-[9px] text-outline">[localhost]</span>
-          </button>
-
-          <!-- Hidden File Input for Direct Logo Upload -->
-          <input
-            type="file"
-            id="direct-logo-file-input"
-            accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif"
-            class="hidden"
-          />
         </div>
 
         <!-- Author Bio & Coordinates -->
-        <div class="flex flex-col space-y-3 flex-1 text-[13px] text-on-surface-variant leading-relaxed">
+        <div class="flex flex-col space-y-3 flex-1 text-[13px] text-read-text-secondary leading-relaxed">
           <div>
-            <h2 class="text-[18px] text-on-surface font-semibold tracking-tight break-words" data-profile-author>
+            <h3 class="text-[18px] text-read-text-primary font-semibold tracking-tight break-words" data-profile-author>
               {siteConfig.author || siteConfig.handle || 'User'}
-            </h2>
-            <p class={`text-[12px] text-primary mt-0.5 ${siteConfig.role ? '' : 'hidden'}`} data-profile-role>
+            </h3>
+            <p class={`text-[12px] text-read-accent mt-0.5 ${siteConfig.role ? '' : 'hidden'}`} data-profile-role>
               {siteConfig.role}
             </p>
           </div>
 
-          <p class={`break-words ${siteConfig.description ? '' : 'text-outline italic text-[12px]'}`} data-profile-bio>
+          <p class={`break-words ${siteConfig.description ? '' : 'text-read-text-tertiary italic text-[12px]'}`} data-profile-bio>
             {siteConfig.description || 'No description provided yet.'}
           </p>
 
           <div class="flex flex-wrap items-center gap-3 pt-1 text-[12px]">
-            <a
-              href={siteConfig.githubUrl || '#'}
-              target="_blank"
-              rel="noopener noreferrer"
-              class={`text-on-surface hover:text-primary hover:underline underline-offset-4 transition-colors flex items-center gap-1 font-medium ${siteConfig.githubUrl ? '' : 'hidden'}`}
-              data-profile-github-link
-            >
-              <span data-profile-github-text>GitHub: {siteConfig.handle}</span>
-            </a>
-            <span class={`text-outline ${siteConfig.githubUrl && siteConfig.twitterUrl ? '' : 'hidden'}`} data-profile-sep-1>·</span>
-            <a
-              href={siteConfig.twitterUrl || '#'}
-              target="_blank"
-              rel="noopener noreferrer"
-              class={`text-on-surface hover:text-primary hover:underline underline-offset-4 transition-colors flex items-center gap-1 font-medium ${siteConfig.twitterUrl ? '' : 'hidden'}`}
-              data-profile-twitter-link
-            >
-              <span data-profile-twitter-text>Twitter: {siteConfig.twitterHandle}</span>
-            </a>
-            <span class={`text-outline ${(siteConfig.githubUrl || siteConfig.twitterUrl) && siteConfig.email ? '' : 'hidden'}`} data-profile-sep-2>·</span>
-            <a
-              href={siteConfig.email ? `mailto:${siteConfig.email}` : '#'}
-              class={`text-on-surface hover:text-primary hover:underline underline-offset-4 transition-colors flex items-center gap-1 font-medium ${siteConfig.email ? '' : 'hidden'}`}
-              data-profile-email-link
-            >
-              <span data-profile-email-text>{siteConfig.email}</span>
-            </a>
-            {(siteConfig.githubUrl || siteConfig.twitterUrl || siteConfig.email) && <span class="text-outline">·</span>}
+            {siteConfig.githubUrl && (
+              <a
+                href={siteConfig.githubUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-read-text-primary hover:text-read-accent hover:underline underline-offset-4 transition-colors flex items-center gap-1 font-medium"
+              >
+                <span>GitHub: {siteConfig.handle}</span>
+              </a>
+            )}
+            {siteConfig.twitterUrl && (
+              <>
+                <span class="text-read-text-tertiary">·</span>
+                <a
+                  href={siteConfig.twitterUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="text-read-text-primary hover:text-read-accent hover:underline underline-offset-4 transition-colors flex items-center gap-1 font-medium"
+                >
+                  <span>Twitter: {siteConfig.twitterHandle}</span>
+                </a>
+              </>
+            )}
+            {siteConfig.email && (
+              <>
+                <span class="text-read-text-tertiary">·</span>
+                <a
+                  href={`mailto:${siteConfig.email}`}
+                  class="text-read-text-primary hover:text-read-accent hover:underline underline-offset-4 transition-colors flex items-center gap-1 font-medium"
+                >
+                  <span>{siteConfig.email}</span>
+                </a>
+              </>
+            )}
+            <span class="text-read-text-tertiary">·</span>
             <a
               href={getRelativePath('/feed.xml')}
-              class="text-primary hover:underline underline-offset-4 transition-colors flex items-center gap-1 font-medium"
+              class="text-read-accent hover:underline underline-offset-4 transition-colors flex items-center gap-1 font-medium"
             >
               <span>RSS Feed</span>
             </a>
@@ -159,43 +179,40 @@ const authorTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1] || a[0].
         </div>
       </section>
 
-      <!-- Localhost Blog Uploader Section & Command Modal -->
-      <BlogUploader />
-
       <!-- Blog Telemetry & Activity Stats -->
       <section class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-[12px]">
-        <div class="p-3 bg-surface-container-lowest border border-outline-variant">
-          <div class="text-[10px] text-outline uppercase tracking-wider">Articles</div>
-          <div class="text-[18px] text-primary font-bold mt-1">{totalPosts}</div>
+        <div class="p-3 bg-read-bg-surface border border-read-border rounded-[2px]">
+          <div class="text-[10px] text-read-text-tertiary uppercase tracking-wider">Articles</div>
+          <div class="text-[18px] text-read-accent font-bold mt-1">{totalPosts}</div>
         </div>
-        <div class="p-3 bg-surface-container-lowest border border-outline-variant">
-          <div class="text-[10px] text-outline uppercase tracking-wider">Series</div>
-          <div class="text-[18px] text-on-surface font-bold mt-1">{seriesMap.size}</div>
+        <div class="p-3 bg-read-bg-surface border border-read-border rounded-[2px]">
+          <div class="text-[10px] text-read-text-tertiary uppercase tracking-wider">Series</div>
+          <div class="text-[18px] text-read-text-primary font-bold mt-1">{seriesMap.size}</div>
         </div>
-        <div class="p-3 bg-surface-container-lowest border border-outline-variant">
-          <div class="text-[10px] text-outline uppercase tracking-wider">Topics</div>
-          <div class="text-[18px] text-on-surface font-bold mt-1">{authorTags.length}</div>
+        <div class="p-3 bg-read-bg-surface border border-read-border rounded-[2px]">
+          <div class="text-[10px] text-read-text-tertiary uppercase tracking-wider">Topics</div>
+          <div class="text-[18px] text-read-text-primary font-bold mt-1">{authorTags.length}</div>
         </div>
-        <div class="p-3 bg-surface-container-lowest border border-outline-variant">
-          <div class="text-[10px] text-outline uppercase tracking-wider">Total Words</div>
-          <div class="text-[18px] text-outline font-bold mt-1">~{totalWords.toLocaleString()}</div>
+        <div class="p-3 bg-read-bg-surface border border-read-border rounded-[2px]">
+          <div class="text-[10px] text-read-text-tertiary uppercase tracking-wider">Total Words</div>
+          <div class="text-[18px] text-read-text-tertiary font-bold mt-1">~{totalWords.toLocaleString()}</div>
         </div>
       </section>
 
       <!-- Author's Blog Series -->
       {seriesMap.size > 0 && (
-        <section class="space-y-4 pt-4 border-t border-outline-variant">
-          <div class="flex items-center gap-2 text-[11px] text-outline uppercase tracking-wider">
-            <span class="text-primary font-bold">&gt;</span>
+        <section class="space-y-4 pt-4 border-t border-read-border">
+          <div class="flex items-center gap-2 text-[11px] text-read-text-tertiary uppercase tracking-wider">
+            <span class="text-read-accent font-bold">&gt;</span>
             <span>Featured Writing Series</span>
           </div>
 
           <div class="space-y-3">
             {[...seriesMap.entries()].map(([seriesName, data]) => (
-              <div class="p-3 bg-surface-container-low border border-outline-variant rounded-[2px] space-y-2">
+              <div class="p-3.5 bg-read-bg-surface border border-read-border rounded-[2px] space-y-2">
                 <div class="flex items-center justify-between text-[12px] gap-2">
-                  <span class="text-on-surface font-semibold break-words">'{seriesName}'</span>
-                  <span class="text-outline text-[11px] shrink-0">
+                  <span class="text-read-text-primary font-semibold break-words">'{seriesName}'</span>
+                  <span class="text-read-text-tertiary text-[11px] shrink-0">
                     {data.posts.length} {data.posts.length === 1 ? 'part' : 'parts'} published
                     {data.total > data.posts.length ? ` (${data.posts.length}/${data.total} total)` : ''}
                   </span>
@@ -209,9 +226,9 @@ const authorTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1] || a[0].
                       return (
                         <a
                           href={getRelativePath(`/blog/${slug}`)}
-                          class="px-2 py-1 bg-surface-container border border-outline-variant hover:border-primary text-on-surface-variant hover:text-primary text-[11px] rounded-[2px] transition-colors flex items-center gap-1.5"
+                          class="px-2.5 py-1 bg-read-bg-base border border-read-border hover:border-read-accent text-read-text-secondary hover:text-read-accent text-[11px] rounded-[2px] transition-colors flex items-center gap-1.5"
                         >
-                          <span class="text-primary font-bold">[{p.data.seriesPart}{totalPart ? `/${totalPart}` : ''}]</span>
+                          <span class="text-read-accent font-bold">[{p.data.seriesPart}{totalPart ? `/${totalPart}` : ''}]</span>
                           <span class="truncate max-w-[200px] sm:max-w-[300px]">{p.data.title}</span>
                         </a>
                       );
@@ -224,15 +241,12 @@ const authorTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1] || a[0].
       )}
 
       <!-- Topics Covered by this Author -->
-      <section class="space-y-4 pt-4 border-t border-outline-variant">
-        <div class="flex items-center justify-between text-[11px] text-outline uppercase tracking-wider">
+      <section class="space-y-4 pt-4 border-t border-read-border">
+        <div class="flex items-center justify-between text-[11px] text-read-text-tertiary uppercase tracking-wider">
           <div class="flex items-center gap-2">
-            <span class="text-primary font-bold">&gt;</span>
+            <span class="text-read-accent font-bold">&gt;</span>
             <span>Topics &amp; Tags</span>
           </div>
-          <button type="button" data-open-search class="text-primary hover:underline lowercase font-mono cursor-pointer">
-            [search topics &amp; tags]
-          </button>
         </div>
 
         <div class="flex flex-wrap gap-2">
@@ -243,13 +257,13 @@ const authorTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1] || a[0].
       </section>
 
       <!-- Author's Blog Articles Feed -->
-      <section class="space-y-4 pt-4 border-t border-outline-variant">
-        <div class="flex items-center justify-between text-[11px] text-outline uppercase tracking-wider">
+      <section class="space-y-4 pt-4 border-t border-read-border">
+        <div class="flex items-center justify-between text-[11px] text-read-text-tertiary uppercase tracking-wider">
           <div class="flex items-center gap-2">
-            <span class="text-primary font-bold">&gt;</span>
-            <span data-profile-posts-author>{siteConfig.author && siteConfig.author !== 'Author' ? `Published Posts by ${siteConfig.author}` : 'Published Posts'}</span>
+            <span class="text-read-accent font-bold">&gt;</span>
+            <span>Published Posts</span>
           </div>
-          <span class="text-outline font-mono text-[11px]">{userPosts.length} entries</span>
+          <span class="text-read-text-tertiary font-mono text-[11px]">{userPosts.length} entries</span>
         </div>
 
         <div class="flex flex-col space-y-6">
@@ -261,3 +275,81 @@ const authorTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1] || a[0].
     </div>
   </div>
 </BaseLayout>
+
+<script>
+  function initDashboardNavigation() {
+    const tabTriggers = document.querySelectorAll('[data-tab-id]');
+    const tabPanels: Record<string, HTMLElement | null> = {
+      'file-upload': document.getElementById('tab-content-file-upload'),
+      'settings': document.getElementById('tab-content-settings'),
+      'public-profile': document.getElementById('tab-content-public-profile'),
+    };
+
+    function switchActiveTab(targetId: string) {
+      localStorage.setItem('blogly_active_tab', targetId);
+
+      tabTriggers.forEach((btn) => {
+        const id = btn.getAttribute('data-tab-id');
+        const isActive = id === targetId;
+
+        // TUI mode styling
+        if (btn.classList.contains('chrome-tui-inline') || btn.closest('.chrome-tui-inline')) {
+          if (isActive) {
+            btn.classList.add('bg-read-accent', 'text-read-bg-base', 'border-read-accent', 'font-bold');
+            btn.classList.remove('border-read-border-strong', 'text-read-text-secondary');
+          } else {
+            btn.classList.remove('bg-read-accent', 'text-read-bg-base', 'border-read-accent', 'font-bold');
+            btn.classList.add('border-read-border-strong', 'text-read-text-secondary');
+          }
+        }
+
+        // Standard mode styling
+        if (isActive) {
+          btn.classList.add('bg-read-bg-surface', 'text-read-accent', 'shadow-sm', 'font-semibold');
+          btn.classList.remove('text-read-text-secondary');
+        } else {
+          btn.classList.remove('bg-read-bg-surface', 'text-read-accent', 'shadow-sm', 'font-semibold');
+          btn.classList.add('text-read-text-secondary');
+        }
+      });
+
+      for (const [panelId, panelEl] of Object.entries(tabPanels)) {
+        if (panelEl) {
+          if (panelId === targetId) {
+            panelEl.classList.remove('hidden');
+          } else {
+            panelEl.classList.add('hidden');
+          }
+        }
+      }
+    }
+
+    tabTriggers.forEach((trigger) => {
+      trigger.addEventListener('click', (e) => {
+        e.preventDefault();
+        const tabId = trigger.getAttribute('data-tab-id');
+        if (tabId) {
+          switchActiveTab(tabId);
+        }
+      });
+    });
+
+    // Support query param or localStorage tab memory
+    const urlParams = new URLSearchParams(window.location.search);
+    const queryTab = urlParams.get('tab');
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const defaultTab = isLocalhost ? 'file-upload' : 'public-profile';
+    const storedTab = localStorage.getItem('blogly_active_tab');
+    const initialTab = queryTab && tabPanels[queryTab]
+      ? queryTab
+      : (!isLocalhost && (!storedTab || storedTab === 'file-upload') ? 'public-profile' : (storedTab || defaultTab));
+    switchActiveTab(initialTab);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDashboardNavigation);
+  } else {
+    initDashboardNavigation();
+  }
+  document.addEventListener('astro:page-load', initDashboardNavigation);
+</script>
