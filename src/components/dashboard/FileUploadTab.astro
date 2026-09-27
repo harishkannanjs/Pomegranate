@@ -90,7 +90,7 @@ try {
       </div>
       <p class="text-[11px] font-mono text-read-text-secondary max-w-md">
         Direct pass-through for <span class="text-read-accent font-semibold">.md</span> &amp; <span class="text-read-accent font-semibold">.mdx</span> files.
-        <span class="text-read-text-tertiary block mt-0.5">DOCX, PDF, OCR, and Audio files activate the Phase 5 conversion seam.</span>
+        <span class="text-read-text-tertiary block mt-0.5">Supports DOCX, PDF, HTML, CSV, JSON, OCR, and Audio via the Phase 5 conversion seam.</span>
       </p>
     </div>
   </div>
@@ -343,37 +343,79 @@ try {
 </div>
 
 <script>
-  // Seam for multi-format conversion pipeline (Phase 5)
+  // Real multi-format conversion pipeline dispatcher (Phase 5)
   async function convertToMarkdown(file: File): Promise<{ content: string; filename: string; warning?: string }> {
     const name = file.name || 'untitled.md';
     const ext = name.split('.').pop()?.toLowerCase() || '';
+
+    // Fast-path: local text passthrough for plain text and markdown
     if (['md', 'mdx', 'markdown', 'txt'].includes(ext)) {
       const text = await file.text();
       return { content: text, filename: name };
     }
 
-    const comingSoonMap: Record<string, string> = {
-      docx: 'DOCX document conversion (Mammoth)',
-      pdf: 'PDF text extraction (pdf-parse)',
-      png: 'Image OCR text extraction (Tesseract.js)',
-      jpg: 'Image OCR text extraction (Tesseract.js)',
-      jpeg: 'Image OCR text extraction (Tesseract.js)',
-      webp: 'Image OCR text extraction (Tesseract.js)',
-      csv: 'CSV structured table conversion (Papaparse)',
-      json: 'JSON structured data conversion',
-      mp3: 'Audio transcription (Groq Whisper)',
-      wav: 'Audio transcription (Groq Whisper)',
-      m4a: 'Audio transcription (Groq Whisper)',
-    };
+    const audioExtensions = ['mp3', 'wav', 'm4a', 'ogg', 'flac', 'aac'];
+    const isAudio = audioExtensions.includes(ext);
 
-    const toolName = comingSoonMap[ext] || `Conversion for .${ext} files`;
-    const baseName = name.replace(/\.[^/.]+$/, '');
-    const starterContent = `# ${baseName}\n\n> ⚠️ **Notice**: Multi-format conversion for **.${ext}** (${toolName}) will be available in Phase 5.\n> Direct pass-through is active for Markdown (.md/.mdx). You can draft or edit your content below.\n\n`;
+    let groqApiKey = '';
+    if (isAudio) {
+      groqApiKey = localStorage.getItem('blogly_groq_api_key') || '';
+      if (!groqApiKey.trim()) {
+        const goToSettings = confirm(
+          'Add a Groq API key in Settings to convert audio files.\n\nWould you like to open Settings now to add your Groq API key?'
+        );
+        if (goToSettings) {
+          const settingsBtn = document.querySelector('[data-tab-id="settings"]') as HTMLElement | null;
+          if (settingsBtn) settingsBtn.click();
+        }
+        throw new Error('Add a Groq API key in Settings to convert audio files');
+      }
+
+      // Explicit consent prompt before audio leaves device per SPEC.md
+      const consent = confirm('This file will be sent to Groq to convert it — continue?');
+      if (!consent) {
+        throw new Error('Audio conversion cancelled by user (no data was sent).');
+      }
+    }
+
+    // Convert file to Base64 data URL
+    const fileBase64 = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(new Error('Failed to read file into memory'));
+      reader.readAsDataURL(file);
+    });
+
+    const res = await fetch('/api/convert-file', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        filename: file.name,
+        fileBase64,
+        mimeType: file.type,
+        groqApiKey: isAudio ? groqApiKey : undefined,
+      }),
+    });
+
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      if (data.error === 'NO_GROQ_KEY') {
+        const goToSettings = confirm(
+          'Add a Groq API key in Settings to convert audio files.\n\nWould you like to open Settings now to add your Groq API key?'
+        );
+        if (goToSettings) {
+          const settingsBtn = document.querySelector('[data-tab-id="settings"]') as HTMLElement | null;
+          if (settingsBtn) settingsBtn.click();
+        }
+        throw new Error('Add a Groq API key in Settings to convert audio files');
+      }
+      throw new Error(data.error || 'Conversion failed');
+    }
 
     return {
-      content: starterContent,
-      filename: `${baseName}.md`,
-      warning: `${toolName} is coming in Phase 5. A Markdown starter draft was prepared for ${name}.`,
+      content: data.markdown,
+      filename: data.filename || `${name.replace(/\.[^/.]+$/, '')}.md`,
+      warning: data.warning,
     };
   }
 
@@ -515,11 +557,23 @@ try {
 
     function setAlert(message: string, isWarning = false) {
       if (!alertBanner || !alertText) return;
-      alertText.textContent = message;
-      alertBanner.classList.remove('hidden', 'bg-read-accent/10', 'border-read-accent', 'bg-amber-500/10', 'border-amber-500');
-      if (isWarning) {
+      alertBanner.classList.remove('hidden', 'bg-read-accent/10', 'border-read-accent', 'bg-amber-500/10', 'border-amber-500', 'bg-red-500/10', 'border-red-500');
+
+      if (message.includes('Add a Groq API key in Settings')) {
+        alertText.innerHTML = `<span>${message}</span> <button type="button" id="alert-settings-link" class="underline font-bold text-read-accent ml-2 hover:opacity-80 cursor-pointer">[Open Settings Tab]</button>`;
+        const link = document.getElementById('alert-settings-link');
+        if (link) {
+          link.onclick = () => {
+            const settingsBtn = document.querySelector('[data-tab-id="settings"]') as HTMLElement | null;
+            if (settingsBtn) settingsBtn.click();
+          };
+        }
+        alertBanner.classList.add('bg-amber-500/10', 'border-amber-500', 'text-amber-400');
+      } else if (isWarning) {
+        alertText.textContent = message;
         alertBanner.classList.add('bg-amber-500/10', 'border-amber-500', 'text-amber-400');
       } else {
+        alertText.textContent = message;
         alertBanner.classList.add('bg-read-accent/10', 'border-read-accent', 'text-read-accent');
       }
     }
@@ -624,6 +678,18 @@ try {
     // File loading and conversion dispatcher
     async function handleLoadedFile(file: File) {
       try {
+        const ext = file.name.split('.').pop()?.toLowerCase() || '';
+        const isAudio = ['mp3', 'wav', 'm4a', 'ogg', 'flac', 'aac'].includes(ext);
+        const isOcr = ['png', 'jpg', 'jpeg', 'webp', 'bmp', 'tiff', 'gif'].includes(ext);
+
+        if (isAudio) {
+          setAlert(`Transcribing audio "${file.name}" via Groq Whisper Large V3...`);
+        } else if (isOcr) {
+          setAlert(`Extracting text from image "${file.name}" via on-device OCR...`);
+        } else if (ext === 'pdf' || ext === 'docx') {
+          setAlert(`Converting "${file.name}" to Markdown...`);
+        }
+
         const { content, filename, warning } = await convertToMarkdown(file);
         if (rawInput) {
           rawInput.value = content;

@@ -375,6 +375,42 @@ const privacyConfig = siteConfig.privacy || {
         </div>
       </div>
 
+      <!-- BYOK API Integrations (Groq Whisper) -->
+      <div class="mt-4 pt-4 border-t border-read-border space-y-3">
+        <div class="flex items-center justify-between text-xs">
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-read-text-primary">BYOK API Integrations (Groq Whisper)</span>
+            <span class="text-[10px] text-read-accent px-1.5 py-0.2 border border-read-accent rounded-[2px] font-bold">Tier 2 Audio</span>
+          </div>
+          <Button variant="secondary" data-action="save-groq-key">Save Groq Key</Button>
+        </div>
+
+        <p class="text-[11px] text-read-text-secondary leading-relaxed">
+          Provide your own Groq API key to transcribe speech from audio files (<code class="text-read-accent">.mp3</code>, <code class="text-read-accent">.wav</code>, <code class="text-read-accent">.m4a</code>) into Markdown writeups using Groq-hosted Whisper Large V3.
+        </p>
+
+        <div class="space-y-1">
+          <label for="byok-groq-key" class="text-[11px] text-read-text-secondary">Groq API Key (starts with <code>gsk_...</code>):</label>
+          <div class="flex items-center gap-2">
+            <div class="flex-1">
+              <Input id="byok-groq-key" type="password" placeholder="gsk_xxxxxxxxxxxxxxxxxxxxxxxxxxxx" />
+            </div>
+            <Button variant="secondary" data-action="toggle-groq-key-visibility">Show</Button>
+            <Button variant="secondary" data-action="clear-groq-key">Clear</Button>
+          </div>
+        </div>
+
+        <div class="p-2.5 bg-read-bg-surface border border-read-border rounded-[2px] text-[11px] text-read-text-tertiary space-y-1">
+          <div class="flex items-center gap-1.5 text-read-text-secondary font-semibold">
+            <span>🔒</span>
+            <span>Zero-Knowledge BYOK Guarantee:</span>
+          </div>
+          <p>
+            Your Groq API key is stored locally in your browser's <code class="text-read-accent">localStorage</code>. It is communicated directly to Groq's official API (<code class="text-read-accent">api.groq.com</code>) exclusively when you explicitly confirm an audio transcription request. It is never logged, analyzed, or committed into git repository files.
+          </p>
+        </div>
+      </div>
+
       <!-- Raw Configuration Viewer -->
       <div class="mt-4 pt-4 border-t border-read-border space-y-2">
         <div class="flex items-center justify-between text-xs">
@@ -969,8 +1005,39 @@ const privacyConfig = siteConfig.privacy || {
         } catch (err: any) {
           notify(`Save error: ${err.message}`, true);
         }
+      } else if (action === 'save-groq-key') {
+        const groqInp = document.getElementById('byok-groq-key') as HTMLInputElement | null;
+        const key = (groqInp?.value || '').trim();
+        if (key) {
+          localStorage.setItem('blogly_groq_api_key', key);
+          notify('Groq API Key safely saved to your browser localStorage! Tier 2 audio conversion is active.');
+        } else {
+          localStorage.removeItem('blogly_groq_api_key');
+          notify('Groq API Key cleared from browser localStorage.');
+        }
+      } else if (action === 'toggle-groq-key-visibility') {
+        const groqInp = document.getElementById('byok-groq-key') as HTMLInputElement | null;
+        if (groqInp) {
+          const isPassword = groqInp.type === 'password';
+          groqInp.type = isPassword ? 'text' : 'password';
+          target.textContent = isPassword ? 'Hide' : 'Show';
+        }
+      } else if (action === 'clear-groq-key') {
+        const groqInp = document.getElementById('byok-groq-key') as HTMLInputElement | null;
+        if (groqInp) groqInp.value = '';
+        localStorage.removeItem('blogly_groq_api_key');
+        notify('Groq API Key cleared.');
       }
     });
+
+    // Load Groq API Key from localStorage
+    const groqKeyInput = document.getElementById('byok-groq-key') as HTMLInputElement | null;
+    if (groqKeyInput) {
+      const savedKey = localStorage.getItem('blogly_groq_api_key');
+      if (savedKey) {
+        groqKeyInput.value = savedKey;
+      }
+    }
 
     async function checkDeployStatus() {
       try {
