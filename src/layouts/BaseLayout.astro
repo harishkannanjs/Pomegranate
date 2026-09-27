@@ -19,7 +19,7 @@ interface Props {
 }
 
 const {
-  title = siteConfig.name || 'glyph.sh',
+  title = siteConfig.name || 'Blogly',
   description = siteConfig.description,
   image = '/og/default.png',
   canonicalUrl = Astro.url.href,
@@ -30,7 +30,7 @@ const {
   mode = 'dark',
 } = Astro.props;
 
-const pageTitle = title || siteConfig.name || 'glyph.sh';
+const pageTitle = title || siteConfig.name || 'Blogly';
 const resolvedOgImage = new URL(getRelativePath(image), Astro.site || Astro.url.origin).href;
 ---
 

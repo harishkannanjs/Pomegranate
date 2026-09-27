@@ -1,6 +1,6 @@
-# glyph.sh — Terminal Aesthetic Technical Publishing Platform
+# Blogly — Terminal Aesthetic Technical Publishing Platform
 
-> A production-ready, ultra-fast personal blog and technical research platform built with **Astro 5**, **Tailwind CSS v4**, **MDX**, and **Pagefind**, strictly styled under the **Catppuccin Mocha** terminal aesthetic.
+> A production-ready, ultra-fast personal blog and technical research platform built with **Astro 5**, **Tailwind CSS v4**, **MDX**, and **Pagefind**, featuring swappable theme packs and dual TUI/Standard UI modes.
 
 ---
 
@@ -122,7 +122,7 @@ Open `profile.json` in your favorite code editor and edit the fields:
   "logo": "/profile-logo.png",
   "role": "Systems Engineer & Security Researcher",
   "twitterHandle": "@alicereed",
-  "title": "glyph.sh",
+  "title": "Blogly",
   "description": "Explorations into low-level systems, kernel development, and distributed consensus.",
   "siteUrl": "https://alice.github.io/glyph.sh",
   "githubUrl": "https://github.com/alice",
@@ -331,7 +331,7 @@ git push origin master
 ## Project Architecture & File Tree
 
 ```
-glyph.sh/
+blogly/ (repo: glyph.sh)
 ├── .github/
 │   └── workflows/
 │       └── deploy.yml            <-- Automated GitHub Pages build & deploy

@@ -519,7 +519,7 @@ const currentProfile = {
               type="text"
               id="git-push-repo-input"
               class="w-full bg-surface-container-lowest px-3 py-1.5 text-[12px] font-mono border border-outline-variant focus:border-primary focus:outline-none text-primary rounded-[2px] transition-colors"
-              placeholder="https://github.com/username/glyph.sh.git"
+              placeholder="https://github.com/username/blogly.git"
             />
           </div>
           <div id="git-repo-hint" class="text-[10px] text-outline">
@@ -803,14 +803,14 @@ const currentProfile = {
         el.textContent = p.author ? `Published Posts by ${p.author}` : 'Published Posts';
       });
 
-      // Keep Header Brand as glyph.sh
+      // Keep Header Brand as blogly_
       document.querySelectorAll('[data-author-brand]').forEach((el) => {
-        el.textContent = 'glyph.sh';
+        el.textContent = 'blogly_';
       });
 
-      // Keep Footer Brand as glyph.sh
+      // Keep Footer Brand as Blogly
       document.querySelectorAll('[data-footer-brand]').forEach((el) => {
-        el.textContent = `© ${new Date().getFullYear()} glyph.sh`;
+        el.textContent = `© ${new Date().getFullYear()} Blogly`;
       });
 
       // Update Footer Social links
@@ -973,7 +973,7 @@ const currentProfile = {
         logo: profile.logo || '',
         role,
         twitterHandle,
-        title: profile.title || "glyph.sh",
+        title: profile.title || "Blogly",
         description,
         siteUrl,
         githubUrl,
@@ -1201,7 +1201,7 @@ const currentProfile = {
           }
         } catch {}
       }
-      return 'glyph.sh';
+      return 'blogly';
     }
 
     let currentGitInfo = {
@@ -1227,7 +1227,8 @@ const currentProfile = {
       }
 
       const branch = (branchSelect?.value || currentGitInfo.branch || 'master').toLowerCase();
-      const repo = (repoInput?.value.trim()) || `https://github.com/${profileStatus.username}/glyph.sh.git`;
+      const defaultRepoName = extractRepoName(currentGitInfo.remote, profile.siteUrl);
+      const repo = (repoInput?.value.trim()) || `https://github.com/${profileStatus.username}/${defaultRepoName}.git`;
       const rawMsg = msgInput ? msgInput.value.trim() : '';
       const commitPart = rawMsg
         ? `git commit -m "${rawMsg.replace(/"/g, '\\"')}"`

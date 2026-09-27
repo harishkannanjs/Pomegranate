@@ -1,4 +1,4 @@
-# AGENTS.md — glyph.sh (→ Blogly)
+# AGENTS.md — Blogly (repo: glyph.sh)
 
 > Repository-specific rules only. Global cross-project rules (scoped diffs,
 > confirm before destructive actions, run checks before declaring done,
@@ -21,13 +21,14 @@ from this file or from existing CSS alone, since the current CSS
 
 ## What this repo actually is right now
 
-The repo is still named/branded `glyph.sh` in code (`package.json` name,
-`site.config.ts` defaults, README title). The product is mid-rename to
-**Blogly** and mid-pivot from "Harish's personal blog" to a general-purpose,
-forkable blog-authoring tool. Treat any task that touches naming, the
-onboarding flow, or the settings surface as **pivot work**, not a bug fix —
-check `SPEC.md`/`ROADMAP.md` before assuming current behavior is the target
-behavior.
+The product is **Blogly**, a general-purpose, forkable blog-authoring tool.
+The in-code rename from `glyph.sh` to `Blogly` is complete across `package.json`,
+`site.config.ts`, `profile.json`, UI wordmarks (`blogly_`), and documentation.
+Note that the underlying GitHub repository and git remote intentionally retain the
+name `glyph.sh` (`github.com/harishkannanjs/glyph.sh`) to preserve external links,
+fork relationships, and stars. Treat any task that touches the onboarding flow,
+file conversion, or dashboard settings as **pivot work**, not a bug fix — check
+`SPEC.md`/`ROADMAP.md` before assuming current behavior is the target behavior.
 
 ## Real architecture
 
