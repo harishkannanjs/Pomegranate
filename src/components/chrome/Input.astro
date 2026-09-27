@@ -1,0 +1,83 @@
+---
+interface Props {
+  type?: astroHTML.JSX.HTMLInputTypeAttribute;
+  placeholder?: string;
+  value?: string;
+  id?: string;
+  name?: string;
+  disabled?: boolean;
+  prompt?: string;
+  class?: string;
+  required?: boolean;
+}
+
+const {
+  type = 'text',
+  placeholder = '',
+  value = '',
+  id,
+  name,
+  disabled = false,
+  prompt = '$',
+  class: className = '',
+  required = false,
+  ...rest
+} = Astro.props;
+---
+
+<div
+  class:list={[
+    'chrome-input-container relative w-full flex items-center transition-all',
+    disabled && 'opacity-40 cursor-not-allowed pointer-events-none',
+    className,
+  ]}
+>
+  <span class="chrome-tui-inline text-read-accent mr-2 font-bold select-none font-mono text-xs">{prompt}</span>
+  <input
+    type={type}
+    id={id}
+    name={name}
+    value={value}
+    placeholder={placeholder}
+    disabled={disabled}
+    required={required}
+    class="chrome-input-field w-full text-read-text-primary placeholder:text-read-text-tertiary focus:outline-none bg-transparent"
+    {...rest}
+  />
+  <span class="chrome-tui-inline text-read-accent animate-pulse font-bold select-none font-mono text-xs ml-1">_</span>
+</div>
+
+<style>
+  /* TUI Mode Input styling: under html[data-theme="blogly"] */
+  html[data-theme="blogly"] .chrome-input-container {
+    border: 1px solid var(--read-border-strong);
+    background-color: var(--read-bg-base);
+    padding: 0.5rem 0.75rem;
+    font-family: var(--font-theme, monospace);
+    font-size: 0.75rem;
+    border-radius: 0;
+  }
+  html[data-theme="blogly"] .chrome-input-container:focus-within {
+    border-color: var(--read-accent);
+    outline: 1px solid var(--read-accent);
+  }
+  html[data-theme="blogly"] .chrome-input-field {
+    font-family: var(--font-theme, monospace);
+    font-size: 0.75rem;
+  }
+
+  /* Standard Mode Input styling: under all community themes */
+  html:not([data-theme="blogly"]) .chrome-input-container {
+    border: 1px solid var(--read-border);
+    background-color: var(--chrome-input-bg);
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.875rem;
+  }
+  html:not([data-theme="blogly"]) .chrome-input-container:focus-within {
+    border-color: var(--read-accent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--read-accent) 20%, transparent);
+  }
+  html:not([data-theme="blogly"]) .chrome-input-field {
+    font-size: 0.875rem;
+  }
+</style>

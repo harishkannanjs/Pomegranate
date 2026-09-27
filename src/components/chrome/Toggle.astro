@@ -1,0 +1,73 @@
+---
+interface Props {
+  id?: string;
+  name?: string;
+  checked?: boolean;
+  disabled?: boolean;
+  label?: string;
+  class?: string;
+}
+
+const {
+  id = `toggle-${Math.random().toString(36).slice(2, 9)}`,
+  name,
+  checked = false,
+  disabled = false,
+  label,
+  class: className = '',
+} = Astro.props;
+---
+
+<label class:list={['chrome-toggle inline-flex items-center gap-3 cursor-pointer select-none', disabled && 'opacity-40 cursor-not-allowed pointer-events-none', className]}>
+  <input
+    type="checkbox"
+    id={id}
+    name={name}
+    checked={checked}
+    disabled={disabled}
+    class="peer sr-only"
+  />
+
+  {/* TUI Mode sub-template: [ Y ] / [ N ] */}
+  <span class="chrome-tui-inline items-center gap-1.5 font-mono text-xs font-bold">
+    <span class="tui-indicator-no px-2 py-0.5 rounded-[3px] border border-read-border-strong text-read-text-tertiary bg-read-bg-surface">
+      [ N ]
+    </span>
+    <span class="tui-indicator-yes px-2 py-0.5 rounded-[3px] bg-read-accent text-read-bg-base border border-read-accent">
+      [ Y ]
+    </span>
+    {label && <span class="text-read-text-primary text-xs ml-1">{label}</span>}
+  </span>
+
+  {/* Standard Mode sub-template: Sliding Pill */}
+  <span class="chrome-std-inline items-center gap-2.5">
+    <span class="std-switch-track relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-read-border transition-colors duration-200 ease-in-out">
+      <span class="std-switch-knob pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out translate-x-0"></span>
+    </span>
+    {label && <span class="text-read-text-primary text-sm font-medium">{label}</span>}
+  </span>
+</label>
+
+<style>
+  /* TUI toggle indicator states */
+  input:checked ~ .chrome-tui-inline .tui-indicator-no {
+    display: none;
+  }
+  input:not(:checked) ~ .chrome-tui-inline .tui-indicator-yes {
+    display: none;
+  }
+  input:checked ~ .chrome-tui-inline .tui-indicator-yes {
+    display: inline-block;
+  }
+  input:not(:checked) ~ .chrome-tui-inline .tui-indicator-no {
+    display: inline-block;
+  }
+
+  /* Standard sliding pill toggle states */
+  input:checked ~ .chrome-std-inline .std-switch-track {
+    background-color: var(--read-accent);
+  }
+  input:checked ~ .chrome-std-inline .std-switch-knob {
+    transform: translateX(1.25rem);
+  }
+</style>

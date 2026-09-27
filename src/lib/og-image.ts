@@ -3,6 +3,7 @@ import { Resvg } from '@resvg/resvg-js';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { siteConfig } from '@/site.config';
+import { getTheme } from './themes';
 
 let fontData: Buffer | null = null;
 let fontBoldData: Buffer | null = null;
@@ -30,6 +31,7 @@ export interface OgImageOptions {
   description?: string;
   tags?: string[];
   pubDate?: Date;
+  themeId?: string;
 }
 
 export async function generateOgImage({
@@ -37,8 +39,11 @@ export async function generateOgImage({
   description = 'Security research, reverse engineering, and low-level systems.',
   tags = [],
   pubDate,
+  themeId,
 }: OgImageOptions): Promise<Buffer> {
   const { fontData, fontBoldData } = loadFonts();
+  const activeTheme = getTheme(themeId || 'catppuccin');
+  const tokens = activeTheme.tokens.dark.read;
 
   const formattedDate = pubDate
     ? new Date(pubDate).toISOString().split('T')[0]
@@ -54,10 +59,10 @@ export async function generateOgImage({
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          backgroundColor: '#1e1e2e',
+          backgroundColor: tokens['bg-base'],
           padding: '60px',
           fontFamily: 'JetBrains Mono',
-          border: '1px solid #45475a',
+          border: `1px solid ${tokens.border}`,
         },
         children: [
           // Top bar
@@ -68,7 +73,7 @@ export async function generateOgImage({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                borderBottom: '1px solid #313244',
+                borderBottom: `1px solid ${tokens['bg-surface-raised']}`,
                 paddingBottom: '20px',
               },
               children: [
@@ -84,14 +89,14 @@ export async function generateOgImage({
                       {
                         type: 'span',
                         props: {
-                          style: { color: '#a6e3a1', fontSize: '24px', fontWeight: 700 },
+                          style: { color: tokens.accent, fontSize: '24px', fontWeight: 700 },
                           children: '>',
                         },
                       },
                       {
                         type: 'span',
                         props: {
-                          style: { color: '#cdd6f4', fontSize: '20px', fontWeight: 600 },
+                          style: { color: tokens['text-primary'], fontSize: '20px', fontWeight: 600 },
                           children: `${siteConfig.githubUsername}@research:~$ cat writeup.md`,
                         },
                       },
@@ -102,7 +107,7 @@ export async function generateOgImage({
                   type: 'div',
                   props: {
                     style: {
-                      color: '#a6adc8',
+                      color: tokens['text-secondary'],
                       fontSize: '16px',
                     },
                     children: formattedDate,
@@ -127,7 +132,7 @@ export async function generateOgImage({
                   type: 'div',
                   props: {
                     style: {
-                      color: '#cdd6f4',
+                      color: tokens['text-primary'],
                       fontSize: '44px',
                       fontWeight: 700,
                       lineHeight: 1.25,
@@ -139,7 +144,7 @@ export async function generateOgImage({
                   type: 'div',
                   props: {
                     style: {
-                      color: '#bac2de',
+                      color: tokens['text-secondary'],
                       fontSize: '22px',
                       lineHeight: 1.5,
                     },
@@ -157,7 +162,7 @@ export async function generateOgImage({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                borderTop: '1px solid #313244',
+                borderTop: `1px solid ${tokens['bg-surface-raised']}`,
                 paddingTop: '20px',
               },
               children: [
@@ -173,9 +178,9 @@ export async function generateOgImage({
                       type: 'span',
                       props: {
                         style: {
-                          backgroundColor: '#313244',
-                          border: '1px solid #45475a',
-                          color: '#cdd6f4',
+                          backgroundColor: tokens['bg-surface-raised'],
+                          border: `1px solid ${tokens.border}`,
+                          color: tokens['text-primary'],
                           padding: '6px 14px',
                           borderRadius: '2px',
                           fontSize: '14px',
@@ -189,7 +194,7 @@ export async function generateOgImage({
                   type: 'div',
                   props: {
                     style: {
-                      color: '#a6e3a1',
+                      color: tokens.accent,
                       fontSize: '16px',
                       fontWeight: 600,
                     },

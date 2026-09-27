@@ -1,0 +1,451 @@
+/* Self-hosted fonts */
+@import "@fontsource/jetbrains-mono/400.css";
+@import "@fontsource/jetbrains-mono/500.css";
+@import "@fontsource/jetbrains-mono/700.css";
+@import "@fontsource/ibm-plex-mono/400.css";
+@import "@fontsource/ibm-plex-mono/700.css";
+@import "@fontsource/source-code-pro/400.css";
+@import "@fontsource/source-code-pro/700.css";
+@import "@fontsource/cascadia-code/400.css";
+@import "@fontsource/cascadia-code/700.css";
+@import "@fontsource/fira-code/400.css";
+@import "@fontsource/fira-code/700.css";
+
+@font-face {
+  font-family: 'Monocraft';
+  src: url('/fonts/monocraft/Monocraft.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Monocraft';
+  src: url('/fonts/monocraft/Monocraft-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Default font fallback */
+:root {
+  --font-theme: 'JetBrains Mono', monospace;
+}
+
+/* Theme Fonts */
+html[data-theme="blogly"] {
+  --font-theme: 'Monocraft', monospace;
+}
+html[data-theme="catppuccin"],
+html:not([data-theme]) {
+  --font-theme: 'JetBrains Mono', monospace;
+}
+html[data-theme="gruvbox"] {
+  --font-theme: 'IBM Plex Mono', monospace;
+}
+html[data-theme="solarized"] {
+  --font-theme: 'Source Code Pro', monospace;
+}
+html[data-theme="tokyo-night"] {
+  --font-theme: 'Cascadia Code', monospace;
+}
+html[data-theme="nord"] {
+  --font-theme: 'JetBrains Mono', monospace;
+}
+html[data-theme="dracula"] {
+  --font-theme: 'Fira Code', monospace;
+}
+
+/* ========================================================================= */
+/* 1. Blogly (TUI Mode)                                                      */
+/* ========================================================================= */
+
+/* Blogly - Dark */
+html[data-theme="blogly"][data-mode="dark"],
+html[data-theme="blogly"].dark {
+  --read-bg-base: #070a14;
+  --read-bg-surface: #0d1224;
+  --read-bg-surface-raised: #131a33;
+  --read-border: #232b4d;
+  --read-border-strong: #34406e;
+  --read-text-primary: #d7dbf0;
+  --read-text-secondary: #8891bb;
+  --read-text-tertiary: #565f8c;
+  --read-accent: #4d8dff;
+
+  --chrome-input-bg: #0d1224;
+  --chrome-input-border-focus: #4d8dff;
+  --chrome-hover-bg: #131a33;
+  --chrome-danger: #f2555a;
+  --chrome-success: #3ddc84;
+  --chrome-secondary-accent: #4d8dff;
+}
+
+/* Blogly - Light */
+html[data-theme="blogly"][data-mode="light"],
+html[data-theme="blogly"].light,
+html[data-theme="blogly"]:not(.dark) {
+  --read-bg-base: #f6f7fb;
+  --read-bg-surface: #ffffff;
+  --read-bg-surface-raised: #eceffa;
+  --read-border: #d7dceb;
+  --read-border-strong: #b3bcdb;
+  --read-text-primary: #10142a;
+  --read-text-secondary: #4b5170;
+  --read-text-tertiary: #767c9c;
+  --read-accent: #2955d9;
+
+  --chrome-input-bg: #ffffff;
+  --chrome-input-border-focus: #2955d9;
+  --chrome-hover-bg: #eceffa;
+  --chrome-danger: #c0342f;
+  --chrome-success: #1f9d5c;
+  --chrome-secondary-accent: #2955d9;
+}
+
+/* ========================================================================= */
+/* 2. Catppuccin (Standard Mode)                                             */
+/* ========================================================================= */
+
+/* Catppuccin - Dark (Mocha) */
+html[data-theme="catppuccin"][data-mode="dark"],
+html[data-theme="catppuccin"].dark,
+html:not([data-theme]).dark {
+  --read-bg-base: #1e1e2e;
+  --read-bg-surface: #181825;
+  --read-bg-surface-raised: #313244;
+  --read-border: #45475a;
+  --read-border-strong: #585b70;
+  --read-text-primary: #cdd6f4;
+  --read-text-secondary: #a6adc8;
+  --read-text-tertiary: #6c7086;
+  --read-accent: #89b4fa;
+
+  --chrome-input-bg: #181825;
+  --chrome-input-border-focus: #89b4fa;
+  --chrome-hover-bg: #313244;
+  --chrome-danger: #f38ba8;
+  --chrome-success: #a6e3a1;
+  --chrome-secondary-accent: #89b4fa;
+}
+
+/* Catppuccin - Light (Latte) */
+html[data-theme="catppuccin"][data-mode="light"],
+html[data-theme="catppuccin"].light,
+html[data-theme="catppuccin"]:not(.dark),
+html:not([data-theme]).light,
+html:not([data-theme]):not(.dark) {
+  --read-bg-base: #eff1f5;
+  --read-bg-surface: #ffffff;
+  --read-bg-surface-raised: #e6e9ef;
+  --read-border: #ccd0da;
+  --read-border-strong: #bcc0cc;
+  --read-text-primary: #4c4f69;
+  --read-text-secondary: #6c6f85;
+  --read-text-tertiary: #8c8fa1;
+  --read-accent: #1e66f5;
+
+  --chrome-input-bg: #ffffff;
+  --chrome-input-border-focus: #1e66f5;
+  --chrome-hover-bg: #e6e9ef;
+  --chrome-danger: #d20f39;
+  --chrome-success: #40a02b;
+  --chrome-secondary-accent: #1e66f5;
+}
+
+/* ========================================================================= */
+/* 3. Gruvbox (Standard Mode)                                                */
+/* ========================================================================= */
+
+/* Gruvbox - Dark */
+html[data-theme="gruvbox"][data-mode="dark"],
+html[data-theme="gruvbox"].dark {
+  --read-bg-base: #282828;
+  --read-bg-surface: #1d2021;
+  --read-bg-surface-raised: #3c3836;
+  --read-border: #504945;
+  --read-border-strong: #665c54;
+  --read-text-primary: #ebdbb2;
+  --read-text-secondary: #bdae93;
+  --read-text-tertiary: #928374;
+  --read-accent: #d79921;
+
+  --chrome-input-bg: #1d2021;
+  --chrome-input-border-focus: #d79921;
+  --chrome-hover-bg: #3c3836;
+  --chrome-danger: #cc241d;
+  --chrome-success: #98971a;
+  --chrome-secondary-accent: #d79921;
+}
+
+/* Gruvbox - Light */
+html[data-theme="gruvbox"][data-mode="light"],
+html[data-theme="gruvbox"].light,
+html[data-theme="gruvbox"]:not(.dark) {
+  --read-bg-base: #fbf1c7;
+  --read-bg-surface: #f9f5d7;
+  --read-bg-surface-raised: #ebdbb2;
+  --read-border: #d5c4a1;
+  --read-border-strong: #bdae93;
+  --read-text-primary: #3c3836;
+  --read-text-secondary: #665c54;
+  --read-text-tertiary: #7c6f64;
+  --read-accent: #af3a03;
+
+  --chrome-input-bg: #ffffff;
+  --chrome-input-border-focus: #af3a03;
+  --chrome-hover-bg: #ebdbb2;
+  --chrome-danger: #9d0006;
+  --chrome-success: #79740e;
+  --chrome-secondary-accent: #af3a03;
+}
+
+/* ========================================================================= */
+/* 4. Solarized (Standard Mode)                                              */
+/* ========================================================================= */
+
+/* Solarized - Dark */
+html[data-theme="solarized"][data-mode="dark"],
+html[data-theme="solarized"].dark {
+  --read-bg-base: #002b36;
+  --read-bg-surface: #073642;
+  --read-bg-surface-raised: #0a4a5a;
+  --read-border: #586e75;
+  --read-border-strong: #657b83;
+  --read-text-primary: #93a1a1;
+  --read-text-secondary: #839496;
+  --read-text-tertiary: #586e75;
+  --read-accent: #268bd2;
+
+  --chrome-input-bg: #073642;
+  --chrome-input-border-focus: #268bd2;
+  --chrome-hover-bg: #0a4a5a;
+  --chrome-danger: #dc322f;
+  --chrome-success: #859900;
+  --chrome-secondary-accent: #268bd2;
+}
+
+/* Solarized - Light */
+html[data-theme="solarized"][data-mode="light"],
+html[data-theme="solarized"].light,
+html[data-theme="solarized"]:not(.dark) {
+  --read-bg-base: #fdf6e3;
+  --read-bg-surface: #eee8d5;
+  --read-bg-surface-raised: #e4ddc4;
+  --read-border: #93a1a1;
+  --read-border-strong: #839496;
+  --read-text-primary: #586e75;
+  --read-text-secondary: #657b83;
+  --read-text-tertiary: #93a1a1;
+  --read-accent: #268bd2;
+
+  --chrome-input-bg: #ffffff;
+  --chrome-input-border-focus: #268bd2;
+  --chrome-hover-bg: #e4ddc4;
+  --chrome-danger: #dc322f;
+  --chrome-success: #859900;
+  --chrome-secondary-accent: #268bd2;
+}
+
+/* ========================================================================= */
+/* 5. Tokyo Night (Standard Mode)                                            */
+/* ========================================================================= */
+
+/* Tokyo Night - Dark */
+html[data-theme="tokyo-night"][data-mode="dark"],
+html[data-theme="tokyo-night"].dark {
+  --read-bg-base: #1a1b26;
+  --read-bg-surface: #16161e;
+  --read-bg-surface-raised: #292e42;
+  --read-border: #292e42;
+  --read-border-strong: #3b4261;
+  --read-text-primary: #c0caf5;
+  --read-text-secondary: #a9b1d6;
+  --read-text-tertiary: #565f89;
+  --read-accent: #7aa2f7;
+
+  --chrome-input-bg: #16161e;
+  --chrome-input-border-focus: #7aa2f7;
+  --chrome-hover-bg: #292e42;
+  --chrome-danger: #f7768e;
+  --chrome-success: #9ece6a;
+  --chrome-secondary-accent: #7dcfff;
+}
+
+/* Tokyo Night - Light */
+html[data-theme="tokyo-night"][data-mode="light"],
+html[data-theme="tokyo-night"].light,
+html[data-theme="tokyo-night"]:not(.dark) {
+  --read-bg-base: #e1e2e7;
+  --read-bg-surface: #f7f7fb;
+  --read-bg-surface-raised: #d3d4db;
+  --read-border: #9699a3;
+  --read-border-strong: #6c6e75;
+  --read-text-primary: #3760bf;
+  --read-text-secondary: #5a4a78;
+  --read-text-tertiary: #848cb5;
+  --read-accent: #2e7de9;
+
+  --chrome-input-bg: #ffffff;
+  --chrome-input-border-focus: #2e7de9;
+  --chrome-hover-bg: #d3d4db;
+  --chrome-danger: #f52a65;
+  --chrome-success: #587539;
+  --chrome-secondary-accent: #00719c;
+}
+
+/* ========================================================================= */
+/* 6. Nord (Standard Mode)                                                   */
+/* ========================================================================= */
+
+/* Nord - Dark */
+html[data-theme="nord"][data-mode="dark"],
+html[data-theme="nord"].dark {
+  --read-bg-base: #2e3440;
+  --read-bg-surface: #242933;
+  --read-bg-surface-raised: #3b4252;
+  --read-border: #434c5e;
+  --read-border-strong: #4c566a;
+  --read-text-primary: #eceff4;
+  --read-text-secondary: #d8dee9;
+  --read-text-tertiary: #4c566a;
+  --read-accent: #88c0d0;
+
+  --chrome-input-bg: #242933;
+  --chrome-input-border-focus: #88c0d0;
+  --chrome-hover-bg: #3b4252;
+  --chrome-danger: #bf616a;
+  --chrome-success: #a3be8c;
+  --chrome-secondary-accent: #88c0d0;
+}
+
+/* Nord - Light */
+html[data-theme="nord"][data-mode="light"],
+html[data-theme="nord"].light,
+html[data-theme="nord"]:not(.dark) {
+  --read-bg-base: #eceff4;
+  --read-bg-surface: #ffffff;
+  --read-bg-surface-raised: #e5e9f0;
+  --read-border: #d8dee9;
+  --read-border-strong: #b8c2d6;
+  --read-text-primary: #2e3440;
+  --read-text-secondary: #4c566a;
+  --read-text-tertiary: #7b88a1;
+  --read-accent: #5e81ac;
+
+  --chrome-input-bg: #ffffff;
+  --chrome-input-border-focus: #5e81ac;
+  --chrome-hover-bg: #e5e9f0;
+  --chrome-danger: #b64752;
+  --chrome-success: #7a9a5e;
+  --chrome-secondary-accent: #5e81ac;
+}
+
+/* ========================================================================= */
+/* 7. Dracula (Standard Mode)                                                */
+/* ========================================================================= */
+
+/* Dracula - Dark */
+html[data-theme="dracula"][data-mode="dark"],
+html[data-theme="dracula"].dark {
+  --read-bg-base: #282a36;
+  --read-bg-surface: #21222c;
+  --read-bg-surface-raised: #44475a;
+  --read-border: #44475a;
+  --read-border-strong: #6272a4;
+  --read-text-primary: #f8f8f2;
+  --read-text-secondary: #6272a4;
+  --read-text-tertiary: #4d5273;
+  --read-accent: #bd93f9;
+
+  --chrome-input-bg: #21222c;
+  --chrome-input-border-focus: #bd93f9;
+  --chrome-hover-bg: #44475a;
+  --chrome-danger: #ff5555;
+  --chrome-success: #50fa7b;
+  --chrome-secondary-accent: #ff79c6;
+}
+
+/* Dracula - Light */
+html[data-theme="dracula"][data-mode="light"],
+html[data-theme="dracula"].light,
+html[data-theme="dracula"]:not(.dark) {
+  --read-bg-base: #f6f5fa;
+  --read-bg-surface: #ffffff;
+  --read-bg-surface-raised: #ececf5;
+  --read-border: #d7d5e6;
+  --read-border-strong: #b7b3d6;
+  --read-text-primary: #282a36;
+  --read-text-secondary: #4d4f6b;
+  --read-text-tertiary: #7b7d9e;
+  --read-accent: #7841c9;
+
+  --chrome-input-bg: #ffffff;
+  --chrome-input-border-focus: #7841c9;
+  --chrome-hover-bg: #ececf5;
+  --chrome-danger: #c9302c;
+  --chrome-success: #1c9c4a;
+  --chrome-secondary-accent: #c23f8f;
+}
+
+/* ========================================================================= */
+/* Legacy Variable Bridges (Backward Compatibility)                          */
+/* ========================================================================= */
+:root,
+html {
+  --background: var(--read-bg-base);
+  --surface: var(--read-bg-surface);
+  --surface-dim: var(--read-bg-surface);
+  --surface-bright: var(--read-bg-surface-raised);
+  --surface-container-lowest: var(--read-bg-base);
+  --surface-container-low: var(--read-bg-surface);
+  --surface-container: var(--read-bg-surface-raised);
+  --surface-container-high: var(--read-border);
+  --surface-container-highest: var(--read-border-strong);
+  --surface-variant: var(--read-bg-surface-raised);
+  --on-surface: var(--read-text-primary);
+  --on-surface-variant: var(--read-text-secondary);
+  --on-background: var(--read-text-primary);
+  --outline: var(--read-border);
+  --outline-variant: var(--read-border);
+  --primary: var(--read-accent);
+  --primary-container: var(--read-bg-surface-raised);
+  --on-primary: var(--read-bg-base);
+  --secondary: var(--chrome-secondary-accent, var(--read-accent));
+  --secondary-container: var(--read-bg-surface-raised);
+  --on-secondary: var(--read-bg-base);
+  --secondary-fixed-dim: var(--read-accent);
+  --error: var(--chrome-danger);
+  --error-container: var(--chrome-danger);
+  --on-error: var(--read-text-primary);
+  --code-bg: var(--read-bg-surface);
+}
+
+/* ========================================================================= */
+/* Chrome Mode Structural Switching (TUI vs. Standard)                       */
+/* ========================================================================= */
+html[data-theme="blogly"] .chrome-std,
+html[data-theme="blogly"] .chrome-std-inline,
+html[data-theme="blogly"] .chrome-std-block {
+  display: none !important;
+}
+
+html[data-theme="blogly"] .chrome-tui-inline {
+  display: inline-flex !important;
+}
+html[data-theme="blogly"] .chrome-tui-block {
+  display: block !important;
+}
+
+html:not([data-theme="blogly"]) .chrome-tui,
+html:not([data-theme="blogly"]) .chrome-tui-inline,
+html:not([data-theme="blogly"]) .chrome-tui-block {
+  display: none !important;
+}
+
+html:not([data-theme="blogly"]) .chrome-std-inline {
+  display: inline-flex !important;
+}
+html:not([data-theme="blogly"]) .chrome-std-block {
+  display: block !important;
+}
