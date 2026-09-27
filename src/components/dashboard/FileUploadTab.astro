@@ -376,9 +376,56 @@ try {
       if (!consent) {
         throw new Error('Audio conversion cancelled by user (no data was sent).');
       }
+
+      // Stream file directly from browser to Groq's official API: zero key leakage to any server
+      const formData = new FormData();
+      formData.append('file', file, name);
+      formData.append('model', 'whisper-large-v3');
+      formData.append('response_format', 'verbose_json');
+
+      const response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${groqApiKey.trim()}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorBody = await response.text();
+        let errMsg = `Groq Whisper transcription failed (${response.status})`;
+        try {
+          const parsed = JSON.parse(errorBody);
+          if (parsed.error?.message) {
+            errMsg = `Groq API Error: ${parsed.error.message}`;
+          }
+        } catch {}
+        throw new Error(errMsg);
+      }
+
+      const groqData = await response.json();
+      const text = (groqData.text || '').trim();
+      const baseName = name.replace(/\.[^/.]+$/, '');
+      const derivedTitle = baseName
+        .replace(/^[0-9]+[-_]?/, '')
+        .split(/[-_]+/)
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ') || 'Untitled Article';
+
+      let markdown = `# ${derivedTitle}\n\n`;
+      if (text) {
+        markdown += text.split(/\r?\n\s*\r?\n+/).map((p: string) => p.trim()).filter(Boolean).join('\n\n');
+      } else {
+        markdown += `> *Audio transcription completed for ${name}: No speech detected.*`;
+      }
+
+      return {
+        content: markdown,
+        filename: `${baseName}.md`,
+      };
     }
 
-    // Convert file to Base64 data URL
+    // Convert file to Base64 data URL for local Tier 1 conversion
     const fileBase64 = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result as string);
@@ -386,29 +433,31 @@ try {
       reader.readAsDataURL(file);
     });
 
-    const res = await fetch('/api/convert-file', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        filename: file.name,
-        fileBase64,
-        mimeType: file.type,
-        groqApiKey: isAudio ? groqApiKey : undefined,
-      }),
-    });
+    let res: Response;
+    try {
+      res = await fetch('/api/convert-file', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          filename: file.name,
+          fileBase64,
+          mimeType: file.type,
+        }),
+      });
+    } catch {
+      throw new Error(
+        'Local conversion server unreachable. The multi-format file pipeline runs in your local Blogly author environment (`bun run dev`). Direct Markdown (.md/.mdx) editing is active.'
+      );
+    }
+
+    if (res.status === 404) {
+      throw new Error(
+        'Conversion endpoint unavailable on static deployment. The multi-format pipeline runs in your local author environment (`bun run dev`).'
+      );
+    }
 
     const data = await res.json();
     if (!res.ok || !data.success) {
-      if (data.error === 'NO_GROQ_KEY') {
-        const goToSettings = confirm(
-          'Add a Groq API key in Settings to convert audio files.\n\nWould you like to open Settings now to add your Groq API key?'
-        );
-        if (goToSettings) {
-          const settingsBtn = document.querySelector('[data-tab-id="settings"]') as HTMLElement | null;
-          if (settingsBtn) settingsBtn.click();
-        }
-        throw new Error('Add a Groq API key in Settings to convert audio files');
-      }
       throw new Error(data.error || 'Conversion failed');
     }
 
@@ -494,6 +543,25 @@ try {
     content = content.replace(/^\s*[-*]\s+(.+)$/gm, '<li class="ml-4 list-disc text-read-text-primary">$1</li>');
     content = content.replace(/^\s*(\d+)\.\s+(.+)$/gm, '<li class="ml-4 list-decimal text-read-text-primary">$2</li>');
 
+    // Markdown tables
+    content = content.replace(/(?:^|\n)(\|.+?\|\r?\n\|[-:\s|]+?\|\r?\n(?:\|.+?\|\r?\n?)+)/g, (match) => {
+      const lines = match.trim().split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+      if (lines.length < 2) return match;
+      const parseRow = (line: string) =>
+        line
+          .replace(/^\||\|$/g, '')
+          .split('|')
+          .map((c) => c.trim());
+
+      const headers = parseRow(lines[0]);
+      const dataRows = lines.slice(2).map(parseRow);
+
+      const thead = `<thead><tr class="border-b border-read-border bg-read-bg-surface-raised">${headers.map((h) => `<th class="px-3 py-1.5 text-left text-xs font-bold text-read-text-primary border border-read-border">${h}</th>`).join('')}</tr></thead>`;
+      const tbody = `<tbody>${dataRows.map((row) => `<tr class="border-b border-read-border/50 hover:bg-read-bg-surface/50">${headers.map((_, i) => `<td class="px-3 py-1.5 text-xs text-read-text-secondary border border-read-border">${row[i] || ''}</td>`).join('')}</tr>`).join('')}</tbody>`;
+
+      return `\n<div class="my-4 overflow-x-auto border border-read-border rounded-[2px]"><table class="w-full text-xs font-mono border-collapse bg-read-bg-base">${thead}${tbody}</table></div>\n`;
+    });
+
     // Paragraphs: split by double newlines
     const paragraphs = content.split(/\n\n+/);
     const htmlParts = paragraphs.map((para) => {
@@ -504,6 +572,7 @@ try {
         para.startsWith('<blockquote') ||
         para.startsWith('<hr') ||
         para.startsWith('<li') ||
+        para.startsWith('<div class="my-4 overflow-x-auto') ||
         para.startsWith('__CODE_BLOCK_')
       ) {
         return para;

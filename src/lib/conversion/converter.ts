@@ -30,6 +30,17 @@ export interface ConversionResult {
 }
 
 /**
+ * Escape cell text to protect GitHub-Flavored Markdown table syntax
+ */
+function escapeTableCell(value: any): string {
+  if (value === null || value === undefined) return '';
+  return String(value)
+    .replace(/\|/g, '\\|')
+    .replace(/\r?\n/g, '<br/>')
+    .trim();
+}
+
+/**
  * Format CSV content into a GitHub-Flavored Markdown table
  */
 export function csvToMarkdown(csvString: string): string {
@@ -38,10 +49,10 @@ export function csvToMarkdown(csvString: string): string {
   if (!rows || rows.length === 0) return '';
   const headers = rows[0];
   const dataRows = rows.slice(1);
-  const headerLine = `| ${headers.map((h) => (h || '').trim()).join(' | ')} |`;
+  const headerLine = `| ${headers.map((h) => escapeTableCell(h)).join(' | ')} |`;
   const separatorLine = `| ${headers.map(() => '---').join(' | ')} |`;
   const bodyLines = dataRows.map((row) => {
-    const cells = headers.map((_, i) => (row[i] !== undefined ? String(row[i]).trim() : ''));
+    const cells = headers.map((_, i) => escapeTableCell(row[i]));
     return `| ${cells.join(' | ')} |`;
   });
   return [headerLine, separatorLine, ...bodyLines].join('\n');
@@ -52,15 +63,21 @@ export function csvToMarkdown(csvString: string): string {
  */
 export function jsonToMarkdown(jsonString: string): string {
   const data = JSON.parse(jsonString);
-  if (Array.isArray(data) && data.length > 0 && typeof data[0] === 'object' && data[0] !== null) {
-    const keys = Array.from(new Set(data.flatMap((item) => Object.keys(item))));
-    const headerLine = `| ${keys.join(' | ')} |`;
-    const separatorLine = `| ${keys.map(() => '---').join(' | ')} |`;
-    const bodyLines = data.map((item) => {
-      const cells = keys.map((k) => (item[k] !== undefined ? String(item[k]).replace(/\n/g, ' ') : ''));
-      return `| ${cells.join(' | ')} |`;
-    });
-    return [headerLine, separatorLine, ...bodyLines].join('\n');
+  if (Array.isArray(data) && data.length > 0) {
+    const objectItems = data.filter((item) => item !== null && typeof item === 'object' && !Array.isArray(item));
+    // Format as a table only when every element is a non-null object
+    if (objectItems.length === data.length && objectItems.length > 0) {
+      const keys = Array.from(new Set(objectItems.flatMap((item) => Object.keys(item))));
+      if (keys.length > 0) {
+        const headerLine = `| ${keys.map((k) => escapeTableCell(k)).join(' | ')} |`;
+        const separatorLine = `| ${keys.map(() => '---').join(' | ')} |`;
+        const bodyLines = data.map((item) => {
+          const cells = keys.map((k) => escapeTableCell(item && (item as any)[k]));
+          return `| ${cells.join(' | ')} |`;
+        });
+        return [headerLine, separatorLine, ...bodyLines].join('\n');
+      }
+    }
   }
   return '```json\n' + JSON.stringify(data, null, 2) + '\n```';
 }
@@ -94,11 +111,23 @@ export async function pdfToMarkdown(buffer: Buffer): Promise<string> {
       if (!rawText) {
         return '> *Note: This PDF does not contain extractable text (it may be a scanned image or protected document).*';
       }
-      const paragraphs = rawText
-        .split(/\r?\n\s*\r?\n+/)
-        .map((p) => p.replace(/\s+/g, ' ').trim())
+      // Split on double line breaks for distinct paragraphs/sections
+      const blocks = rawText.split(/\r?\n\s*\r?\n+/);
+      const formattedBlocks = blocks
+        .map((block) => {
+          const lines = block
+            .split(/\r?\n/)
+            .map((l) => l.trim())
+            .filter(Boolean);
+          // If lines start with list markers or headings, keep line breaks intact
+          if (lines.some((l) => /^[-*•#]|\d+\./.test(l))) {
+            return lines.join('\n');
+          }
+          // Otherwise join wrapped prose lines with space
+          return lines.join(' ');
+        })
         .filter(Boolean);
-      return paragraphs.join('\n\n');
+      return formattedBlocks.join('\n\n');
     } finally {
       await parser.destroy();
     }
@@ -112,22 +141,28 @@ export async function pdfToMarkdown(buffer: Buffer): Promise<string> {
  */
 export async function imageToMarkdown(buffer: Buffer, filename: string): Promise<string> {
   const cachePath = path.resolve(process.cwd(), '.tesseract-cache');
-  const worker = await createWorker('eng', 1, {
-    cachePath,
-  });
   try {
-    const ret = await worker.recognize(buffer);
-    const text = (ret.data?.text || '').trim();
-    if (!text) {
-      return `> *Image OCR completed for ${filename}: No text recognized in image.*`;
+    const worker = await createWorker('eng', 1, {
+      cachePath,
+    });
+    try {
+      const ret = await worker.recognize(buffer);
+      const text = (ret.data?.text || '').trim();
+      if (!text) {
+        return `> *Image OCR completed for ${filename}: No text recognized in image.*`;
+      }
+      return text
+        .split(/\r?\n\s*\r?\n+/)
+        .map((p) => p.replace(/\s+/g, ' ').trim())
+        .filter(Boolean)
+        .join('\n\n');
+    } finally {
+      await worker.terminate();
     }
-    return text
-      .split(/\r?\n\s*\r?\n+/)
-      .map((p) => p.replace(/\s+/g, ' ').trim())
-      .filter(Boolean)
-      .join('\n\n');
-  } finally {
-    await worker.terminate();
+  } catch (err: any) {
+    throw new Error(
+      `On-device image OCR failed: ${err.message || 'Unable to initialize Tesseract language model. Ensure initial internet connection to cache language data or provide a text format.'}`
+    );
   }
 }
 
@@ -140,8 +175,8 @@ export async function audioToMarkdown(
   apiKey?: string,
   mimeType?: string
 ): Promise<string> {
-  const key = apiKey || process.env.GROQ_API_KEY;
-  if (!key || !key.trim()) {
+  const key = apiKey?.trim();
+  if (!key) {
     throw new MissingGroqApiKeyError();
   }
 
@@ -154,7 +189,7 @@ export async function audioToMarkdown(
   const response = await fetch('https://api.groq.com/openai/v1/audio/transcriptions', {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${key.trim()}`,
+      Authorization: `Bearer ${key}`,
     },
     body: formData,
   });
@@ -190,11 +225,13 @@ export async function audioToMarkdown(
  */
 function deriveTitleFromFilename(filename: string): string {
   const base = path.basename(filename).replace(/\.[^/.]+$/, '');
-  return base
-    .replace(/^[0-9]+[-_]?/, '')
-    .split(/[-_]+/)
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(' ') || 'Untitled Article';
+  return (
+    base
+      .replace(/^[0-9]+[-_]?/, '')
+      .split(/[-_]+/)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ') || 'Untitled Article'
+  );
 }
 
 /**
@@ -287,9 +324,12 @@ export async function convertFileToMarkdown(options: ConversionOptions): Promise
     }
 
     default: {
-      // Fallback: try reading as UTF-8 text
       tier = 1;
       format = 'unknown';
+      // Reject binary file with null bytes rather than corrupting text
+      if (buffer.includes(0)) {
+        throw new Error(`Unsupported binary file format .${ext} for conversion`);
+      }
       try {
         rawContent = buffer.toString('utf-8');
         warning = `Unrecognized format .${ext}. Treated as plain text.`;
@@ -299,9 +339,10 @@ export async function convertFileToMarkdown(options: ConversionOptions): Promise
     }
   }
 
-  // Ensure content has a title heading if not already present
+  // Ensure content has a title heading if not already present, ignoring code blocks
   let finalMarkdown = rawContent.trim();
-  const headingMatch = finalMarkdown.match(/^#\s+(.+)$/m);
+  const strippedOfCode = finalMarkdown.replace(/```[\s\S]*?```/g, '').replace(/`[^`]+`/g, '');
+  const headingMatch = strippedOfCode.match(/^#\s+(.+)$/m);
   let title = derivedTitle;
 
   if (headingMatch) {

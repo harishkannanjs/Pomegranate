@@ -643,9 +643,10 @@ function profileDevMiddleware() {
           let body = '';
           req.on('data', (chunk) => {
             body += chunk;
-            if (body.length > 50 * 1024 * 1024) {
+            // Allow up to 75MB payload to support 50MB binary files encoded in base64
+            if (body.length > 75 * 1024 * 1024) {
               res.writeHead(413, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify({ error: 'File exceeds 50MB limit' }));
+              res.end(JSON.stringify({ error: 'Request payload exceeds 75MB limit' }));
               req.destroy();
             }
           });
@@ -665,6 +666,11 @@ function profileDevMiddleware() {
 
               const base64Data = fileBase64.replace(/^data:[^;]+;base64,/, '');
               const buffer = Buffer.from(base64Data, 'base64');
+              if (buffer.length > 50 * 1024 * 1024) {
+                res.writeHead(413, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Decoded file exceeds 50MB limit' }));
+                return;
+              }
 
               // Dynamically load converter module using Vite's ssrLoadModule
               const converterPath = path.resolve(process.cwd(), 'src', 'lib', 'conversion', 'converter.ts');

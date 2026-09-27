@@ -47,6 +47,14 @@ describe('Phase 5: File Conversion Pipeline Tests', () => {
       expect(result).toContain('| Linux Internals | Harish | 3 |');
     });
 
+    it('escapes pipes and newlines in table cells', () => {
+      const csv = `Metric,Expression\nBitwise,A|B\nMultiline,"Line 1\nLine 2"`;
+      const result = csvToMarkdown(csv);
+
+      expect(result).toContain('A\\|B');
+      expect(result).toContain('Line 1<br/>Line 2');
+    });
+
     it('converts JSON array of objects into a Markdown table', () => {
       const json = JSON.stringify([
         { tool: 'Mammoth', target: 'DOCX', tier: 1 },
@@ -58,6 +66,14 @@ describe('Phase 5: File Conversion Pipeline Tests', () => {
       expect(result).toContain('| --- | --- | --- |');
       expect(result).toContain('| Mammoth | DOCX | 1 |');
       expect(result).toContain('| pdf-parse | PDF | 1 |');
+    });
+
+    it('handles mixed or non-uniform JSON arrays gracefully by falling back to code block', () => {
+      const json = JSON.stringify([{ name: 'Alpha' }, null, 'scalar']);
+      const result = jsonToMarkdown(json);
+
+      expect(result).toContain('```json');
+      expect(result).toContain('"name": "Alpha"');
     });
 
     it('converts arbitrary JSON object into a fenced code block', () => {
@@ -146,7 +162,7 @@ describe('Phase 5: File Conversion Pipeline Tests', () => {
     });
   });
 
-  describe('Tier 1: Zero Remote Network Calls Guarantee', () => {
+  describe('Tier 1: Zero Remote Network Calls Guarantee & Robust Boundaries', () => {
     it('executes all Tier 1 handlers without making any HTTP/fetch network requests', async () => {
       const fetchSpy = vi.fn();
       global.fetch = fetchSpy;
@@ -177,6 +193,29 @@ describe('Phase 5: File Conversion Pipeline Tests', () => {
 
       // Assert zero external network calls were triggered during Tier 1 conversions
       expect(fetchSpy).not.toHaveBeenCalled();
+    });
+
+    it('excludes code block comments from being selected as article title', async () => {
+      const codeSnippet =
+        '```bash\n# Comment inside bash script\necho "test"\n```\n\nArticle body paragraph.';
+      const res = await convertFileToMarkdown({
+        buffer: Buffer.from(codeSnippet),
+        filename: 'devops-guide.md',
+      });
+
+      // Heading inside code block should NOT become article title; derived title should be used
+      expect(res.title).toBe('Devops Guide');
+    });
+
+    it('rejects binary files containing null bytes in default fallback', async () => {
+      // Buffer containing null byte 0x00
+      const binaryBuffer = Buffer.from([0x7f, 0x45, 0x4c, 0x46, 0x00, 0x01]);
+      await expect(
+        convertFileToMarkdown({
+          buffer: binaryBuffer,
+          filename: 'program.bin',
+        })
+      ).rejects.toThrow('Unsupported binary file format .bin for conversion');
     });
   });
 
