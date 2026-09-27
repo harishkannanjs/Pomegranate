@@ -638,6 +638,85 @@ function profileDevMiddleware() {
         }
       });
 
+      registerApi('/api/convert-file', async (req, res) => {
+        if (req.method === 'POST') {
+          let body = '';
+          req.on('data', (chunk) => {
+            body += chunk;
+            // Allow up to 75MB payload to support 50MB binary files encoded in base64
+            if (body.length > 75 * 1024 * 1024) {
+              res.writeHead(413, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: 'Request payload exceeds 75MB limit' }));
+              req.destroy();
+            }
+          });
+          req.on('end', async () => {
+            try {
+              const { filename, fileBase64, mimeType, groqApiKey } = JSON.parse(body);
+              if (!filename || typeof filename !== 'string') {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Missing or invalid filename' }));
+                return;
+              }
+              if (!fileBase64 || typeof fileBase64 !== 'string') {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Missing file content' }));
+                return;
+              }
+
+              const base64Data = fileBase64.replace(/^data:[^;]+;base64,/, '');
+              const buffer = Buffer.from(base64Data, 'base64');
+              if (buffer.length > 50 * 1024 * 1024) {
+                res.writeHead(413, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'Decoded file exceeds 50MB limit' }));
+                return;
+              }
+
+              // Dynamically load converter module using Vite's ssrLoadModule
+              const converterPath = path.resolve(process.cwd(), 'src', 'lib', 'conversion', 'converter.ts');
+              const { convertFileToMarkdown } = await server.ssrLoadModule(converterPath);
+
+              const result = await convertFileToMarkdown({
+                buffer,
+                filename,
+                mimeType,
+                groqApiKey,
+              });
+
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({
+                success: true,
+                markdown: result.markdown,
+                title: result.title,
+                description: result.description,
+                filename: result.filename,
+                tier: result.tier,
+                format: result.format,
+                warning: result.warning,
+              }));
+            } catch (err) {
+              if (err.name === 'MissingGroqApiKeyError' || err.message?.includes('Add a Groq API key in Settings')) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({
+                  success: false,
+                  error: 'NO_GROQ_KEY',
+                  message: err.message || 'Add a Groq API key in Settings to convert audio files',
+                }));
+                return;
+              }
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({
+                success: false,
+                error: err.message || 'Failed to convert file',
+              }));
+            }
+          });
+        } else {
+          res.writeHead(405, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Method not allowed' }));
+        }
+      });
+
       registerApi('/api/list-blogs', (req, res) => {
         if (req.method === 'GET') {
           try {
