@@ -13,5 +13,6 @@ describe('Homepage Smoke Test', () => {
     // Check for PostCard elements: title or link or cat command or card article
     expect(result).toMatch(/<article\s+class="group relative flex flex-col/);
     expect(result).toContain('Welcome to glyph.sh');
+    expect(result).toContain('blogly_');
   });
 });

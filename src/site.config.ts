@@ -41,7 +41,7 @@ function extractGithubUsername(githubUrl?: string, handle?: string): string {
 const githubUsername = extractGithubUsername(profileData.githubUrl, profileData.handle);
 
 export const siteConfig: SiteConfig = {
-  name: "glyph.sh",
+  name: "Blogly",
   author: profileData.author || "Author",
   githubUsername: githubUsername || "user",
   handle: profileData.handle || (githubUsername ? `@${githubUsername}` : "@user"),
@@ -49,7 +49,7 @@ export const siteConfig: SiteConfig = {
   logo: (profileData as any).logo || (profileData as any).avatar || '',
   role: profileData.role || "",
   twitterHandle: profileData.twitterHandle || "",
-  title: profileData.title || "glyph.sh",
+  title: profileData.title || "Blogly",
   description: profileData.description || "",
   siteUrl: profileData.siteUrl || "https://example.com",
   githubUrl: profileData.githubUrl || "",
