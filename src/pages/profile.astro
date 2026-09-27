@@ -41,24 +41,26 @@ userPosts.forEach((post) => {
 });
 const authorTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
 
+const isDev = import.meta.env.DEV;
+
 const dashboardTabs = [
-  { id: 'file-upload', label: 'File Upload', active: true },
+  { id: 'file-upload', label: 'File Upload', active: isDev },
   { id: 'settings', label: 'Settings', active: false },
-  { id: 'public-profile', label: 'Public Profile View', active: false },
+  { id: 'public-profile', label: 'Public Profile View', active: !isDev },
 ];
 ---
 
-<BaseLayout title="Dashboard & Profile" activePath="/profile">
+<BaseLayout title={isDev ? "Dashboard & Profile" : "Author Profile"} activePath="/profile">
   <div class="max-w-[1040px] mx-auto px-4 md:px-8 py-8 font-mono space-y-6">
     <!-- Dashboard Top Header Bar & Mode-Aware TabBar -->
     <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-read-border">
       <div class="flex items-center gap-2">
         <span class="text-read-accent font-bold text-base">&gt;</span>
         <h1 class="text-xl sm:text-2xl font-bold text-read-text-primary tracking-tight">
-          Blogly Dashboard
+          {isDev ? 'Blogly Dashboard' : 'Author Profile'}
         </h1>
         <span class="text-read-accent text-[10px] font-bold px-2 py-0.5 border border-read-border rounded-[2px] bg-read-bg-surface select-none">
-          DEV // LOCALHOST
+          {isDev ? 'DEV // LOCALHOST' : 'PUBLIC PROFILE'}
         </span>
       </div>
 
@@ -67,7 +69,7 @@ const dashboardTabs = [
     </div>
 
     <!-- Tab 1: File Upload Tab (Split Editor + Seam) -->
-    <div id="tab-content-file-upload">
+    <div id="tab-content-file-upload" class={isDev ? '' : 'hidden'}>
       <FileUploadTab />
     </div>
 
@@ -77,7 +79,7 @@ const dashboardTabs = [
     </div>
 
     <!-- Tab 3: Public Profile View (Visitor Perspective & Published Feed) -->
-    <div id="tab-content-public-profile" class="hidden max-w-[760px] mx-auto space-y-10">
+    <div id="tab-content-public-profile" class={isDev ? 'hidden max-w-[760px] mx-auto space-y-10' : 'max-w-[760px] mx-auto space-y-10'}>
       <!-- Public Profile Context -->
       <section class="flex flex-col space-y-3">
         <div class="flex items-center gap-2 text-read-accent text-[13px]">
@@ -335,7 +337,12 @@ const dashboardTabs = [
     // Support query param or localStorage tab memory
     const urlParams = new URLSearchParams(window.location.search);
     const queryTab = urlParams.get('tab');
-    const initialTab = queryTab && tabPanels[queryTab] ? queryTab : localStorage.getItem('blogly_active_tab') || 'file-upload';
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const defaultTab = isLocalhost ? 'file-upload' : 'public-profile';
+    const storedTab = localStorage.getItem('blogly_active_tab');
+    const initialTab = queryTab && tabPanels[queryTab]
+      ? queryTab
+      : (!isLocalhost && (!storedTab || storedTab === 'file-upload') ? 'public-profile' : (storedTab || defaultTab));
     switchActiveTab(initialTab);
   }
 

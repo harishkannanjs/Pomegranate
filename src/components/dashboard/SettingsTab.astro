@@ -279,7 +279,7 @@ const privacyConfig = siteConfig.privacy || {
       <div class="space-y-3 text-xs">
         <div class="flex items-center gap-2 text-read-accent font-bold">
           <span class="w-2 h-2 rounded-full bg-read-accent animate-pulse"></span>
-          <span>GitHub Pages Pipeline Configured</span>
+          <span id="deploy-status-badge">GitHub Pages Pipeline Configured</span>
         </div>
 
         <p class="text-read-text-secondary leading-relaxed">
@@ -290,17 +290,23 @@ const privacyConfig = siteConfig.privacy || {
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
           <div class="p-3 bg-read-bg-base border border-read-border rounded-[2px]">
             <div class="text-[10px] text-read-text-tertiary uppercase">Target Site URL</div>
-            <a href={siteConfig.siteUrl} target="_blank" rel="noopener" class="text-read-accent font-bold hover:underline block truncate mt-1">
+            <a id="deploy-target-url" href={siteConfig.siteUrl} target="_blank" rel="noopener" class="text-read-accent font-bold hover:underline block truncate mt-1">
               {siteConfig.siteUrl}
             </a>
           </div>
 
           <div class="p-3 bg-read-bg-base border border-read-border rounded-[2px]">
             <div class="text-[10px] text-read-text-tertiary uppercase">Remote Repository</div>
-            <a href={siteConfig.githubUrl} target="_blank" rel="noopener" class="text-read-text-primary font-bold hover:underline block truncate mt-1">
+            <a id="deploy-remote-repo" href={siteConfig.githubUrl} target="_blank" rel="noopener" class="text-read-text-primary font-bold hover:underline block truncate mt-1">
               {siteConfig.githubUrl || 'https://github.com/harishkannanjs/glyph.sh'}
             </a>
           </div>
+        </div>
+
+        <div class="pt-2">
+          <a id="deploy-workflow-url" href="#" target="_blank" rel="noopener" class="text-[11px] text-read-accent hover:underline hidden">
+            → View GitHub Actions Deployments Workflow
+          </a>
         </div>
       </div>
     </Panel>
@@ -515,11 +521,12 @@ const privacyConfig = siteConfig.privacy || {
         highlightActiveThemeAndFont();
         notify(`Switched theme to ${themeId}.`);
 
+        const currentFont = document.documentElement.getAttribute('data-font') || localStorage.getItem('blogly_font') || 'monocraft';
         try {
           await fetch('/api/save-profile', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ appearance: { theme: themeId } }),
+            body: JSON.stringify({ appearance: { theme: themeId, font: currentFont } }),
           });
         } catch {}
       });
@@ -533,11 +540,12 @@ const privacyConfig = siteConfig.privacy || {
         highlightActiveThemeAndFont();
         notify(`Switched typography font to ${fontId}.`);
 
+        const currentTheme = document.documentElement.getAttribute('data-theme') || localStorage.getItem('blogly_theme') || 'blogly';
         try {
           await fetch('/api/save-profile', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ appearance: { font: fontId } }),
+            body: JSON.stringify({ appearance: { theme: currentTheme, font: fontId } }),
           });
         } catch {}
       });
@@ -633,6 +641,14 @@ const privacyConfig = siteConfig.privacy || {
         if (countStandaloneEl) countStandaloneEl.textContent = String(standalonePosts.length);
         if (countSeriesEl) countSeriesEl.textContent = String(seriesPosts.length);
 
+        const escapeHtml = (str: any) =>
+          String(str || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+
         // Render standalone
         if (standaloneListEl) {
           if (standalonePosts.length === 0) {
@@ -641,13 +657,13 @@ const privacyConfig = siteConfig.privacy || {
             standaloneListEl.innerHTML = standalonePosts.map((p: any) => `
               <div class="p-3 bg-read-bg-base border border-read-border rounded-[2px] flex items-center justify-between gap-3 text-xs">
                 <div class="space-y-0.5 truncate">
-                  <div class="font-bold text-read-text-primary truncate">${p.title}</div>
-                  <div class="text-[11px] text-read-text-tertiary truncate"><code>${p.relPath}</code> · ${p.date || 'Unpublished'}</div>
+                  <div class="font-bold text-read-text-primary truncate">${escapeHtml(p.title)}</div>
+                  <div class="text-[11px] text-read-text-tertiary truncate"><code>${escapeHtml(p.relPath)}</code> · ${escapeHtml(p.date || 'Unpublished')}</div>
                 </div>
                 <div class="flex items-center gap-1.5 shrink-0">
-                  <a href="${p.url}" target="_blank" class="px-2 py-1 bg-read-bg-surface border border-read-border hover:border-read-accent text-read-text-secondary hover:text-read-accent rounded-[2px] text-[11px]">View</a>
-                  <button type="button" data-edit-post="${p.relPath}" class="px-2 py-1 bg-read-bg-surface border border-read-border hover:border-read-accent text-read-text-secondary hover:text-read-accent rounded-[2px] text-[11px] cursor-pointer">Edit</button>
-                  <button type="button" data-delete-post="${p.relPath}" data-post-title="${p.title}" class="px-2 py-1 bg-read-bg-surface border border-red-500/30 hover:border-red-500 text-red-400 rounded-[2px] text-[11px] cursor-pointer">Delete</button>
+                  <a href="${escapeHtml(p.url)}" target="_blank" class="px-2 py-1 bg-read-bg-surface border border-read-border hover:border-read-accent text-read-text-secondary hover:text-read-accent rounded-[2px] text-[11px]">View</a>
+                  <button type="button" data-edit-post="${escapeHtml(p.relPath)}" class="px-2 py-1 bg-read-bg-surface border border-read-border hover:border-read-accent text-read-text-secondary hover:text-read-accent rounded-[2px] text-[11px] cursor-pointer">Edit</button>
+                  <button type="button" data-delete-post="${escapeHtml(p.relPath)}" data-post-title="${escapeHtml(p.title)}" class="px-2 py-1 bg-read-bg-surface border border-red-500/30 hover:border-red-500 text-red-400 rounded-[2px] text-[11px] cursor-pointer">Delete</button>
                 </div>
               </div>
             `).join('');
@@ -672,19 +688,19 @@ const privacyConfig = siteConfig.privacy || {
               return `
                 <div class="p-3 bg-read-bg-base border border-read-border rounded-[2px] space-y-2.5 text-xs">
                   <div class="flex items-center justify-between pb-1.5 border-b border-read-border">
-                    <span class="font-bold text-read-accent uppercase text-[11px]">Series: "${sName}" (${entries.length} episodes)</span>
+                    <span class="font-bold text-read-accent uppercase text-[11px]">Series: "${escapeHtml(sName)}" (${entries.length} episodes)</span>
                   </div>
-                  <div class="space-y-1.5" data-series-container="${sName}">
+                  <div class="space-y-1.5" data-series-container="${escapeHtml(sName)}">
                     ${entries.map((ep, idx) => `
-                      <div class="p-2 bg-read-bg-surface border border-read-border/70 rounded-[2px] flex items-center justify-between gap-2" data-series-file="${ep.filename}" data-ep-idx="${idx}">
+                      <div class="p-2 bg-read-bg-surface border border-read-border/70 rounded-[2px] flex items-center justify-between gap-2" data-series-file="${escapeHtml(ep.filename)}" data-ep-idx="${idx}">
                         <div class="truncate text-read-text-primary text-[11px]">
-                          <span class="text-read-accent font-bold">[Ep ${ep.episode || idx + 1}]</span> ${ep.title}
+                          <span class="text-read-accent font-bold">[Ep ${ep.episode || idx + 1}]</span> ${escapeHtml(ep.title)}
                         </div>
                         <div class="flex items-center gap-1 shrink-0">
-                          <button type="button" data-reorder-up="${sName}" data-file="${ep.filename}" class="px-1.5 py-0.5 bg-read-bg-base border border-read-border text-read-text-secondary hover:text-read-accent cursor-pointer ${idx === 0 ? 'opacity-30 pointer-events-none' : ''}">↑</button>
-                          <button type="button" data-reorder-down="${sName}" data-file="${ep.filename}" class="px-1.5 py-0.5 bg-read-bg-base border border-read-border text-read-text-secondary hover:text-read-accent cursor-pointer ${idx === entries.length - 1 ? 'opacity-30 pointer-events-none' : ''}">↓</button>
-                          <button type="button" data-edit-post="${ep.relPath}" class="px-1.5 py-0.5 bg-read-bg-base border border-read-border text-read-text-secondary hover:text-read-accent cursor-pointer text-[10px]">Edit</button>
-                          <button type="button" data-delete-post="${ep.relPath}" data-post-title="${ep.title}" class="px-1.5 py-0.5 bg-read-bg-base border border-red-500/30 text-red-400 hover:text-red-300 cursor-pointer text-[10px]">✕</button>
+                          <button type="button" data-reorder-up="${escapeHtml(sName)}" data-file="${escapeHtml(ep.filename)}" class="px-1.5 py-0.5 bg-read-bg-base border border-read-border text-read-text-secondary hover:text-read-accent cursor-pointer ${idx === 0 ? 'opacity-30 pointer-events-none' : ''}">↑</button>
+                          <button type="button" data-reorder-down="${escapeHtml(sName)}" data-file="${escapeHtml(ep.filename)}" class="px-1.5 py-0.5 bg-read-bg-base border border-read-border text-read-text-secondary hover:text-read-accent cursor-pointer ${idx === entries.length - 1 ? 'opacity-30 pointer-events-none' : ''}">↓</button>
+                          <button type="button" data-edit-post="${escapeHtml(ep.relPath)}" class="px-1.5 py-0.5 bg-read-bg-base border border-read-border text-read-text-secondary hover:text-read-accent cursor-pointer text-[10px]">Edit</button>
+                          <button type="button" data-delete-post="${escapeHtml(ep.relPath)}" data-post-title="${escapeHtml(ep.title)}" class="px-1.5 py-0.5 bg-read-bg-base border border-red-500/30 text-red-400 hover:text-red-300 cursor-pointer text-[10px]">✕</button>
                         </div>
                       </div>
                     `).join('')}
@@ -804,17 +820,48 @@ const privacyConfig = siteConfig.privacy || {
         const data = await res.json();
         if (res.ok && data.success) {
           // Switch to File Upload Tab
-          const uploadTabTrigger = document.querySelector('[data-tab-target="file-upload"]') as HTMLElement | null;
+          const uploadTabTrigger = (document.querySelector('[data-tab-id="file-upload"]') || document.querySelector('[data-tab-target="file-upload"]')) as HTMLElement | null;
           if (uploadTabTrigger) uploadTabTrigger.click();
 
           const rawInput = document.getElementById('raw-markdown-input') as HTMLTextAreaElement | null;
           const filenameInp = document.getElementById('meta-filename') as HTMLInputElement | null;
+          const titleInp = document.getElementById('meta-title') as HTMLInputElement | null;
+          const descInp = document.getElementById('meta-desc') as HTMLInputElement | null;
+          const tagsInp = document.getElementById('meta-tags') as HTMLInputElement | null;
+          const dateInp = document.getElementById('meta-date') as HTMLInputElement | null;
+
           if (rawInput) {
             rawInput.value = data.content || '';
             rawInput.dispatchEvent(new Event('input'));
           }
-          if (filenameInp) {
-            filenameInp.value = data.filename || '';
+          if (filenameInp && data.filename) {
+            filenameInp.value = data.filename;
+          }
+          if (titleInp && data.title) {
+            titleInp.value = data.title;
+          }
+          if (descInp && data.description) {
+            descInp.value = data.description;
+          }
+          if (tagsInp && data.tags) {
+            tagsInp.value = Array.isArray(data.tags) ? data.tags.join(', ') : data.tags;
+          }
+          if (dateInp && data.pubDate) {
+            dateInp.value = String(data.pubDate).split('T')[0];
+          }
+
+          if (data.isSeries || relPath.startsWith('Blogs/series/')) {
+            const trackSeriesBtn = document.getElementById('track-series-btn');
+            if (trackSeriesBtn) trackSeriesBtn.click();
+            const seriesNameInp = document.getElementById('meta-series-name') as HTMLInputElement | null;
+            const seriesPartInp = document.getElementById('meta-series-part') as HTMLInputElement | null;
+            const seriesTotalInp = document.getElementById('meta-series-total') as HTMLInputElement | null;
+            if (seriesNameInp && data.seriesName) seriesNameInp.value = data.seriesName;
+            if (seriesPartInp && data.seriesPart) seriesPartInp.value = String(data.seriesPart);
+            if (seriesTotalInp && data.seriesTotal) seriesTotalInp.value = String(data.seriesTotal);
+          } else {
+            const trackStandaloneBtn = document.getElementById('track-standalone-btn');
+            if (trackStandaloneBtn) trackStandaloneBtn.click();
           }
           notify(`Loaded ${relPath} into split editor.`);
         }
@@ -854,7 +901,11 @@ const privacyConfig = siteConfig.privacy || {
           return;
         }
         try {
-          const res = await fetch('/api/git-revert', { method: 'POST' });
+          const res = await fetch('/api/git-revert', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ confirm: true }),
+          });
           const data = await res.json();
           if (res.ok && data.success) {
             notify(data.message || 'Reverted last commit successfully.');
@@ -920,6 +971,37 @@ const privacyConfig = siteConfig.privacy || {
         }
       }
     });
+
+    async function checkDeployStatus() {
+      try {
+        const res = await fetch('/api/deploy-status');
+        const data = await res.json();
+        if (res.ok && data.success) {
+          const targetUrlEl = document.getElementById('deploy-target-url') as HTMLAnchorElement | null;
+          const remoteRepoEl = document.getElementById('deploy-remote-repo') as HTMLAnchorElement | null;
+          const workflowLinkEl = document.getElementById('deploy-workflow-url') as HTMLAnchorElement | null;
+          const statusBadge = document.getElementById('deploy-status-badge');
+          if (targetUrlEl && data.pagesUrl) {
+            targetUrlEl.href = data.pagesUrl;
+            targetUrlEl.textContent = data.pagesUrl;
+          }
+          if (remoteRepoEl && data.remote) {
+            const webUrl = data.remote.replace(/^git@github\.com:/, 'https://github.com/').replace(/\.git$/, '');
+            remoteRepoEl.href = webUrl;
+            remoteRepoEl.textContent = data.remote;
+          }
+          if (workflowLinkEl && data.workflowUrl) {
+            workflowLinkEl.href = data.workflowUrl;
+            workflowLinkEl.classList.remove('hidden');
+          }
+          if (statusBadge) {
+            statusBadge.textContent = 'GitHub Pages Pipeline Active';
+          }
+        }
+      } catch {}
+    }
+
+    checkDeployStatus();
   }
 
   if (document.readyState === 'loading') {

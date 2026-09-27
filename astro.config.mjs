@@ -7,6 +7,7 @@ import rehypeKatex from 'rehype-katex';
 
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 import { promisify } from 'node:util';
 import { exec as execCb } from 'node:child_process';
 import yaml from 'js-yaml';
@@ -137,8 +138,17 @@ function profileDevMiddleware() {
                 } catch {}
               }
               const merged = { ...existing, ...data };
-              if (data.giscus && existing.giscus) {
+              if (data.giscus && typeof existing.giscus === 'object') {
                 merged.giscus = { ...existing.giscus, ...data.giscus };
+              }
+              if (data.appearance && typeof existing.appearance === 'object') {
+                merged.appearance = { ...existing.appearance, ...data.appearance };
+              }
+              if (data.features && typeof existing.features === 'object') {
+                merged.features = { ...existing.features, ...data.features };
+              }
+              if (data.privacy && typeof existing.privacy === 'object') {
+                merged.privacy = { ...existing.privacy, ...data.privacy };
               }
               fs.writeFileSync(profilePath, JSON.stringify(merged, null, 2) + '\n', 'utf-8');
               res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -383,7 +393,7 @@ function profileDevMiddleware() {
           });
           req.on('end', () => {
             try {
-              const { type, seriesName, episode, totalEpisodes, filename, content } = JSON.parse(body);
+              const { type, seriesName, episode, totalEpisodes, filename, content, title, tags: explicitTags, pubDate: explicitPubDate, description: explicitDescription } = JSON.parse(body);
 
               if (!filename || typeof filename !== 'string') {
                 res.writeHead(400, { 'Content-Type': 'application/json' });
@@ -527,6 +537,20 @@ function profileDevMiddleware() {
                 if (Array.isArray(frontmatter.tags)) {
                   frontmatter.tags = frontmatter.tags.filter((t) => typeof t === 'string' && !/^episode-\d+$/i.test(t));
                 }
+              }
+
+              // Apply explicit metadata overrides if provided from dashboard
+              if (title && typeof title === 'string' && title.trim()) {
+                frontmatter.title = title.trim();
+              }
+              if (explicitDescription && typeof explicitDescription === 'string' && explicitDescription.trim()) {
+                frontmatter.description = explicitDescription.trim();
+              }
+              if (explicitPubDate && typeof explicitPubDate === 'string' && explicitPubDate.trim()) {
+                frontmatter.pubDate = explicitPubDate.trim();
+              }
+              if (explicitTags && Array.isArray(explicitTags) && explicitTags.length > 0) {
+                frontmatter.tags = explicitTags.filter((t) => typeof t === 'string' && t.trim()).map((t) => t.trim());
               }
 
               // Ensure title exists
@@ -830,8 +854,34 @@ function profileDevMiddleware() {
         }
         try {
           const content = fs.readFileSync(absPath, 'utf-8');
+          let frontmatter = {};
+          const fmMatch = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+          if (fmMatch) {
+            try {
+              frontmatter = yaml.load(fmMatch[1]) || {};
+            } catch {}
+          }
+          const isSeries = normalized.startsWith('Blogs/series/');
+          let sName = '';
+          if (isSeries) {
+            const parts = normalized.split('/');
+            sName = parts[2] || '';
+          }
           res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: true, relPath: normalized, filename: path.basename(normalized), content }));
+          res.end(JSON.stringify({
+            success: true,
+            relPath: normalized,
+            filename: path.basename(normalized),
+            content,
+            isSeries,
+            seriesName: frontmatter.series || sName,
+            seriesPart: frontmatter.seriesPart,
+            seriesTotal: frontmatter.seriesTotal,
+            title: frontmatter.title,
+            description: frontmatter.description,
+            tags: frontmatter.tags,
+            pubDate: frontmatter.pubDate,
+          }));
         } catch (err) {
           res.writeHead(500, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: err.message }));
@@ -857,7 +907,15 @@ function profileDevMiddleware() {
                 res.end(JSON.stringify({ error: `Series folder "${cleanSeries}" not found` }));
                 return;
               }
-              const totalCount = episodeOrder.length;
+              const allSeriesFiles = fs.readdirSync(seriesDir).filter((f) => /\.(md|mdx)$/i.test(f));
+              if (episodeOrder.length !== allSeriesFiles.length) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({
+                  error: `Incomplete episode list: received ${episodeOrder.length} episodes, but series directory contains ${allSeriesFiles.length} files.`
+                }));
+                return;
+              }
+              const totalCount = allSeriesFiles.length;
               const frontmatterRegex = /^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/;
               episodeOrder.forEach((item, index) => {
                 const filename = typeof item === 'string' ? item : item.filename;
@@ -899,15 +957,31 @@ function profileDevMiddleware() {
 
       registerApi('/api/git-revert', async (req, res) => {
         if (req.method === 'POST') {
-          try {
-            const cwd = process.cwd();
-            const { stdout, stderr } = await exec('git revert HEAD --no-edit', { cwd });
-            res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ success: true, message: 'Successfully reverted last commit.', output: stdout || stderr }));
-          } catch (err) {
-            res.writeHead(500, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ success: false, error: (err.stderr || err.message || '').toString().trim() }));
-          }
+          let body = '';
+          req.on('data', (c) => { body += c; });
+          req.on('end', async () => {
+            try {
+              const payload = JSON.parse(body || '{}');
+              if (!payload.confirm) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ success: false, error: 'Confirmation required: body must include { confirm: true }' }));
+                return;
+              }
+              const cwd = process.cwd();
+              const { stdout: statusOut } = await exec('git status --porcelain', { cwd });
+              if (statusOut.trim().length > 0) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ success: false, error: 'Working tree has uncommitted changes. Please commit or stash before reverting.' }));
+                return;
+              }
+              const { stdout, stderr } = await exec('git revert HEAD --no-edit', { cwd });
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ success: true, message: 'Successfully reverted last commit.', output: stdout || stderr }));
+            } catch (err) {
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ success: false, error: (err.stderr || err.message || '').toString().trim() }));
+            }
+          });
         } else {
           res.writeHead(405, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ error: 'Method not allowed' }));
@@ -916,22 +990,44 @@ function profileDevMiddleware() {
 
       registerApi('/api/export-zip', async (req, res) => {
         if (req.method === 'GET') {
+          const cwd = process.cwd();
+          const uniqueName = `blogly-export-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.zip`;
+          const tmpZip = path.resolve(os.tmpdir(), uniqueName);
           try {
-            const cwd = process.cwd();
-            const tmpZip = path.resolve(cwd, '.site-export-tmp.zip');
-            if (fs.existsSync(tmpZip)) {
-              try { fs.unlinkSync(tmpZip); } catch {}
-            }
+            const itemsToZip = ['Blogs', 'public', 'profile.json', 'src', 'package.json', 'README.md'].filter((item) =>
+              fs.existsSync(path.resolve(cwd, item))
+            );
+            let zipped = false;
+
+            // 1. Try standard zip command (macOS, Linux)
             try {
-              await exec(`tar.exe -a -c -f "${tmpZip}" Blogs public profile.json src package.json README.md`, { cwd });
-            } catch {
-              await exec(`powershell -NoProfile -Command "Compress-Archive -Path Blogs, public, profile.json, src, package.json, README.md -DestinationPath '${tmpZip}' -Force"`, { cwd });
+              await exec(`zip -r "${tmpZip}" ${itemsToZip.join(' ')}`, { cwd });
+              if (fs.existsSync(tmpZip)) zipped = true;
+            } catch {}
+
+            // 2. Try tar command (cross-platform, built into Windows & Unix)
+            if (!zipped) {
+              try {
+                const tarCmd = process.platform === 'win32' ? 'tar.exe' : 'tar';
+                await exec(`${tarCmd} -a -c -f "${tmpZip}" ${itemsToZip.join(' ')}`, { cwd });
+                if (fs.existsSync(tmpZip)) zipped = true;
+              } catch {}
             }
-            if (!fs.existsSync(tmpZip)) {
-              throw new Error('Failed to generate archive file');
+
+            // 3. Fallback to PowerShell Compress-Archive on Windows
+            if (!zipped && process.platform === 'win32') {
+              try {
+                const psItems = itemsToZip.join(', ');
+                await exec(`powershell -NoProfile -Command "Compress-Archive -Path ${psItems} -DestinationPath '${tmpZip}' -Force"`, { cwd });
+                if (fs.existsSync(tmpZip)) zipped = true;
+              } catch {}
             }
+
+            if (!zipped || !fs.existsSync(tmpZip)) {
+              throw new Error('Failed to generate archive: No compatible zip/tar archiver available');
+            }
+
             const zipBuffer = fs.readFileSync(tmpZip);
-            try { fs.unlinkSync(tmpZip); } catch {}
             res.writeHead(200, {
               'Content-Type': 'application/zip',
               'Content-Disposition': 'attachment; filename="blogly-site-export.zip"',
@@ -941,6 +1037,10 @@ function profileDevMiddleware() {
           } catch (err) {
             res.writeHead(500, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ error: err.message }));
+          } finally {
+            if (fs.existsSync(tmpZip)) {
+              try { fs.unlinkSync(tmpZip); } catch {}
+            }
           }
         } else {
           res.writeHead(405, { 'Content-Type': 'application/json' });

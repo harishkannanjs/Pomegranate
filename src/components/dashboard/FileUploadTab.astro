@@ -394,21 +394,36 @@ try {
 
     // Escape raw HTML entities
     const escapeHtml = (str: string) =>
-      str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
-    // Handle code blocks
+    // Handle code blocks first to protect code content
     const codeBlocks: string[] = [];
     content = content.replace(/```([a-zA-Z0-9_-]*)\r?\n([\s\S]*?)```/g, (_, lang, code) => {
       const idx = codeBlocks.length;
-      const langBadge = lang ? `<span class="text-xs text-read-accent font-mono block pb-1 border-b border-read-border mb-2">${lang}</span>` : '';
+      const langBadge = lang ? `<span class="text-xs text-read-accent font-mono block pb-1 border-b border-read-border mb-2">${escapeHtml(lang)}</span>` : '';
       codeBlocks.push(
         `<pre class="bg-read-bg-base border border-read-border p-3.5 my-3 rounded-[2px] overflow-x-auto text-xs font-mono">${langBadge}<code>${escapeHtml(code.trim())}</code></pre>`
       );
       return `__CODE_BLOCK_${idx}__`;
     });
 
-    // Handle inline code
-    content = content.replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 bg-read-bg-base border border-read-border rounded-[2px] text-read-accent font-mono text-xs">$1</code>');
+    // Handle inline code to protect inline code content
+    const inlineCodes: string[] = [];
+    content = content.replace(/`([^`]+)`/g, (_, code) => {
+      const idx = inlineCodes.length;
+      inlineCodes.push(`<code class="px-1.5 py-0.5 bg-read-bg-base border border-read-border rounded-[2px] text-read-accent font-mono text-xs">${escapeHtml(code)}</code>`);
+      return `__INLINE_CODE_${idx}__`;
+    });
+
+    // Escape all raw HTML characters in the remaining markdown text
+    content = escapeHtml(content);
+
+    // Sanitize URL helper
+    const cleanUrl = (url: string) => {
+      const trimmed = url.trim();
+      if (/^javascript:/i.test(trimmed) || /^vbscript:/i.test(trimmed)) return '#';
+      return trimmed;
+    };
 
     // Headers
     content = content.replace(/^######\s+(.+)$/gm, '<h6 class="text-sm font-bold text-read-text-primary mt-4 mb-2">$1</h6>');
@@ -419,7 +434,7 @@ try {
     content = content.replace(/^#\s+(.+)$/gm, '<h1 class="text-2xl font-bold text-read-text-primary mt-6 mb-3 pb-2 border-b border-read-border">$1</h1>');
 
     // Blockquotes
-    content = content.replace(/^>\s+(.+)$/gm, '<blockquote class="border-l-2 border-read-accent pl-3.5 my-2.5 text-read-text-secondary italic font-mono text-xs">$1</blockquote>');
+    content = content.replace(/^&gt;\s+(.+)$/gm, '<blockquote class="border-l-2 border-read-accent pl-3.5 my-2.5 text-read-text-secondary italic font-mono text-xs">$1</blockquote>');
 
     // Horizontal Rule
     content = content.replace(/^---$/gm, '<hr class="border-t border-read-border my-5" />');
@@ -430,8 +445,8 @@ try {
     content = content.replace(/~~([^~]+)~~/g, '<del class="line-through text-read-text-tertiary">$1</del>');
 
     // Links & Images
-    content = content.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="max-w-full my-3 rounded-[2px] border border-read-border" />');
-    content = content.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" class="text-read-accent underline underline-offset-4 hover:opacity-80">$1</a>');
+    content = content.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_, alt, url) => `<img src="${cleanUrl(url)}" alt="${alt}" class="max-w-full my-3 rounded-[2px] border border-read-border" />`);
+    content = content.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (_, text, url) => `<a href="${cleanUrl(url)}" target="_blank" rel="noopener" class="text-read-accent underline underline-offset-4 hover:opacity-80">${text}</a>`);
 
     // Lists
     content = content.replace(/^\s*[-*]\s+(.+)$/gm, '<li class="ml-4 list-disc text-read-text-primary">$1</li>');
@@ -455,6 +470,10 @@ try {
     });
 
     let rendered = htmlParts.join('\n');
+    // Restore inline code
+    inlineCodes.forEach((ic, idx) => {
+      rendered = rendered.replace(`__INLINE_CODE_${idx}__`, ic);
+    });
     // Restore code blocks
     codeBlocks.forEach((block, idx) => {
       rendered = rendered.replace(`__CODE_BLOCK_${idx}__`, block);

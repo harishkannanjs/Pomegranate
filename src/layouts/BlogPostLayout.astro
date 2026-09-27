@@ -92,10 +92,17 @@ const features = {
       ))}
     </div>
 
-    <!-- Main 2-column layout (content + sticky TOC) -->
-    <div class="relative grid grid-cols-1 lg:grid-cols-[1fr_240px] gap-10">
+    <!-- Main layout (content + sticky TOC) -->
+    <div
+      id="blog-post-grid"
+      class={`relative grid grid-cols-1 ${features.tableOfContents ? 'lg:grid-cols-[1fr_240px]' : 'max-w-[760px] mx-auto'} gap-10`}
+    >
       <!-- Article Column -->
-      <article class="max-w-[680px] w-full min-w-0" data-pagefind-body>
+      <article
+        id="blog-post-article"
+        class={features.tableOfContents ? 'max-w-[680px] w-full min-w-0' : 'max-w-[760px] w-full min-w-0 mx-auto'}
+        data-pagefind-body
+      >
         <!-- Header -->
         <header class="mb-8 font-mono">
           <h1
@@ -247,6 +254,24 @@ const features = {
                 el.style.removeProperty('display');
               }
             });
+
+            if (key === 'tableOfContents') {
+              const grid = document.getElementById('blog-post-grid');
+              const article = document.getElementById('blog-post-article');
+              if (grid && article) {
+                if (enabled) {
+                  grid.classList.add('lg:grid-cols-[1fr_240px]');
+                  grid.classList.remove('max-w-[760px]', 'mx-auto');
+                  article.classList.add('max-w-[680px]');
+                  article.classList.remove('max-w-[760px]', 'mx-auto');
+                } else {
+                  grid.classList.remove('lg:grid-cols-[1fr_240px]');
+                  grid.classList.add('max-w-[760px]', 'mx-auto');
+                  article.classList.remove('max-w-[680px]');
+                  article.classList.add('max-w-[760px]', 'mx-auto');
+                }
+              }
+            }
           }
         }
       } catch {}

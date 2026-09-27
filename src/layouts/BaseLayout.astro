@@ -94,6 +94,25 @@ const resolvedOgImage = new URL(getRelativePath(image), Astro.site || Astro.url.
       });
     </script>
 
+    <!-- Cookie-Free Privacy Analytics (Active when opt-in enabled in profile.json or localStorage) -->
+    <script is:inline>
+      (function() {
+        try {
+          const storedPrivacy = localStorage.getItem('blogly_privacy');
+          const isEnabled = storedPrivacy ? JSON.parse(storedPrivacy).analytics : false;
+          if (isEnabled && typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('blogly:analytics', {
+              detail: {
+                path: window.location.pathname,
+                referrer: document.referrer || null,
+                timestamp: Date.now(),
+              }
+            }));
+          }
+        } catch {}
+      })();
+    </script>
+
     <ClientRouter />
   </head>
   <body class="bg-surface font-mono text-[14px] text-on-surface antialiased selection:bg-primary selection:text-on-primary min-h-screen flex flex-col justify-between transition-colors">
