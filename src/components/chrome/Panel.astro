@@ -1,0 +1,43 @@
+---
+interface Props {
+  title?: string;
+  class?: string;
+  id?: string;
+}
+
+const { title, class: className = '', id } = Astro.props;
+---
+
+{/* TUI Mode sub-template: Titled sharp border */}
+<div
+  id={id ? `${id}-tui` : undefined}
+  class:list={[
+    'chrome-tui-block relative border border-read-border-strong bg-read-bg-surface rounded-none p-5 my-4',
+    className,
+  ]}
+>
+  {title && (
+    <div class="absolute -top-3 left-4 px-2 bg-read-bg-surface text-read-accent font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-1 select-none">
+      <span class="text-read-border-strong font-normal">┌─</span>
+      <span>{title}</span>
+      <span class="text-read-border-strong font-normal">─┐</span>
+    </div>
+  )}
+  <slot />
+</div>
+
+{/* Standard Mode sub-template: Rounded modern card */}
+<div
+  id={id ? `${id}-std` : undefined}
+  class:list={[
+    'chrome-std-block rounded-xl border border-read-border bg-read-bg-surface p-6 my-4 shadow-sm transition-all',
+    className,
+  ]}
+>
+  {title && (
+    <div class="text-xs font-semibold uppercase tracking-wider text-read-text-secondary pb-3 mb-4 border-b border-read-border">
+      {title}
+    </div>
+  )}
+  <slot />
+</div>

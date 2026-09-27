@@ -1,0 +1,108 @@
+---
+import { getAllThemes } from '@/lib/themes';
+
+const themes = getAllThemes();
+---
+
+<div class="relative inline-block text-left" id="theme-pack-dropdown-container">
+  <button
+    type="button"
+    id="theme-pack-button"
+    class="px-2 h-7 bg-surface-container border border-outline-variant hover:border-outline rounded-[2px] flex items-center gap-1.5 text-on-surface-variant hover:text-on-surface transition-colors cursor-pointer text-[11px] font-mono select-none"
+    title="Change Theme Pack"
+    aria-haspopup="true"
+    aria-expanded="false"
+  >
+    <span class="text-primary font-bold">#</span>
+    <span id="active-theme-name" class="capitalize">theme</span>
+    <span class="text-[9px] text-outline">▾</span>
+  </button>
+
+  <div
+    id="theme-pack-menu"
+    class="hidden absolute right-0 mt-1 w-44 bg-surface-container-low border border-outline-variant rounded-[2px] shadow-lg z-50 font-mono py-1 text-xs"
+    role="menu"
+    aria-orientation="vertical"
+  >
+    {themes.map((theme) => {
+      const darkTokens = theme.tokens.dark.read;
+      return (
+        <button
+          type="button"
+          data-theme-id={theme.id}
+          data-theme-name={theme.name}
+          class="theme-pack-option w-full text-left px-3 py-1.5 flex items-center justify-between hover:bg-surface-container transition-colors text-on-surface cursor-pointer text-[11px]"
+          role="menuitem"
+        >
+          <div class="flex items-center gap-2">
+            <span
+              class="w-2.5 h-2.5 rounded-full inline-block border border-outline"
+              style={`background-color: ${darkTokens.accent};`}
+            />
+            <span class="font-medium">{theme.name}</span>
+          </div>
+          <span class="text-[9px] text-outline uppercase">{theme.mode}</span>
+        </button>
+      );
+    })}
+  </div>
+</div>
+
+<script is:inline>
+  function initThemePack() {
+    const container = document.getElementById('theme-pack-dropdown-container');
+    const button = document.getElementById('theme-pack-button');
+    const menu = document.getElementById('theme-pack-menu');
+    const activeLabel = document.getElementById('active-theme-name');
+    const options = document.querySelectorAll('.theme-pack-option');
+
+    if (!button || !menu) return;
+
+    // Load saved or attribute theme
+    const savedTheme = localStorage.getItem('theme-pack') || document.documentElement.getAttribute('data-theme') || 'catppuccin';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    if (activeLabel) activeLabel.textContent = savedTheme;
+
+    // Toggle dropdown
+    button.onclick = (e) => {
+      e.stopPropagation();
+      const isHidden = menu.classList.contains('hidden');
+      if (isHidden) {
+        menu.classList.remove('hidden');
+        button.setAttribute('aria-expanded', 'true');
+      } else {
+        menu.classList.add('hidden');
+        button.setAttribute('aria-expanded', 'false');
+      }
+    };
+
+    // Close when clicking outside
+    document.addEventListener('click', (e) => {
+      if (container && !container.contains(e.target)) {
+        menu.classList.add('hidden');
+        button.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    // Option selection
+    options.forEach((opt) => {
+      opt.onclick = () => {
+        const selectedId = opt.getAttribute('data-theme-id');
+        const selectedName = opt.getAttribute('data-theme-name');
+        if (!selectedId) return;
+
+        document.documentElement.setAttribute('data-theme', selectedId);
+        localStorage.setItem('theme-pack', selectedId);
+        if (activeLabel && selectedName) activeLabel.textContent = selectedName;
+
+        menu.classList.add('hidden');
+        button.setAttribute('aria-expanded', 'false');
+
+        window.dispatchEvent(new CustomEvent('theme-pack-change', { detail: { theme: selectedId } }));
+      };
+    });
+  }
+
+  initThemePack();
+  document.addEventListener('astro:after-swap', initThemePack);
+</script>

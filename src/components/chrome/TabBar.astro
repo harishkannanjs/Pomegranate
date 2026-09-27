@@ -1,0 +1,74 @@
+---
+export interface TabItem {
+  id: string;
+  label: string;
+  active?: boolean;
+  href?: string;
+  count?: number;
+}
+
+interface Props {
+  tabs: TabItem[];
+  class?: string;
+}
+
+const { tabs, class: className = '' } = Astro.props;
+---
+
+{/* TUI Mode sub-template: multiplexer tabs [1 Tab] */}
+<nav class:list={['chrome-tui-inline flex-wrap items-center gap-2 select-none font-mono text-xs', className]}>
+  {tabs.map((tab, idx) => {
+    const Tag = tab.href ? 'a' : 'button';
+    return (
+      <Tag
+        href={tab.href}
+        data-tab-id={tab.id}
+        class:list={[
+          'px-3 py-1.5 transition-colors flex items-center gap-1.5 rounded-none border',
+          tab.active
+            ? 'bg-read-accent text-read-bg-base border-read-accent font-bold'
+            : 'border-read-border-strong text-read-text-secondary hover:text-read-text-primary hover:bg-read-bg-surface-raised',
+        ]}
+      >
+        <span class={tab.active ? 'text-read-bg-base/70' : 'text-read-text-tertiary'}>
+          [{idx + 1}
+        </span>
+        <span>{tab.label}</span>
+        {tab.count !== undefined && (
+          <span class={tab.active ? 'text-read-bg-base/80' : 'text-read-accent font-bold'}>
+            ({tab.count})
+          </span>
+        )}
+        <span class={tab.active ? 'text-read-bg-base/70' : 'text-read-text-tertiary'}>
+          ]
+        </span>
+      </Tag>
+    );
+  })}
+</nav>
+
+{/* Standard Mode sub-template: Modern rounded pill tabs */}
+<nav class:list={['chrome-std-inline flex-wrap items-center p-1 rounded-xl bg-read-bg-surface-raised border border-read-border select-none gap-1', className]}>
+  {tabs.map((tab) => {
+    const Tag = tab.href ? 'a' : 'button';
+    return (
+      <Tag
+        href={tab.href}
+        data-tab-id={tab.id}
+        class:list={[
+          'px-4 py-2 text-xs font-medium rounded-lg transition-all flex items-center gap-2',
+          tab.active
+            ? 'bg-read-bg-surface text-read-accent shadow-sm font-semibold'
+            : 'text-read-text-secondary hover:text-read-text-primary hover:bg-read-bg-surface/50',
+        ]}
+      >
+        <span>{tab.label}</span>
+        {tab.count !== undefined && (
+          <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-read-bg-surface-raised border border-read-border text-read-text-tertiary">
+            {tab.count}
+          </span>
+        )}
+      </Tag>
+    );
+  })}
+</nav>

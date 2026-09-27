@@ -1,5 +1,6 @@
 ---
 import ThemeToggle from './ThemeToggle.astro';
+import ThemePackSelector from './ThemePackSelector.astro';
 import { siteConfig, getRelativePath } from '@/site.config';
 
 interface Props {
@@ -58,6 +59,7 @@ const avatarSrc = siteConfig.avatar || siteConfig.logo ? getRelativePath(siteCon
         <kbd class="px-1 bg-surface-container-high text-primary border border-outline-variant rounded-[2px] text-[10px] font-mono">/</kbd>
       </button>
 
+      <ThemePackSelector />
       <ThemeToggle />
 
       <a

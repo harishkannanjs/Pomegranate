@@ -20,6 +20,7 @@
     
     // Default to dark unless explicitly light
     const currentTheme = localStorage.getItem('theme') || 'dark';
+    document.documentElement.setAttribute('data-mode', currentTheme === 'light' ? 'light' : 'dark');
     if (currentTheme === 'light') {
       document.documentElement.classList.remove('dark');
       document.documentElement.classList.add('light');
@@ -34,6 +35,7 @@
       themeToggleBtn.onclick = () => {
         const isDark = document.documentElement.classList.contains('dark');
         const nextTheme = isDark ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-mode', nextTheme);
         
         if (nextTheme === 'dark') {
           document.documentElement.classList.add('dark');
@@ -45,6 +47,7 @@
           if (themeToggleText) themeToggleText.textContent = 'light';
         }
         localStorage.setItem('theme', nextTheme);
+        localStorage.setItem('mode', nextTheme);
         
         // Dispatch custom event for giscus or other synced components
         window.dispatchEvent(new CustomEvent('theme-change', { detail: { theme: nextTheme } }));

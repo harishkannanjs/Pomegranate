@@ -14,6 +14,8 @@ interface Props {
   article?: boolean;
   pubDate?: Date;
   activePath?: string;
+  theme?: string;
+  mode?: 'dark' | 'light';
 }
 
 const {
@@ -24,6 +26,8 @@ const {
   article = false,
   pubDate,
   activePath = Astro.url.pathname,
+  theme = 'catppuccin',
+  mode = 'dark',
 } = Astro.props;
 
 const pageTitle = title || siteConfig.name || 'glyph.sh';
@@ -31,7 +35,7 @@ const resolvedOgImage = new URL(getRelativePath(image), Astro.site || Astro.url.
 ---
 
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en" class={mode === 'light' ? 'light' : 'dark'} data-theme={theme} data-mode={mode}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -60,14 +64,34 @@ const resolvedOgImage = new URL(getRelativePath(image), Astro.site || Astro.url.
 
     <!-- Inline script to prevent FOUC (flash of unstyled theme) -->
     <script is:inline>
-      const savedTheme = localStorage.getItem('theme') || 'dark';
-      if (savedTheme === 'light') {
-        document.documentElement.classList.remove('dark');
-        document.documentElement.classList.add('light');
-      } else {
-        document.documentElement.classList.add('dark');
-        document.documentElement.classList.remove('light');
-      }
+      (function() {
+        const savedMode = localStorage.getItem('mode') || localStorage.getItem('theme') || 'dark';
+        const savedThemePack = localStorage.getItem('theme-pack') || document.documentElement.getAttribute('data-theme') || 'catppuccin';
+        const isDark = savedMode !== 'light';
+        document.documentElement.setAttribute('data-theme', savedThemePack);
+        document.documentElement.setAttribute('data-mode', isDark ? 'dark' : 'light');
+        if (isDark) {
+          document.documentElement.classList.add('dark');
+          document.documentElement.classList.remove('light');
+        } else {
+          document.documentElement.classList.remove('dark');
+          document.documentElement.classList.add('light');
+        }
+      })();
+      document.addEventListener('astro:after-swap', () => {
+        const savedMode = localStorage.getItem('mode') || localStorage.getItem('theme') || 'dark';
+        const savedThemePack = localStorage.getItem('theme-pack') || 'catppuccin';
+        const isDark = savedMode !== 'light';
+        document.documentElement.setAttribute('data-theme', savedThemePack);
+        document.documentElement.setAttribute('data-mode', isDark ? 'dark' : 'light');
+        if (isDark) {
+          document.documentElement.classList.add('dark');
+          document.documentElement.classList.remove('light');
+        } else {
+          document.documentElement.classList.remove('dark');
+          document.documentElement.classList.add('light');
+        }
+      });
     </script>
 
     <ClientRouter />

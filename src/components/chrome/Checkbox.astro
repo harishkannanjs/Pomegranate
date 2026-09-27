@@ -1,0 +1,69 @@
+---
+interface Props {
+  id?: string;
+  name?: string;
+  checked?: boolean;
+  disabled?: boolean;
+  label?: string;
+  radio?: boolean;
+  class?: string;
+}
+
+const {
+  id = `check-${Math.random().toString(36).slice(2, 9)}`,
+  name,
+  checked = false,
+  disabled = false,
+  label,
+  radio = false,
+  class: className = '',
+} = Astro.props;
+
+const inputType = radio ? 'radio' : 'checkbox';
+---
+
+<label class:list={['inline-flex items-center gap-2.5 cursor-pointer select-none', disabled && 'opacity-40 cursor-not-allowed pointer-events-none', className]}>
+  <input
+    type={inputType}
+    id={id}
+    name={name}
+    checked={checked}
+    disabled={disabled}
+    class="peer sr-only"
+  />
+
+  {/* TUI Mode: [x] / [ ] or (•) / ( ) */}
+  <span class="chrome-tui-inline items-center gap-2 font-mono text-xs">
+    {radio ? (
+      <>
+        <span class="peer-checked:hidden text-read-text-tertiary">( )</span>
+        <span class="hidden peer-checked:inline-block text-read-accent font-bold">(•)</span>
+      </>
+    ) : (
+      <>
+        <span class="peer-checked:hidden text-read-text-tertiary">[ ]</span>
+        <span class="hidden peer-checked:inline-block text-read-accent font-bold">[x]</span>
+      </>
+    )}
+    {label && <span class="text-read-text-primary text-xs">{label}</span>}
+  </span>
+
+  {/* Standard Mode: rounded checkbox / circular radio */}
+  <span class="chrome-std-inline items-center gap-2.5">
+    <span
+      class:list={[
+        'w-4 h-4 flex items-center justify-center border transition-all',
+        radio ? 'rounded-full border-read-border peer-checked:border-read-accent' : 'rounded border-read-border peer-checked:bg-read-accent peer-checked:border-read-accent',
+      ]}
+    >
+      {radio ? (
+        <span class="w-2 h-2 rounded-full bg-read-accent hidden peer-checked:block" />
+      ) : (
+        <svg class="w-3 h-3 text-white hidden peer-checked:block fill-current" viewBox="0 0 20 20">
+          <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" />
+        </svg>
+      )}
+    </span>
+    {label && <span class="text-read-text-primary text-sm">{label}</span>}
+  </span>
+</label>

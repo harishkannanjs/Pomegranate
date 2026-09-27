@@ -1,68 +1,8 @@
-@import "@fontsource/jetbrains-mono/400.css";
-@import "@fontsource/jetbrains-mono/500.css";
-@import "@fontsource/jetbrains-mono/700.css";
+@import "./theme-tokens.css";
 @import "katex/dist/katex.min.css";
 @import "tailwindcss";
 
 @layer base {
-  :root {
-    --background: #eff1f5;
-    --surface: #ffffff;
-    --surface-dim: #e6e9ef;
-    --surface-bright: #ffffff;
-    --surface-container-lowest: #dce0e8;
-    --surface-container-low: #f4f5f8;
-    --surface-container: #e6e9ef;
-    --surface-container-high: #ccd0da;
-    --surface-container-highest: #bcc0cc;
-    --surface-variant: #e6e9ef;
-    --on-surface: #4c4f69;
-    --on-surface-variant: #6c6f85;
-    --on-background: #4c4f69;
-    --outline: #9ca0b0;
-    --outline-variant: #ccd0da;
-    --primary: #40a02b;
-    --primary-container: #a6e3a1;
-    --on-primary: #ffffff;
-    --secondary: #04a5e5;
-    --secondary-container: #dce0e8;
-    --on-secondary: #ffffff;
-    --secondary-fixed-dim: #179299;
-    --error: #d20f39;
-    --error-container: #ffebe9;
-    --on-error: #ffffff;
-    --code-bg: #e6e9ef;
-  }
-
-  html.dark, :root.dark {
-    --background: #1e1e2e;
-    --surface: #1e1e2e;
-    --surface-dim: #181825;
-    --surface-bright: #313244;
-    --surface-container-lowest: #11111b;
-    --surface-container-low: #181825;
-    --surface-container: #313244;
-    --surface-container-high: #45475a;
-    --surface-container-highest: #585b70;
-    --surface-variant: #313244;
-    --on-surface: #cdd6f4;
-    --on-surface-variant: #a6adc8;
-    --on-background: #cdd6f4;
-    --outline: #6c7086;
-    --outline-variant: #45475a;
-    --primary: #a6e3a1;
-    --primary-container: #264732;
-    --on-primary: #11111b;
-    --secondary: #89dceb;
-    --secondary-container: #1b3844;
-    --on-secondary: #11111b;
-    --secondary-fixed-dim: #94e2d5;
-    --error: #f38ba8;
-    --error-container: #511f2d;
-    --on-error: #11111b;
-    --code-bg: #11111b;
-  }
-
   html {
     scroll-behavior: smooth;
     scroll-padding-top: 5rem;
@@ -71,7 +11,7 @@
   html, body {
     margin: 0;
     padding: 0;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: var(--font-theme, 'JetBrains Mono', monospace);
     background-color: var(--surface);
     color: var(--on-surface);
   }
@@ -106,18 +46,18 @@
 }
 
 @theme {
-  --font-mono: 'JetBrains Mono', monospace;
-  --font-code-inline: 'JetBrains Mono', monospace;
-  --font-code-block: 'JetBrains Mono', monospace;
-  --font-body-sm: 'JetBrains Mono', monospace;
-  --font-body-md: 'JetBrains Mono', monospace;
-  --font-body-lg: 'JetBrains Mono', monospace;
-  --font-headline-sm: 'JetBrains Mono', monospace;
-  --font-headline-md: 'JetBrains Mono', monospace;
-  --font-headline-lg: 'JetBrains Mono', monospace;
-  --font-display: 'JetBrains Mono', monospace;
-  --font-label-sm: 'JetBrains Mono', monospace;
-  --font-label-md: 'JetBrains Mono', monospace;
+  --font-mono: var(--font-theme, 'JetBrains Mono', monospace);
+  --font-code-inline: var(--font-theme, 'JetBrains Mono', monospace);
+  --font-code-block: var(--font-theme, 'JetBrains Mono', monospace);
+  --font-body-sm: var(--font-theme, 'JetBrains Mono', monospace);
+  --font-body-md: var(--font-theme, 'JetBrains Mono', monospace);
+  --font-body-lg: var(--font-theme, 'JetBrains Mono', monospace);
+  --font-headline-sm: var(--font-theme, 'JetBrains Mono', monospace);
+  --font-headline-md: var(--font-theme, 'JetBrains Mono', monospace);
+  --font-headline-lg: var(--font-theme, 'JetBrains Mono', monospace);
+  --font-display: var(--font-theme, 'JetBrains Mono', monospace);
+  --font-label-sm: var(--font-theme, 'JetBrains Mono', monospace);
+  --font-label-md: var(--font-theme, 'JetBrains Mono', monospace);
 
   --color-surface: var(--surface);
   --color-surface-dim: var(--surface-dim);
@@ -145,6 +85,22 @@
   --color-error-container: var(--error-container);
   --color-on-error: var(--on-error);
   --color-code-bg: var(--code-bg);
+
+  --color-read-bg-base: var(--read-bg-base);
+  --color-read-bg-surface: var(--read-bg-surface);
+  --color-read-bg-surface-raised: var(--read-bg-surface-raised);
+  --color-read-border: var(--read-border);
+  --color-read-border-strong: var(--read-border-strong);
+  --color-read-text-primary: var(--read-text-primary);
+  --color-read-text-secondary: var(--read-text-secondary);
+  --color-read-text-tertiary: var(--read-text-tertiary);
+  --color-read-accent: var(--read-accent);
+  --color-chrome-input-bg: var(--chrome-input-bg);
+  --color-chrome-input-border-focus: var(--chrome-input-border-focus);
+  --color-chrome-hover-bg: var(--chrome-hover-bg);
+  --color-chrome-danger: var(--chrome-danger);
+  --color-chrome-success: var(--chrome-success);
+  --color-chrome-secondary-accent: var(--chrome-secondary-accent, var(--read-accent));
 
   --spacing-gutter: 1.5rem;
   --spacing-gutter-mobile: 1rem;
