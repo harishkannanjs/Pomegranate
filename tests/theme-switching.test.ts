@@ -1,6 +1,7 @@
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { describe, it, expect } from 'vitest';
 import { getCollection, render } from 'astro:content';
+import IndexPage from '../src/pages/index.astro';
 import BaseLayout from '../src/layouts/BaseLayout.astro';
 import BlogPostLayout from '../src/layouts/BlogPostLayout.astro';
 import { getAllThemes, type ColorMode } from '../src/lib/themes';
@@ -40,7 +41,17 @@ describe('Theme Switching Regression Tests (14 States)', () => {
     }
   }
 
-  it('renders BlogPostLayout under active theme and mode without throwing', async () => {
+  it('renders real homepage with ThemePackSelector containing all 7 themes', async () => {
+    const container = await AstroContainer.create();
+    const html = await container.renderToString(IndexPage);
+    expect(html).toBeDefined();
+    expect(html).toContain('theme-pack-dropdown-container');
+    for (const theme of themes) {
+      expect(html).toContain(`data-theme-id="${theme.id}"`);
+    }
+  });
+
+  it('renders BlogPostLayout across all 14 theme and mode combinations', async () => {
     const posts = await getCollection('blog');
     const targetPost = posts.find((p) => p.id.includes('welcome-to-glyph')) || posts[0];
     expect(targetPost).toBeDefined();
@@ -49,21 +60,27 @@ describe('Theme Switching Regression Tests (14 States)', () => {
     const container = await AstroContainer.create();
 
     for (const theme of themes) {
-      const html = await container.renderToString(BlogPostLayout, {
-        props: {
-          post: targetPost!,
-          allPosts: posts,
-          headings: headings || [],
-          theme: theme.id,
-        },
-        slots: {
-          default: '<p>Blog article body</p>',
-        },
-      });
+      for (const mode of modes) {
+        const html = await container.renderToString(BlogPostLayout, {
+          props: {
+            post: targetPost!,
+            allPosts: posts,
+            headings: headings || [],
+            theme: theme.id,
+            mode: mode,
+          },
+          slots: {
+            default: '<p>Blog article body</p>',
+          },
+        });
 
-      expect(html).toBeDefined();
-      expect(html).toContain(targetPost!.data.title);
-      expect(html).toContain('Blog article body');
+        expect(html).toBeDefined();
+        expect(html).toContain(targetPost!.data.title);
+        expect(html).toContain(`data-theme="${theme.id}"`);
+        expect(html).toContain(`data-mode="${mode}"`);
+        expect(html).toContain(mode === 'light' ? 'class="light"' : 'class="dark"');
+        expect(html).toContain('Blog article body');
+      }
     }
   });
 
@@ -141,16 +158,20 @@ describe('Theme Switching Regression Tests (14 States)', () => {
       expect(html).toContain('chrome-std-inline');
     });
 
-    it('renders Input with TUI prompt line and Standard rounded field', async () => {
+    it('renders Input with single input element and dual-mode responsive styling', async () => {
       const container = await AstroContainer.create();
       const html = await container.renderToString(Input, {
         props: { placeholder: 'Enter username...', prompt: '>' },
       });
 
+      expect(html).toContain('chrome-input-container');
+      expect(html).toContain('chrome-input-field');
       expect(html).toContain('chrome-tui-inline');
       expect(html).toContain('&gt;');
-      expect(html).toContain('chrome-std-block');
       expect(html).toContain('Enter username...');
+      // Ensure only one input element is rendered
+      const inputMatches = html.match(/<input\b/g);
+      expect(inputMatches).toHaveLength(1);
     });
 
     it('renders LoadingIndicator with TUI blinking block cursor and Standard spinner', async () => {

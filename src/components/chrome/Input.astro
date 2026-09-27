@@ -25,43 +25,59 @@ const {
 } = Astro.props;
 ---
 
-{/* TUI Mode sub-template: Prompt-styled field */}
 <div
   class:list={[
-    'chrome-tui-inline items-center border border-read-border-strong bg-read-bg-base px-3 py-2 font-mono text-xs focus-within:border-read-accent focus-within:ring-1 focus-within:ring-read-accent rounded-none transition-colors w-full',
-    disabled && 'opacity-40 cursor-not-allowed',
+    'chrome-input-container relative w-full flex items-center transition-all',
+    disabled && 'opacity-40 cursor-not-allowed pointer-events-none',
     className,
   ]}
 >
-  <span class="text-read-accent mr-2 font-bold select-none">{prompt}</span>
+  <span class="chrome-tui-inline text-read-accent mr-2 font-bold select-none font-mono text-xs">{prompt}</span>
   <input
     type={type}
-    id={id ? `${id}-tui` : undefined}
+    id={id}
     name={name}
     value={value}
     placeholder={placeholder}
     disabled={disabled}
     required={required}
-    class="bg-transparent text-read-text-primary placeholder:text-read-text-tertiary focus:outline-none w-full font-mono text-xs"
+    class="chrome-input-field w-full text-read-text-primary placeholder:text-read-text-tertiary focus:outline-none bg-transparent"
     {...rest}
   />
-  <span class="text-read-accent animate-pulse font-bold select-none">_</span>
+  <span class="chrome-tui-inline text-read-accent animate-pulse font-bold select-none font-mono text-xs ml-1">_</span>
 </div>
 
-{/* Standard Mode sub-template: Modern rounded input */}
-<div class:list={['chrome-std-block w-full', className]}>
-  <input
-    type={type}
-    id={id ? `${id}-std` : undefined}
-    name={name}
-    value={value}
-    placeholder={placeholder}
-    disabled={disabled}
-    required={required}
-    class:list={[
-      'w-full rounded-lg border border-read-border bg-chrome-input-bg text-read-text-primary placeholder:text-read-text-tertiary px-3.5 py-2 text-sm focus:border-read-accent focus:ring-2 focus:ring-read-accent/20 focus:outline-none transition-all',
-      disabled && 'opacity-40 cursor-not-allowed',
-    ]}
-    {...rest}
-  />
-</div>
+<style>
+  /* TUI Mode Input styling: under html[data-theme="blogly"] */
+  html[data-theme="blogly"] .chrome-input-container {
+    border: 1px solid var(--read-border-strong);
+    background-color: var(--read-bg-base);
+    padding: 0.5rem 0.75rem;
+    font-family: var(--font-theme, monospace);
+    font-size: 0.75rem;
+    border-radius: 0;
+  }
+  html[data-theme="blogly"] .chrome-input-container:focus-within {
+    border-color: var(--read-accent);
+    outline: 1px solid var(--read-accent);
+  }
+  html[data-theme="blogly"] .chrome-input-field {
+    font-family: var(--font-theme, monospace);
+    font-size: 0.75rem;
+  }
+
+  /* Standard Mode Input styling: under all community themes */
+  html:not([data-theme="blogly"]) .chrome-input-container {
+    border: 1px solid var(--read-border);
+    background-color: var(--chrome-input-bg);
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.875rem;
+  }
+  html:not([data-theme="blogly"]) .chrome-input-container:focus-within {
+    border-color: var(--read-accent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--read-accent) 20%, transparent);
+  }
+  html:not([data-theme="blogly"]) .chrome-input-field {
+    font-size: 0.875rem;
+  }
+</style>

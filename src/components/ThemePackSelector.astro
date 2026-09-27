@@ -61,7 +61,9 @@ const themes = getAllThemes();
     // Load saved or attribute theme
     const savedTheme = localStorage.getItem('theme-pack') || document.documentElement.getAttribute('data-theme') || 'catppuccin';
     document.documentElement.setAttribute('data-theme', savedTheme);
-    if (activeLabel) activeLabel.textContent = savedTheme;
+    const matchingOpt = Array.from(options).find((opt) => opt.getAttribute('data-theme-id') === savedTheme);
+    const displayName = matchingOpt ? matchingOpt.getAttribute('data-theme-name') : savedTheme;
+    if (activeLabel && displayName) activeLabel.textContent = displayName;
 
     // Toggle dropdown
     button.onclick = (e) => {

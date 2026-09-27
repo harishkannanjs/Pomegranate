@@ -27,13 +27,17 @@
   font-display: swap;
 }
 
+/* Default font fallback */
+:root {
+  --font-theme: 'JetBrains Mono', monospace;
+}
+
 /* Theme Fonts */
 html[data-theme="blogly"] {
   --font-theme: 'Monocraft', monospace;
 }
 html[data-theme="catppuccin"],
-html:not([data-theme]),
-:root {
+html:not([data-theme]) {
   --font-theme: 'JetBrains Mono', monospace;
 }
 html[data-theme="gruvbox"] {
@@ -58,8 +62,7 @@ html[data-theme="dracula"] {
 
 /* Blogly - Dark */
 html[data-theme="blogly"][data-mode="dark"],
-html[data-theme="blogly"].dark,
-:root.dark[data-theme="blogly"] {
+html[data-theme="blogly"].dark {
   --read-bg-base: #070a14;
   --read-bg-surface: #0d1224;
   --read-bg-surface-raised: #131a33;
@@ -107,9 +110,7 @@ html[data-theme="blogly"]:not(.dark) {
 /* Catppuccin - Dark (Mocha) */
 html[data-theme="catppuccin"][data-mode="dark"],
 html[data-theme="catppuccin"].dark,
-:root.dark[data-theme="catppuccin"],
-html:not([data-theme]).dark,
-:root.dark:not([data-theme]) {
+html:not([data-theme]).dark {
   --read-bg-base: #1e1e2e;
   --read-bg-surface: #181825;
   --read-bg-surface-raised: #313244;
@@ -133,8 +134,7 @@ html[data-theme="catppuccin"][data-mode="light"],
 html[data-theme="catppuccin"].light,
 html[data-theme="catppuccin"]:not(.dark),
 html:not([data-theme]).light,
-html:not([data-theme]):not(.dark),
-:root:not(.dark) {
+html:not([data-theme]):not(.dark) {
   --read-bg-base: #eff1f5;
   --read-bg-surface: #ffffff;
   --read-bg-surface-raised: #e6e9ef;
@@ -159,8 +159,7 @@ html:not([data-theme]):not(.dark),
 
 /* Gruvbox - Dark */
 html[data-theme="gruvbox"][data-mode="dark"],
-html[data-theme="gruvbox"].dark,
-:root.dark[data-theme="gruvbox"] {
+html[data-theme="gruvbox"].dark {
   --read-bg-base: #282828;
   --read-bg-surface: #1d2021;
   --read-bg-surface-raised: #3c3836;
@@ -207,8 +206,7 @@ html[data-theme="gruvbox"]:not(.dark) {
 
 /* Solarized - Dark */
 html[data-theme="solarized"][data-mode="dark"],
-html[data-theme="solarized"].dark,
-:root.dark[data-theme="solarized"] {
+html[data-theme="solarized"].dark {
   --read-bg-base: #002b36;
   --read-bg-surface: #073642;
   --read-bg-surface-raised: #0a4a5a;
@@ -255,8 +253,7 @@ html[data-theme="solarized"]:not(.dark) {
 
 /* Tokyo Night - Dark */
 html[data-theme="tokyo-night"][data-mode="dark"],
-html[data-theme="tokyo-night"].dark,
-:root.dark[data-theme="tokyo-night"] {
+html[data-theme="tokyo-night"].dark {
   --read-bg-base: #1a1b26;
   --read-bg-surface: #16161e;
   --read-bg-surface-raised: #292e42;
@@ -303,8 +300,7 @@ html[data-theme="tokyo-night"]:not(.dark) {
 
 /* Nord - Dark */
 html[data-theme="nord"][data-mode="dark"],
-html[data-theme="nord"].dark,
-:root.dark[data-theme="nord"] {
+html[data-theme="nord"].dark {
   --read-bg-base: #2e3440;
   --read-bg-surface: #242933;
   --read-bg-surface-raised: #3b4252;
@@ -351,8 +347,7 @@ html[data-theme="nord"]:not(.dark) {
 
 /* Dracula - Dark */
 html[data-theme="dracula"][data-mode="dark"],
-html[data-theme="dracula"].dark,
-:root.dark[data-theme="dracula"] {
+html[data-theme="dracula"].dark {
   --read-bg-base: #282a36;
   --read-bg-surface: #21222c;
   --read-bg-surface-raised: #44475a;

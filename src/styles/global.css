@@ -132,7 +132,7 @@
 /* Custom code block and markdown prose styles */
 .prose {
   color: var(--on-surface);
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-theme, 'JetBrains Mono', monospace);
   line-height: 1.75;
   overflow-wrap: break-word;
   word-break: break-word;

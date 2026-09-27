@@ -25,9 +25,11 @@ interface Props {
   headings: { depth: number; slug: string; text: string }[];
   prevPost?: CollectionEntry<'blog'> | null;
   nextPost?: CollectionEntry<'blog'> | null;
+  theme?: import('@/lib/themes').ThemeId;
+  mode?: import('@/lib/themes').ColorMode;
 }
 
-const { post, allPosts, headings, prevPost, nextPost } = Astro.props;
+const { post, allPosts, headings, prevPost, nextPost, theme, mode } = Astro.props;
 const slug = post.id.replace(/\.(md|mdx)$/, '');
 const reading = getReadingTime(post.body || '');
 const seriesInfo = getSeriesInfo(post, allPosts);
@@ -50,6 +52,8 @@ const rootUrl = getRelativePath('/');
   article={true}
   pubDate={post.data.pubDate}
   activePath="/blog"
+  theme={theme}
+  mode={mode}
 >
   <ReadingProgressBar />
 

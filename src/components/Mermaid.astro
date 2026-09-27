@@ -29,6 +29,17 @@ const { code, caption } = Astro.props;
     const diagrams = document.querySelectorAll('.mermaid');
     if (diagrams.length === 0) return;
 
+    // Cache original diagram code before Mermaid mutates DOM
+    diagrams.forEach((diagram) => {
+      const original = diagram.getAttribute('data-original-code');
+      if (!original) {
+        diagram.setAttribute('data-original-code', diagram.textContent || '');
+      } else {
+        diagram.removeAttribute('data-processed');
+        diagram.textContent = original;
+      }
+    });
+
     try {
       // @ts-ignore
       const mermaid = (await import('https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs')).default;
@@ -70,4 +81,6 @@ const { code, caption } = Astro.props;
 
   renderMermaid();
   document.addEventListener('astro:after-swap', renderMermaid);
+  window.addEventListener('theme-pack-change', () => setTimeout(renderMermaid, 50));
+  window.addEventListener('theme-change', () => setTimeout(renderMermaid, 50));
 </script>
