@@ -804,6 +804,196 @@ function profileDevMiddleware() {
         }
       });
 
+      registerApi('/api/get-blog', (req, res) => {
+        const urlObj = new URL(req.url, 'http://localhost');
+        const relPath = urlObj.searchParams.get('relPath');
+        if (!relPath || typeof relPath !== 'string') {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Missing relPath query parameter' }));
+          return;
+        }
+        const normalized = path.normalize(relPath).replace(/\\/g, '/');
+        if (
+          (!normalized.startsWith('Blogs/standalone/') && !normalized.startsWith('Blogs/series/')) ||
+          normalized.includes('..') ||
+          !/\.(md|mdx)$/i.test(normalized)
+        ) {
+          res.writeHead(403, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Access denied: Must be inside Blogs/standalone or Blogs/series' }));
+          return;
+        }
+        const absPath = path.resolve(process.cwd(), normalized);
+        if (!fs.existsSync(absPath)) {
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'File not found' }));
+          return;
+        }
+        try {
+          const content = fs.readFileSync(absPath, 'utf-8');
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: true, relPath: normalized, filename: path.basename(normalized), content }));
+        } catch (err) {
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: err.message }));
+        }
+      });
+
+      registerApi('/api/reorder-series', (req, res) => {
+        if (req.method === 'POST') {
+          let body = '';
+          req.on('data', (c) => { body += c; });
+          req.on('end', () => {
+            try {
+              const { seriesName, episodeOrder } = JSON.parse(body || '{}');
+              if (!seriesName || !Array.isArray(episodeOrder) || episodeOrder.length === 0) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: 'seriesName and episodeOrder array are required' }));
+                return;
+              }
+              const cleanSeries = seriesName.trim().toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '');
+              const seriesDir = path.resolve(process.cwd(), 'Blogs', 'series', cleanSeries);
+              if (!fs.existsSync(seriesDir)) {
+                res.writeHead(404, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ error: `Series folder "${cleanSeries}" not found` }));
+                return;
+              }
+              const totalCount = episodeOrder.length;
+              const frontmatterRegex = /^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/;
+              episodeOrder.forEach((item, index) => {
+                const filename = typeof item === 'string' ? item : item.filename;
+                const newEpisodeNum = index + 1;
+                const filePath = path.join(seriesDir, path.basename(filename));
+                if (fs.existsSync(filePath)) {
+                  const raw = fs.readFileSync(filePath, 'utf-8');
+                  const fmMatch = raw.match(frontmatterRegex);
+                  let frontmatter = {};
+                  let bodyContent = raw;
+                  if (fmMatch) {
+                    try {
+                      frontmatter = yaml.load(fmMatch[1]) || {};
+                    } catch {}
+                    bodyContent = raw.slice(fmMatch[0].length);
+                  }
+                  frontmatter.seriesPart = newEpisodeNum;
+                  frontmatter.seriesTotal = totalCount;
+                  let tags = Array.isArray(frontmatter.tags) ? frontmatter.tags : [];
+                  tags = tags.filter((t) => typeof t === 'string' && !/^episode-\d+$/i.test(t));
+                  tags.push(`episode-${newEpisodeNum}`);
+                  frontmatter.tags = tags;
+                  const updated = `---\n${yaml.dump(frontmatter, { lineWidth: -1 }).trim()}\n---\n\n${bodyContent.trimStart()}`;
+                  fs.writeFileSync(filePath, updated, 'utf-8');
+                }
+              });
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ success: true, message: `Reordered ${totalCount} episodes in series "${cleanSeries}".` }));
+            } catch (err) {
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ error: err.message }));
+            }
+          });
+        } else {
+          res.writeHead(405, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Method not allowed' }));
+        }
+      });
+
+      registerApi('/api/git-revert', async (req, res) => {
+        if (req.method === 'POST') {
+          try {
+            const cwd = process.cwd();
+            const { stdout, stderr } = await exec('git revert HEAD --no-edit', { cwd });
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: true, message: 'Successfully reverted last commit.', output: stdout || stderr }));
+          } catch (err) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: (err.stderr || err.message || '').toString().trim() }));
+          }
+        } else {
+          res.writeHead(405, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Method not allowed' }));
+        }
+      });
+
+      registerApi('/api/export-zip', async (req, res) => {
+        if (req.method === 'GET') {
+          try {
+            const cwd = process.cwd();
+            const tmpZip = path.resolve(cwd, '.site-export-tmp.zip');
+            if (fs.existsSync(tmpZip)) {
+              try { fs.unlinkSync(tmpZip); } catch {}
+            }
+            try {
+              await exec(`tar.exe -a -c -f "${tmpZip}" Blogs public profile.json src package.json README.md`, { cwd });
+            } catch {
+              await exec(`powershell -NoProfile -Command "Compress-Archive -Path Blogs, public, profile.json, src, package.json, README.md -DestinationPath '${tmpZip}' -Force"`, { cwd });
+            }
+            if (!fs.existsSync(tmpZip)) {
+              throw new Error('Failed to generate archive file');
+            }
+            const zipBuffer = fs.readFileSync(tmpZip);
+            try { fs.unlinkSync(tmpZip); } catch {}
+            res.writeHead(200, {
+              'Content-Type': 'application/zip',
+              'Content-Disposition': 'attachment; filename="blogly-site-export.zip"',
+              'Content-Length': zipBuffer.length,
+            });
+            res.end(zipBuffer);
+          } catch (err) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: err.message }));
+          }
+        } else {
+          res.writeHead(405, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Method not allowed' }));
+        }
+      });
+
+      registerApi('/api/deploy-status', async (req, res) => {
+        if (req.method === 'GET') {
+          try {
+            const cwd = process.cwd();
+            let remote = '';
+            try {
+              const { stdout } = await exec('git remote get-url origin', { cwd });
+              remote = stdout.trim();
+            } catch {}
+            let siteUrl = '';
+            try {
+              const pRaw = fs.readFileSync(path.resolve(cwd, 'profile.json'), 'utf-8');
+              const pData = JSON.parse(pRaw);
+              siteUrl = pData.siteUrl || '';
+            } catch {}
+            let repoName = 'glyph.sh';
+            let owner = 'username';
+            if (remote) {
+              const clean = remote.replace(/\.git$/i, '').replace(/\/+$/, '');
+              const parts = clean.split(/[\/:]/);
+              if (parts.length >= 2) {
+                repoName = parts[parts.length - 1];
+                owner = parts[parts.length - 2];
+              }
+            }
+            const pagesUrl = siteUrl || `https://${owner}.github.io/${repoName}/`;
+            const workflowUrl = `https://github.com/${owner}/${repoName}/actions/workflows/deploy.yml`;
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({
+              success: true,
+              remote,
+              pagesUrl,
+              workflowUrl,
+              owner,
+              repoName,
+            }));
+          } catch (err) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ error: err.message }));
+          }
+        } else {
+          res.writeHead(405, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Method not allowed' }));
+        }
+      });
+
       registerApi('/api/git-status', async (req, res) => {
         if (req.method === 'GET') {
           try {
