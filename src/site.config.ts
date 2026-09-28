@@ -25,6 +25,12 @@ export interface PrivacyConfig {
   footerNote?: boolean;
 }
 
+export interface DeployTargetsConfig {
+  vercel?: string;
+  netlify?: string;
+  cloudflare?: string;
+}
+
 export interface SiteConfig {
   name: string;
   author: string;
@@ -44,6 +50,7 @@ export interface SiteConfig {
   giscus: GiscusConfig;
   features?: FeaturesConfig;
   privacy?: PrivacyConfig;
+  deployTargets?: DeployTargetsConfig;
 }
 
 function extractGithubUsername(githubUrl?: string, handle?: string): string {
@@ -99,6 +106,7 @@ export const siteConfig: SiteConfig = {
     footerNote: true,
     ...((profileData as any).privacy || {}),
   },
+  deployTargets: (profileData as any).deployTargets || {},
 };
 
 /**

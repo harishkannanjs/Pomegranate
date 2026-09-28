@@ -81,11 +81,14 @@ describe('Phase 4: Dashboard Restructure Tests', () => {
     expect(result).toContain('id="posts-list-standalone"');
     expect(result).toContain('id="posts-list-series"');
 
-    // 4. Deploy section (GitHub Pages only, no placeholder Vercel/Netlify buttons)
-    expect(result).toContain('Deploy Status (GitHub Pages)');
-    expect(result).toContain('GitHub Pages Pipeline Configured');
-    expect(result).not.toContain('Vercel');
-    expect(result).not.toContain('Netlify');
+    // 4. Deploy section & GitHub Device Flow (Phase 7 Multi-Target)
+    expect(result).toContain('Deploy &amp; GitHub Authentication');
+    expect(result).toContain('Multi-Target Deployment');
+    expect(result).toContain('GitHub Pages');
+    expect(result).toContain('Vercel');
+    expect(result).toContain('Netlify');
+    expect(result).toContain('Cloudflare Pages');
+    expect(result).toContain('Connect GitHub (Device Flow)');
 
     // 5. Privacy section
     expect(result).toContain('Privacy &amp; Data Storage');
@@ -98,7 +101,8 @@ describe('Phase 4: Dashboard Restructure Tests', () => {
     expect(result).toContain('Export Site as ZIP');
     expect(result).toContain('Undo Last Change (Git Revert)');
     expect(result).toContain('id="raw-config-editor"');
-    expect(result).toContain('Coming Soon (Phase 7)');
+    expect(result).toContain('data-action="disconnect-github"');
+    expect(result).toContain('Disconnect GitHub');
   });
 
   it('exposes features and privacy configurations in siteConfig', () => {

@@ -150,6 +150,11 @@ function profileDevMiddleware() {
               if (data.privacy && typeof existing.privacy === 'object') {
                 merged.privacy = { ...existing.privacy, ...data.privacy };
               }
+              if (data.deployTargets && typeof existing.deployTargets === 'object') {
+                merged.deployTargets = { ...existing.deployTargets, ...data.deployTargets };
+              } else if (data.deployTargets) {
+                merged.deployTargets = data.deployTargets;
+              }
               fs.writeFileSync(profilePath, JSON.stringify(merged, null, 2) + '\n', 'utf-8');
               res.writeHead(200, { 'Content-Type': 'application/json' });
               res.end(JSON.stringify({ success: true, message: 'Saved to profile.json in repository!', profile: merged }));
@@ -1127,6 +1132,178 @@ function profileDevMiddleware() {
         }
       });
 
+      registerApi('/api/auth-status', async (req, res) => {
+        if (req.method === 'GET') {
+          try {
+            const deviceFlowPath = path.resolve(process.cwd(), 'src', 'lib', 'github-device-flow.ts');
+            const { getAuthStatus } = await server.ssrLoadModule(deviceFlowPath);
+            const url = new URL(req.url, 'http://localhost');
+            const verify = url.searchParams.get('verify') === 'true';
+            const status = await getAuthStatus(verify);
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: true, ...status }));
+          } catch (err) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: err.message }));
+          }
+        } else {
+          res.writeHead(405, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Method not allowed' }));
+        }
+      });
+
+      registerApi('/api/device-code', async (req, res) => {
+        if (req.method === 'POST') {
+          try {
+            const deviceFlowPath = path.resolve(process.cwd(), 'src', 'lib', 'github-device-flow.ts');
+            const { initiateDeviceFlow } = await server.ssrLoadModule(deviceFlowPath);
+            const codeData = await initiateDeviceFlow();
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: true, ...codeData }));
+          } catch (err) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: err.message }));
+          }
+        } else {
+          res.writeHead(405, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Method not allowed' }));
+        }
+      });
+
+      registerApi('/api/device-poll', (req, res) => {
+        if (req.method === 'POST') {
+          let body = '';
+          req.on('data', (chunk) => { body += chunk; });
+          req.on('end', async () => {
+            try {
+              const { deviceCode } = JSON.parse(body || '{}');
+              if (!deviceCode) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ success: false, error: 'deviceCode is required' }));
+                return;
+              }
+              const deviceFlowPath = path.resolve(process.cwd(), 'src', 'lib', 'github-device-flow.ts');
+              const { pollDeviceToken } = await server.ssrLoadModule(deviceFlowPath);
+              const pollResult = await pollDeviceToken(deviceCode);
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ success: true, ...pollResult }));
+            } catch (err) {
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ success: false, error: err.message }));
+            }
+          });
+        } else {
+          res.writeHead(405, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Method not allowed' }));
+        }
+      });
+
+      registerApi('/api/disconnect-github', async (req, res) => {
+        if (req.method === 'POST') {
+          try {
+            const deviceFlowPath = path.resolve(process.cwd(), 'src', 'lib', 'github-device-flow.ts');
+            const { clearAuthToken } = await server.ssrLoadModule(deviceFlowPath);
+            clearAuthToken();
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: true, connected: false, message: 'Disconnected GitHub authentication.' }));
+          } catch (err) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: false, error: err.message }));
+          }
+        } else {
+          res.writeHead(405, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Method not allowed' }));
+        }
+      });
+
+      registerApi('/api/enable-pages', (req, res) => {
+        if (req.method === 'POST') {
+          let body = '';
+          req.on('data', (chunk) => { body += chunk; });
+          req.on('end', async () => {
+            try {
+              let payload = {};
+              try { payload = JSON.parse(body || '{}'); } catch {}
+              const cwd = process.cwd();
+              let remote = '';
+              try {
+                const { stdout } = await exec('git remote get-url origin', { cwd });
+                remote = stdout.trim();
+              } catch {}
+              let owner = payload.owner || '';
+              let repo = payload.repo || '';
+              if ((!owner || !repo) && remote) {
+                const clean = remote.replace(/\.git$/i, '').replace(/\/+$/, '');
+                const parts = clean.split(/[\/:]/);
+                if (parts.length >= 2) {
+                  repo = parts[parts.length - 1];
+                  owner = parts[parts.length - 2];
+                }
+              }
+              if (!owner || !repo) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ success: false, error: 'Could not determine repository owner and name.' }));
+                return;
+              }
+              const deviceFlowPath = path.resolve(process.cwd(), 'src', 'lib', 'github-device-flow.ts');
+              const { setupOrCheckGitHubPages } = await server.ssrLoadModule(deviceFlowPath);
+              const result = await setupOrCheckGitHubPages(owner, repo);
+              res.writeHead(result.success ? 200 : 500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify(result));
+            } catch (err) {
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ success: false, error: err.message }));
+            }
+          });
+        } else {
+          res.writeHead(405, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Method not allowed' }));
+        }
+      });
+
+      registerApi('/api/save-deploy-target', (req, res) => {
+        if (req.method === 'POST') {
+          let body = '';
+          req.on('data', (chunk) => { body += chunk; });
+          req.on('end', () => {
+            try {
+              const { target, url } = JSON.parse(body || '{}');
+              if (!target || !['vercel', 'netlify', 'cloudflare'].includes(target)) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ success: false, error: 'Invalid deploy target name.' }));
+                return;
+              }
+              const profilePath = path.resolve(process.cwd(), 'profile.json');
+              let existing = {};
+              if (fs.existsSync(profilePath)) {
+                try { existing = JSON.parse(fs.readFileSync(profilePath, 'utf-8')); } catch {}
+              }
+              if (!existing.deployTargets || typeof existing.deployTargets !== 'object') {
+                existing.deployTargets = {};
+              }
+              if (url && typeof url === 'string' && url.trim()) {
+                existing.deployTargets[target] = url.trim();
+              } else {
+                delete existing.deployTargets[target];
+              }
+              fs.writeFileSync(profilePath, JSON.stringify(existing, null, 2) + '\n', 'utf-8');
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({
+                success: true,
+                message: `Saved ${target} live URL to profile.json.`,
+                deployTargets: existing.deployTargets,
+              }));
+            } catch (err) {
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+              res.end(JSON.stringify({ success: false, error: err.message }));
+            }
+          });
+        } else {
+          res.writeHead(405, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Method not allowed' }));
+        }
+      });
+
       registerApi('/api/deploy-status', async (req, res) => {
         if (req.method === 'GET') {
           try {
@@ -1137,10 +1314,12 @@ function profileDevMiddleware() {
               remote = stdout.trim();
             } catch {}
             let siteUrl = '';
+            let deployTargets = {};
             try {
               const pRaw = fs.readFileSync(path.resolve(cwd, 'profile.json'), 'utf-8');
               const pData = JSON.parse(pRaw);
               siteUrl = pData.siteUrl || '';
+              deployTargets = pData.deployTargets || {};
             } catch {}
             let repoName = 'glyph.sh';
             let owner = 'username';
@@ -1154,6 +1333,14 @@ function profileDevMiddleware() {
             }
             const pagesUrl = siteUrl || `https://${owner}.github.io/${repoName}/`;
             const workflowUrl = `https://github.com/${owner}/${repoName}/actions/workflows/deploy.yml`;
+
+            let authStatus = { connected: false };
+            try {
+              const deviceFlowPath = path.resolve(process.cwd(), 'src', 'lib', 'github-device-flow.ts');
+              const { getAuthStatus } = await server.ssrLoadModule(deviceFlowPath);
+              authStatus = await getAuthStatus(false);
+            } catch {}
+
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({
               success: true,
@@ -1162,6 +1349,8 @@ function profileDevMiddleware() {
               workflowUrl,
               owner,
               repoName,
+              deployTargets,
+              authStatus,
             }));
           } catch (err) {
             res.writeHead(500, { 'Content-Type': 'application/json' });
@@ -1291,18 +1480,8 @@ function profileDevMiddleware() {
               }
 
               // 5. Push to origin with selected branch & upstream tracking
-              const { stdout: pushStdout, stderr: pushStderr } = await exec(`git push -u origin ${targetBranch}`, {
-                cwd,
-                timeout: 90000,
-                maxBuffer: 20 * 1024 * 1024,
-              });
-
-              // 6. Get last commit
-              let lastCommit = '';
-              try {
-                const { stdout } = await exec('git log -1 --oneline', { cwd });
-                lastCommit = stdout.trim();
-              } catch {}
+              let pushStdout = '';
+              let pushStderr = '';
 
               let resolvedRemote = targetRepo;
               if (!resolvedRemote) {
@@ -1311,6 +1490,41 @@ function profileDevMiddleware() {
                   resolvedRemote = stdout.trim();
                 } catch {}
               }
+
+              let token = null;
+              try {
+                const deviceFlowPath = path.resolve(process.cwd(), 'src', 'lib', 'github-device-flow.ts');
+                const { getStoredToken } = await server.ssrLoadModule(deviceFlowPath);
+                token = getStoredToken();
+              } catch {}
+
+              if (token && resolvedRemote && /^https?:\/\//i.test(resolvedRemote)) {
+                // In-memory HTTP extraHeader authentication (token is never written to disk or .git/config)
+                const basicAuth = Buffer.from(`x-access-token:${token}`).toString('base64');
+                const pushResult = await exec(`git -c http.extraHeader="AUTHORIZATION: basic ${basicAuth}" push -u origin ${targetBranch}`, {
+                  cwd,
+                  timeout: 90000,
+                  maxBuffer: 20 * 1024 * 1024,
+                });
+                pushStdout = pushResult.stdout;
+                pushStderr = pushResult.stderr;
+              } else {
+                // Machine / Codespaces credential fallback
+                const pushResult = await exec(`git push -u origin ${targetBranch}`, {
+                  cwd,
+                  timeout: 90000,
+                  maxBuffer: 20 * 1024 * 1024,
+                });
+                pushStdout = pushResult.stdout;
+                pushStderr = pushResult.stderr;
+              }
+
+              // 6. Get last commit
+              let lastCommit = '';
+              try {
+                const { stdout } = await exec('git log -1 --oneline', { cwd });
+                lastCommit = stdout.trim();
+              } catch {}
 
               res.writeHead(200, { 'Content-Type': 'application/json' });
               res.end(JSON.stringify({
@@ -1325,11 +1539,15 @@ function profileDevMiddleware() {
               }));
             } catch (err) {
               const errText = (err.stderr || err.stdout || err.message || '').toString().trim();
-              res.writeHead(500, { 'Content-Type': 'application/json' });
+              const isAuthError = /authentication failed|could not read Username|Permission to .* denied|HTTP 401|HTTP 403|terminal prompts disabled/i.test(errText);
+              res.writeHead(isAuthError ? 401 : 500, { 'Content-Type': 'application/json' });
               res.end(JSON.stringify({
                 success: false,
                 error: errText,
-                message: 'Git push encountered an issue. You can run the terminal command shown below.',
+                needsAuth: isAuthError,
+                message: isAuthError
+                  ? 'GitHub authentication required to push. Please connect GitHub in Settings via Device Flow.'
+                  : 'Git push encountered an issue. You can run the terminal command shown below.',
               }));
             }
           });

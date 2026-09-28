@@ -1,17 +1,45 @@
-# TASKS.md — Current phase only: Phase 5 (File-Conversion Pipeline)
+# TASKS.md — Current phase only: Phase 7 (Device Flow Push + Multi-Target Deploy)
 
-> Per `ROADMAP.md` Phase 5 and prompt instructions. Each item is scoped to be one reviewable unit of work.
+> Per `ROADMAP.md` Phase 7 and prompt instructions. Each item is scoped to be one reviewable unit of work.
 
-- [x] Initialize Phase 5 task checklist and create feature branch `feat/phase-5-file-conversion-pipeline`.
-- [x] Install and configure conversion dependencies (`turndown`, `mammoth`, `pdf-parse`, `papaparse`, `tesseract.js`, types).
-- [x] Build backend conversion dispatcher module (`src/lib/conversion/converter.ts`):
-  - Tier 1: `.md`/`.txt` (passthrough), `.html` (Turndown), `.docx` (Mammoth -> Turndown), `.pdf` (PDFParse), `.csv`/`.json` (Papaparse/JSON -> Markdown table), images (Tesseract.js OCR).
-  - Tier 2: audio (`.mp3`/`.wav`/`.m4a`) via Groq-hosted Whisper Large V3 (BYOK).
-- [x] Implement `/api/convert-file` endpoint in `astro.config.mjs` running in local Node/Bun backend without external network calls for Tier 1.
-- [x] Add Groq API Key (BYOK) management in `src/components/dashboard/SettingsTab.astro` with privacy explainer.
-- [x] Wire the real conversion dispatcher into the existing seam (`convertToMarkdown`) in `src/components/dashboard/FileUploadTab.astro`:
-  - Enforce explicit consent prompt before sending audio to Groq.
-  - Show plain-language message with Settings link if no Groq API key is configured.
-  - Populate raw/preview split editor upon successful conversion.
-- [x] Build automated test suite (`tests/conversion.test.ts`) covering all Tier 1 handlers with fixtures, zero-network verification for Tier 1, and Tier 2 BYOK consent/error handling.
-- [x] Run full repository verification suite (`bun run astro check`, `bun run lint`, `bun run format:check`, `bun run test`, `bun run build`), open PR, verify CI, resolve review comments, and merge.
+- [x] Initialize Phase 7 task checklist (`guardrails/TASKS.md`) and create feature branch `feat/phase-7-device-flow-deploy`.
+- [x] Ensure `.gitignore` covers `.blogly/` and local credential files with zero token committability.
+- [x] Create zero-config deployment configurations for static output:
+  - `vercel.json` (Astro framework, bun run build, dist output)
+  - `netlify.toml` (build command, publish dist, security headers)
+  - `wrangler.toml` (Cloudflare Pages dist static build output)
+- [x] Implement backend Device Flow module (`src/lib/github-device-flow.ts`):
+  - Request user & device code from GitHub (`POST https://github.com/login/device/code`).
+  - Background polling mechanism respecting `interval` and `slow_down` responses.
+  - Safe, uncommitted local token storage in `.blogly/auth.json` with restrictive permissions.
+  - Token verification (`GET https://api.github.com/user`) and 401 expiration detection.
+  - Disconnect action clearing local tokens and linking to GitHub App revocation.
+  - Device-authenticated git push execution for users without pre-configured git credentials.
+  - GitHub Pages enable & status querying via GitHub REST API.
+- [x] Register Device Flow and deployment endpoints in `astro.config.mjs`:
+  - `GET /api/auth-status`: Returns connected state and user handle (never exposes raw token).
+  - `POST /api/device-code`: Initiates flow and returns userCode + verificationUri.
+  - `POST /api/device-poll`: Backend polling trigger for token exchange.
+  - `POST /api/disconnect-github`: Wipes local token and resets auth state.
+  - `POST /api/enable-pages`: Enables Pages with GitHub Actions workflow on user's repo.
+  - Upgrade `/api/git-push`: Uses Device Flow token if available to push over HTTPS without credential prompts.
+- [x] Update `src/components/dashboard/SettingsTab.astro` Deploy & Danger Zone UI:
+  - Multi-target deploy section:
+    - GitHub Pages emphasized with one-click enable, workflow validation, and inline status indicator.
+    - Vercel, Netlify, and Cloudflare Pages buttons opening synchronously in new tabs with pre-filled repo URLs.
+    - Persistent "Paste your live URL" inputs for Vercel, Netlify, and Cloudflare Pages saving to `profile.json`.
+  - Connect GitHub (Device Flow) modal and banner:
+    - User code display, copy-to-clipboard, direct link to `github.com/login/device`.
+    - Polling status feedback (`Waiting for approval... → Connected as @username`).
+  - Active Disconnect GitHub button in Danger Zone with revocation guidance.
+  - Dual-mode styling compliance (TUI and Standard modes).
+- [x] Update `src/components/dashboard/FileUploadTab.astro`:
+  - Prompt or badge to connect GitHub via Device Flow if push fails or credentials are required.
+- [x] Write comprehensive test suite (`tests/device-flow-deploy.test.ts`):
+  - Verify Device Flow initiation and polling handling.
+  - Verify local token storage and `.gitignore` coverage.
+  - Verify zero token leakage in API responses or logs.
+  - Verify 401 expiration handling.
+  - Verify multi-target deploy URLs generation and paste-URL persistence.
+  - Verify zero-config build files syntax and contents.
+- [x] Execute native verification suite (`bun run astro check`, `bun run lint`, `bun run format:check`, `bun run test`, `bun run build`).
