@@ -71,17 +71,32 @@ export function validateHighlight(item: unknown): StoredHighlight | null {
 }
 
 /**
+ * Safely accesses localStorage without throwing on SecurityError (e.g. private browsing or disabled storage).
+ */
+export function getSafeLocalStorage(): Storage | null {
+  try {
+    if (typeof window !== 'undefined' && 'localStorage' in window && window.localStorage) {
+      return window.localStorage;
+    }
+  } catch {
+    // SecurityError or restricted storage in private browsing
+  }
+  return null;
+}
+
+/**
  * Loads and validates all highlights stored for a given post.
  * Never throws — returns empty list if storage is disabled, empty, or corrupt.
  */
 export function loadHighlights(postSlug: string): StoredHighlight[] {
-  if (typeof window === 'undefined' || !window.localStorage) {
+  const storage = getSafeLocalStorage();
+  if (!storage) {
     return [];
   }
 
   const key = getStorageKey(postSlug);
   try {
-    const raw = window.localStorage.getItem(key);
+    const raw = storage.getItem(key);
     if (!raw) {
       return [];
     }
@@ -117,10 +132,11 @@ export function saveHighlights(
   postSlug: string,
   highlights: StoredHighlight[]
 ): StorageOperationResult<StoredHighlight[]> {
-  if (typeof window === 'undefined' || !window.localStorage) {
+  const storage = getSafeLocalStorage();
+  if (!storage) {
     return {
       success: false,
-      error: 'Local storage is not available in this environment.',
+      error: 'Local storage is not available or permitted in this environment.',
     };
   }
 
@@ -128,7 +144,7 @@ export function saveHighlights(
   const capped = highlights.slice(0, MAX_HIGHLIGHTS_PER_POST);
 
   try {
-    window.localStorage.setItem(key, JSON.stringify(capped));
+    storage.setItem(key, JSON.stringify(capped));
     return {
       success: true,
       data: capped,
@@ -227,13 +243,17 @@ export function removeHighlight(
  * Clears all highlights for a given post.
  */
 export function clearHighlights(postSlug: string): StorageOperationResult {
-  if (typeof window === 'undefined' || !window.localStorage) {
-    return { success: true };
+  const storage = getSafeLocalStorage();
+  if (!storage) {
+    return {
+      success: false,
+      error: 'Local storage is not available or permitted in this environment.',
+    };
   }
 
   const key = getStorageKey(postSlug);
   try {
-    window.localStorage.removeItem(key);
+    storage.removeItem(key);
     return { success: true };
   } catch (err: unknown) {
     return {

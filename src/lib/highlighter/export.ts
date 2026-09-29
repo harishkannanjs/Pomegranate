@@ -23,10 +23,11 @@ export function generateHighlightsMarkdown(data: HighlightExportData): string {
   const { postTitle, postUrl, exportedAt, highlights } = data;
 
   const lines: string[] = [];
-  lines.push(`# Highlights: ${postTitle || 'Blog Post'}`);
+  lines.push(`# Highlights: ${escapeMarkdown(postTitle || 'Blog Post')}`);
   lines.push('');
   if (postUrl) {
-    lines.push(`- **Source:** [${postUrl}](${postUrl})`);
+    const safeUrl = encodeURI(postUrl).replace(/\(/g, '%28').replace(/\)/g, '%29');
+    lines.push(`- **Source:** [${escapeMarkdown(postUrl)}](${safeUrl})`);
   }
   lines.push(`- **Exported:** ${exportedAt || new Date().toISOString()}`);
   lines.push(`- **Count:** ${highlights.length} highlight${highlights.length === 1 ? '' : 's'}`);

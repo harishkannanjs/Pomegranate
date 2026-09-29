@@ -286,8 +286,107 @@ export function reanchorAllHighlights(
 }
 
 /**
+ * Resolves a (node, offset) DOM boundary point to an exact character offset in index.fullText.
+ * Handles both Text nodes and Element nodes (child boundaries) without searching from index 0.
+ */
+export function resolvePointToCharOffset(
+  pointNode: Node,
+  pointOffset: number,
+  index: TextIndex,
+  isStart: boolean
+): number {
+  // If pointNode is directly one of our indexed text nodes
+  for (const item of index.textNodes) {
+    if (item.node === pointNode) {
+      return item.start + Math.min(item.node.length, Math.max(0, pointOffset));
+    }
+  }
+
+  // If pointNode is an Element or container (offset refers to child index)
+  if (pointNode.nodeType === 1 || 'childNodes' in pointNode) {
+    const children = pointNode.childNodes;
+    if (isStart) {
+      if (pointOffset < children.length) {
+        const nextChild = children[pointOffset];
+        for (const item of index.textNodes) {
+          if (nextChild === item.node || (nextChild.contains && nextChild.contains(item.node))) {
+            return item.start;
+          }
+          if (
+            nextChild.compareDocumentPosition &&
+            nextChild.compareDocumentPosition(item.node) & 4 /* Node.DOCUMENT_POSITION_FOLLOWING */
+          ) {
+            return item.start;
+          }
+        }
+      } else if (children.length > 0) {
+        const lastChild = children[children.length - 1];
+        for (let i = index.textNodes.length - 1; i >= 0; i--) {
+          const item = index.textNodes[i];
+          if (lastChild === item.node || (lastChild.contains && lastChild.contains(item.node))) {
+            return item.end;
+          }
+        }
+      }
+    } else {
+      if (pointOffset > 0 && pointOffset <= children.length) {
+        const prevChild = children[pointOffset - 1];
+        for (let i = index.textNodes.length - 1; i >= 0; i--) {
+          const item = index.textNodes[i];
+          if (prevChild === item.node || (prevChild.contains && prevChild.contains(item.node))) {
+            return item.end;
+          }
+          if (
+            prevChild.compareDocumentPosition &&
+            prevChild.compareDocumentPosition(item.node) & 2 /* Node.DOCUMENT_POSITION_PRECEDING */
+          ) {
+            return item.end;
+          }
+        }
+      } else if (children.length > 0) {
+        const firstChild = children[0];
+        for (const item of index.textNodes) {
+          if (firstChild === item.node || (firstChild.contains && firstChild.contains(item.node))) {
+            return item.start;
+          }
+        }
+      }
+    }
+  }
+
+  return -1;
+}
+
+const RANGE_START_TO_END = typeof Range !== 'undefined' && Range.START_TO_END !== undefined ? Range.START_TO_END : 1;
+const RANGE_END_TO_START = typeof Range !== 'undefined' && Range.END_TO_START !== undefined ? Range.END_TO_START : 3;
+
+/**
+ * Safely checks if a Range intersects a DOM Node, even in environments without Range.prototype.intersectsNode.
+ */
+export function rangeIntersectsNode(range: Range, node: Node): boolean {
+  if (typeof range.intersectsNode === 'function') {
+    return range.intersectsNode(node);
+  }
+  const doc = node.ownerDocument || (node as unknown as { document?: Document }).document;
+  if (!doc || typeof doc.createRange !== 'function') {
+    return false;
+  }
+  try {
+    const nodeRange = doc.createRange();
+    nodeRange.selectNode(node);
+    return (
+      range.compareBoundaryPoints(RANGE_END_TO_START, nodeRange) < 0 &&
+      range.compareBoundaryPoints(RANGE_START_TO_END, nodeRange) > 0
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Extracts context (~40 chars before and after) from an active user selection.
- * Validates that the selection is non-empty and does not touch excluded elements.
+ * Validates that the selection is non-empty, does not intersect excluded elements,
+ * and adjusts context to match trimmed selection boundaries.
  */
 export function extractSelectionContext(
   container: Element,
@@ -297,8 +396,8 @@ export function extractSelectionContext(
     return null;
   }
 
-  const text = selection.toString().trim();
-  if (text.length === 0) {
+  const rawSelectionText = selection.toString();
+  if (rawSelectionText.trim().length === 0) {
     return null;
   }
 
@@ -309,7 +408,7 @@ export function extractSelectionContext(
     return null;
   }
 
-  // Validate excluded elements
+  // Validate start and end element parents
   const startEl =
     range.startContainer instanceof Element ? range.startContainer : range.startContainer.parentElement;
   const endEl =
@@ -319,36 +418,48 @@ export function extractSelectionContext(
     return null;
   }
 
+  // Verify that the selection does not cross or intersect any excluded elements
+  for (const selector of EXCLUDED_SELECTORS) {
+    const excludedList = container.querySelectorAll(selector);
+    for (let i = 0; i < excludedList.length; i++) {
+      const excluded = excludedList[i];
+      if (rangeIntersectsNode(range, excluded)) {
+        return null;
+      }
+    }
+  }
+
   // Build text index
   const index = buildTextIndex(container);
-
-  // Find start and end offset in index
-  let matchStart = -1;
-  let matchEnd = -1;
-
-  for (const item of index.textNodes) {
-    if (item.node === range.startContainer) {
-      matchStart = item.start + range.startOffset;
-    }
-    if (item.node === range.endContainer) {
-      matchEnd = item.start + range.endOffset;
-    }
+  if (index.textNodes.length === 0 || index.fullText.length === 0) {
+    return null;
   }
 
-  // If start or end container was an element (e.g., selection touched element boundary)
+  // Resolve start and end offsets accurately using resolvePointToCharOffset
+  const matchStart = resolvePointToCharOffset(range.startContainer, range.startOffset, index, true);
+  const matchEnd = resolvePointToCharOffset(range.endContainer, range.endOffset, index, false);
+
   if (matchStart === -1 || matchEnd === -1 || matchStart >= matchEnd) {
-    // Fall back to finding exact occurrence of text in index.fullText
-    const idx = index.fullText.indexOf(text);
-    if (idx !== -1) {
-      matchStart = idx;
-      matchEnd = idx + text.length;
-    } else {
-      return null;
-    }
+    return null;
   }
 
-  const contextBefore = index.fullText.slice(Math.max(0, matchStart - 40), matchStart);
-  const contextAfter = index.fullText.slice(matchEnd, Math.min(index.fullText.length, matchEnd + 40));
+  // Trim whitespace and adjust offsets so context ends/starts immediately adjacent to trimmed text
+  const selectedSlice = index.fullText.slice(matchStart, matchEnd);
+  const leadingWsMatch = selectedSlice.match(/^\s*/);
+  const leadingWs = leadingWsMatch ? leadingWsMatch[0].length : 0;
+  const trailingWsMatch = selectedSlice.match(/\s*$/);
+  const trailingWs = trailingWsMatch ? trailingWsMatch[0].length : 0;
+
+  const trimmedStart = matchStart + leadingWs;
+  const trimmedEnd = Math.max(trimmedStart, matchEnd - trailingWs);
+
+  const text = index.fullText.slice(trimmedStart, trimmedEnd);
+  if (!text || text.length === 0) {
+    return null;
+  }
+
+  const contextBefore = index.fullText.slice(Math.max(0, trimmedStart - 40), trimmedStart);
+  const contextAfter = index.fullText.slice(trimmedEnd, Math.min(index.fullText.length, trimmedEnd + 40));
 
   return {
     text,

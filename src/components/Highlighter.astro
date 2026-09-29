@@ -91,32 +91,52 @@ const { postSlug, postTitle = 'Blog Post' } = Astro.props;
     id="highlighter-remove-popover"
     class="fixed z-50 opacity-0 pointer-events-none transition-all duration-150 transform -translate-x-1/2 -translate-y-2 select-none"
     role="dialog"
-    aria-label="Remove highlight"
+    aria-label="Highlight options"
   >
     <!-- TUI Mode -->
-    <button
-      type="button"
-      id="hl-remove-btn-tui"
-      class="chrome-tui-inline items-center gap-1.5 font-mono text-xs px-2.5 py-1 bg-read-bg-surface border border-chrome-danger text-chrome-danger hover:bg-chrome-danger hover:text-white font-bold shadow-lg cursor-pointer rounded-none"
-    >
-      <span class="text-read-text-tertiary">[</span>
-      <span>Remove Highlight</span>
-      <span class="text-read-text-tertiary">]</span>
-    </button>
+    <div class="chrome-tui-inline items-center gap-1.5 font-mono text-xs">
+      <button
+        type="button"
+        id="hl-remove-btn-tui"
+        class="chrome-tui-inline items-center gap-1 px-2.5 py-1 bg-read-bg-surface border border-chrome-danger text-chrome-danger hover:bg-chrome-danger hover:text-white font-bold shadow-lg cursor-pointer rounded-none"
+      >
+        <span class="text-read-text-tertiary">[</span>
+        <span>Remove Highlight</span>
+        <span class="text-read-text-tertiary">]</span>
+      </button>
+      <a
+        id="hl-follow-link-tui"
+        href="#"
+        class="chrome-tui-inline items-center gap-1 px-2.5 py-1 bg-read-bg-surface border border-read-accent text-read-accent hover:bg-read-accent hover:text-read-bg-base font-bold shadow-lg cursor-pointer rounded-none hidden"
+      >
+        <span class="text-read-text-tertiary">[</span>
+        <span>Follow Link &rarr;</span>
+        <span class="text-read-text-tertiary">]</span>
+      </a>
+    </div>
 
     <!-- Standard Mode -->
-    <button
-      type="button"
-      id="hl-remove-btn-std"
-      class="chrome-std-inline items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg bg-chrome-danger text-white hover:opacity-90 shadow-md cursor-pointer"
-    >
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3.5 h-3.5">
-        <path d="M3 6h18"></path>
-        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
-        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
-      </svg>
-      <span>Remove Highlight</span>
-    </button>
+    <div class="chrome-std-inline items-center gap-1.5 text-xs font-medium">
+      <button
+        type="button"
+        id="hl-remove-btn-std"
+        class="chrome-std-inline items-center gap-1.5 px-3 py-1.5 rounded-lg bg-chrome-danger text-white hover:opacity-90 shadow-md cursor-pointer"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3.5 h-3.5">
+          <path d="M3 6h18"></path>
+          <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+          <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+        </svg>
+        <span>Remove Highlight</span>
+      </button>
+      <a
+        id="hl-follow-link-std"
+        href="#"
+        class="chrome-std-inline items-center gap-1.5 px-3 py-1.5 rounded-lg bg-read-bg-surface-raised border border-read-border hover:border-read-accent text-read-text-primary hover:text-read-accent shadow-md cursor-pointer hidden"
+      >
+        <span>Follow Link &rarr;</span>
+      </a>
+    </div>
   </div>
 
   <!-- "Your Highlights" Drawer / Backdrop -->
@@ -261,7 +281,14 @@ const { postSlug, postTitle = 'Blog Post' } = Astro.props;
   } from '@/lib/highlighter/export';
   import type { StoredHighlight } from '@/lib/highlighter/types';
 
+  let cleanupHighlighter: (() => void) | null = null;
+
   function initHighlighter() {
+    if (cleanupHighlighter) {
+      cleanupHighlighter();
+      cleanupHighlighter = null;
+    }
+
     const root = document.getElementById('highlighter-root');
     if (!root) return;
 
@@ -276,9 +303,14 @@ const { postSlug, postTitle = 'Blog Post' } = Astro.props;
     if (!proseEl) return;
     const prose: HTMLElement = proseEl;
 
+    const abortController = new AbortController();
+    const { signal } = abortController;
+
     // Elements
     const floatingBar = document.getElementById('highlighter-floating-bar');
     const removePopover = document.getElementById('highlighter-remove-popover');
+    const hlFollowLinkTui = document.getElementById('hl-follow-link-tui') as HTMLAnchorElement | null;
+    const hlFollowLinkStd = document.getElementById('hl-follow-link-std') as HTMLAnchorElement | null;
     const drawer = document.getElementById('highlighter-drawer');
     const backdrop = document.getElementById('highlighter-backdrop');
     const drawerToggleBtn = document.getElementById('highlighter-drawer-toggle-btn');
@@ -294,6 +326,10 @@ const { postSlug, postTitle = 'Blog Post' } = Astro.props;
     let activeSelectionContext: { text: string; contextBefore: string; contextAfter: string } | null = null;
     let activeHighlightIdForRemoval: string | null = null;
     let toastTimeout: number | null = null;
+    let selectionTimer: number | null = null;
+    let mutationTimer: number | null = null;
+    let isReanchoring = false;
+    let lastRenderedIds = new Set<string>();
 
     function showToast(message: string, isError = false) {
       if (!toast || !toastMsg) return;
@@ -347,7 +383,8 @@ const { postSlug, postTitle = 'Blog Post' } = Astro.props;
         card.appendChild(quote);
 
         const metaRow = document.createElement('div');
-        metaRow.className = 'flex items-center justify-between text-[11px] font-mono text-read-text-secondary pt-1 border-t border-read-border/40';
+        metaRow.className =
+          'flex items-center justify-between text-[11px] font-mono text-read-text-secondary pt-1 border-t border-read-border/40';
 
         const dateSpan = document.createElement('span');
         dateSpan.textContent = new Date(h.createdAt).toLocaleDateString(undefined, {
@@ -436,6 +473,8 @@ const { postSlug, postTitle = 'Blog Post' } = Astro.props;
       removePopover.classList.remove('opacity-100', 'pointer-events-auto');
       removePopover.classList.add('opacity-0', 'pointer-events-none');
       activeHighlightIdForRemoval = null;
+      if (hlFollowLinkTui) hlFollowLinkTui.classList.add('hidden');
+      if (hlFollowLinkStd) hlFollowLinkStd.classList.add('hidden');
     }
 
     function handleSelectionChange() {
@@ -465,7 +504,6 @@ const { postSlug, postTitle = 'Blog Post' } = Astro.props;
       if (floatingBar) {
         const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
         let top = rect.top - 46;
-        // If close to top of viewport or on touch device, position below selection to avoid OS toolbar collision
         if (top < 50 || (isTouch && rect.bottom + 50 < window.innerHeight)) {
           top = rect.bottom + 12;
         }
@@ -496,6 +534,7 @@ const { postSlug, postTitle = 'Blog Post' } = Astro.props;
       }
 
       anchorHighlight(prose, res.data);
+      lastRenderedIds.add(res.data.id);
       const updated = loadHighlights(postSlug);
       updateBadge(updated.length);
 
@@ -506,7 +545,13 @@ const { postSlug, postTitle = 'Blog Post' } = Astro.props;
 
     function handleRemoveHighlight(id: string) {
       const res = removeHighlight(postSlug, id);
+      if (!res.success) {
+        showToast(res.error || 'Failed to remove highlight from storage', true);
+        return;
+      }
+
       removeRenderedHighlight(prose, id);
+      lastRenderedIds.delete(id);
       const updated = res.data || loadHighlights(postSlug);
       updateBadge(updated.length);
       renderDrawerList(updated);
@@ -514,179 +559,305 @@ const { postSlug, postTitle = 'Blog Post' } = Astro.props;
       showToast('Highlight removed');
     }
 
-    // Attach listeners
-    document.addEventListener('selectionchange', () => {
-      // Debounce slightly to smooth out drag selections
-      setTimeout(handleSelectionChange, 10);
-    });
+    // Attach listeners with AbortSignal for lifecycle cleanup
+    document.addEventListener(
+      'selectionchange',
+      () => {
+        if (selectionTimer) clearTimeout(selectionTimer);
+        selectionTimer = window.setTimeout(handleSelectionChange, 10);
+      },
+      { signal }
+    );
 
     // Floating bar confirm buttons
     const tuiConfirm = document.getElementById('hl-confirm-btn-tui');
     const stdConfirm = document.getElementById('hl-confirm-btn-std');
-    tuiConfirm?.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      createHighlightFromSelection();
-    });
-    stdConfirm?.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      createHighlightFromSelection();
-    });
+    tuiConfirm?.addEventListener(
+      'click',
+      (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        createHighlightFromSelection();
+      },
+      { signal }
+    );
+    stdConfirm?.addEventListener(
+      'click',
+      (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        createHighlightFromSelection();
+      },
+      { signal }
+    );
 
     // Remove popover buttons
     const tuiRemove = document.getElementById('hl-remove-btn-tui');
     const stdRemove = document.getElementById('hl-remove-btn-std');
-    tuiRemove?.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (activeHighlightIdForRemoval) handleRemoveHighlight(activeHighlightIdForRemoval);
-    });
-    stdRemove?.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (activeHighlightIdForRemoval) handleRemoveHighlight(activeHighlightIdForRemoval);
-    });
+    tuiRemove?.addEventListener(
+      'click',
+      (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (activeHighlightIdForRemoval) handleRemoveHighlight(activeHighlightIdForRemoval);
+      },
+      { signal }
+    );
+    stdRemove?.addEventListener(
+      'click',
+      (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (activeHighlightIdForRemoval) handleRemoveHighlight(activeHighlightIdForRemoval);
+      },
+      { signal }
+    );
+
+    // Follow link buttons in popover
+    hlFollowLinkTui?.addEventListener('click', () => hideRemovePopover(), { signal });
+    hlFollowLinkStd?.addEventListener('click', () => hideRemovePopover(), { signal });
 
     // Clicking an existing highlight in the article
-    prose.addEventListener('click', (e) => {
-      const target = e.target as HTMLElement | null;
-      const mark = target?.closest('mark.blogly-highlight') as HTMLElement | null;
-      if (!mark) {
-        hideRemovePopover();
-        return;
-      }
-
-      e.preventDefault();
-      e.stopPropagation();
-
-      const hlId = mark.dataset.highlightId;
-      if (!hlId || !removePopover) return;
-
-      activeHighlightIdForRemoval = hlId;
-      hideFloatingBar();
-
-      const rect = mark.getBoundingClientRect();
-      let top = rect.top - 42;
-      if (top < 50) top = rect.bottom + 10;
-      const left = Math.max(80, Math.min(window.innerWidth - 80, rect.left + rect.width / 2));
-
-      removePopover.style.top = `${top}px`;
-      removePopover.style.left = `${left}px`;
-      removePopover.classList.remove('opacity-0', 'pointer-events-none');
-      removePopover.classList.add('opacity-100', 'pointer-events-auto');
-    });
-
-    // Drawer toggle & close
-    drawerToggleBtn?.addEventListener('click', (e) => {
-      e.stopPropagation();
-      openDrawer();
-    });
-    drawerCloseBtn?.addEventListener('click', closeDrawer);
-    backdrop?.addEventListener('click', closeDrawer);
-
-    // Download Markdown action
-    downloadBtn?.addEventListener('click', () => {
-      const highlights = loadHighlights(postSlug);
-      if (highlights.length === 0) {
-        showToast('No highlights to export', true);
-        return;
-      }
-
-      const md = generateHighlightsMarkdown({
-        postTitle,
-        postUrl: window.location.href,
-        exportedAt: new Date().toISOString(),
-        highlights,
-      });
-
-      const cleanSlug = postSlug.replace(/[^a-zA-Z0-9_-]+/g, '-');
-      triggerMarkdownDownload(`highlights-${cleanSlug}.md`, md);
-      showToast('Downloaded highlights markdown');
-    });
-
-    // Clear all action
-    clearAllBtn?.addEventListener('click', () => {
-      const highlights = loadHighlights(postSlug);
-      if (highlights.length === 0) return;
-
-      if (!confirm('Are you sure you want to clear all highlights on this post? This cannot be undone.')) {
-        return;
-      }
-
-      clearHighlights(postSlug);
-      highlights.forEach((h) => removeRenderedHighlight(prose, h.id));
-      updateBadge(0);
-      renderDrawerList([]);
-      showToast('All highlights cleared');
-    });
-
-    // Keyboard Shortcuts
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        if (drawer?.classList.contains('translate-x-0')) {
-          closeDrawer();
-          return;
-        }
-        if (removePopover && !removePopover.classList.contains('opacity-0')) {
+    prose.addEventListener(
+      'click',
+      (e) => {
+        const target = e.target as HTMLElement | null;
+        const mark = target?.closest('mark.blogly-highlight') as HTMLElement | null;
+        if (!mark) {
           hideRemovePopover();
           return;
         }
-        if (floatingBar && !floatingBar.classList.contains('opacity-0')) {
-          hideFloatingBar();
+
+        // Allow Ctrl+Click, Cmd+Click, Shift+Click, or middle-click to follow links natively
+        if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) {
           return;
         }
-      }
 
-      // Alt+H: Highlight active selection or toggle drawer
-      if (e.altKey && (e.key === 'h' || e.key === 'H')) {
+        const hlId = mark.dataset.highlightId;
+        if (!hlId || !removePopover) return;
+
+        // Check if the mark is inside an anchor link or contains one
+        const linkEl = (mark.closest('a') || mark.querySelector('a')) as HTMLAnchorElement | null;
+
         e.preventDefault();
-        if (activeSelectionContext) {
-          createHighlightFromSelection();
+        e.stopPropagation();
+
+        activeHighlightIdForRemoval = hlId;
+        hideFloatingBar();
+
+        if (linkEl && linkEl.href) {
+          if (hlFollowLinkTui) {
+            hlFollowLinkTui.href = linkEl.href;
+            hlFollowLinkTui.target = linkEl.target || '';
+            hlFollowLinkTui.rel = linkEl.rel || '';
+            hlFollowLinkTui.classList.remove('hidden');
+          }
+          if (hlFollowLinkStd) {
+            hlFollowLinkStd.href = linkEl.href;
+            hlFollowLinkStd.target = linkEl.target || '';
+            hlFollowLinkStd.rel = linkEl.rel || '';
+            hlFollowLinkStd.classList.remove('hidden');
+          }
         } else {
+          if (hlFollowLinkTui) {
+            hlFollowLinkTui.classList.add('hidden');
+            hlFollowLinkTui.href = '#';
+          }
+          if (hlFollowLinkStd) {
+            hlFollowLinkStd.classList.add('hidden');
+            hlFollowLinkStd.href = '#';
+          }
+        }
+
+        const rect = mark.getBoundingClientRect();
+        let top = rect.top - 42;
+        if (top < 50) top = rect.bottom + 10;
+        const left = Math.max(80, Math.min(window.innerWidth - 80, rect.left + rect.width / 2));
+
+        removePopover.style.top = `${top}px`;
+        removePopover.style.left = `${left}px`;
+        removePopover.classList.remove('opacity-0', 'pointer-events-none');
+        removePopover.classList.add('opacity-100', 'pointer-events-auto');
+      },
+      { signal }
+    );
+
+    // Drawer toggle & close
+    drawerToggleBtn?.addEventListener(
+      'click',
+      (e) => {
+        e.stopPropagation();
+        openDrawer();
+      },
+      { signal }
+    );
+    drawerCloseBtn?.addEventListener('click', closeDrawer, { signal });
+    backdrop?.addEventListener('click', closeDrawer, { signal });
+
+    // Download Markdown action
+    downloadBtn?.addEventListener(
+      'click',
+      () => {
+        const highlights = loadHighlights(postSlug);
+        if (highlights.length === 0) {
+          showToast('No highlights to export', true);
+          return;
+        }
+
+        const md = generateHighlightsMarkdown({
+          postTitle,
+          postUrl: window.location.href,
+          exportedAt: new Date().toISOString(),
+          highlights,
+        });
+
+        const cleanSlug = postSlug.replace(/[^a-zA-Z0-9_-]+/g, '-');
+        triggerMarkdownDownload(`highlights-${cleanSlug}.md`, md);
+        showToast('Downloaded highlights markdown');
+      },
+      { signal }
+    );
+
+    // Clear all action
+    clearAllBtn?.addEventListener(
+      'click',
+      () => {
+        const highlights = loadHighlights(postSlug);
+        if (highlights.length === 0) return;
+
+        if (!confirm('Are you sure you want to clear all highlights on this post? This cannot be undone.')) {
+          return;
+        }
+
+        const res = clearHighlights(postSlug);
+        if (!res.success) {
+          showToast(res.error || 'Failed to clear highlights from storage', true);
+          return;
+        }
+
+        highlights.forEach((h) => removeRenderedHighlight(prose, h.id));
+        lastRenderedIds.clear();
+        updateBadge(0);
+        renderDrawerList([]);
+        showToast('All highlights cleared');
+      },
+      { signal }
+    );
+
+    // Keyboard Shortcuts
+    document.addEventListener(
+      'keydown',
+      (e) => {
+        if (e.key === 'Escape') {
           if (drawer?.classList.contains('translate-x-0')) {
             closeDrawer();
-          } else {
-            openDrawer();
+            return;
+          }
+          if (removePopover && !removePopover.classList.contains('opacity-0')) {
+            hideRemovePopover();
+            return;
+          }
+          if (floatingBar && !floatingBar.classList.contains('opacity-0')) {
+            hideFloatingBar();
+            return;
           }
         }
-      }
-    });
 
-    // Initial Anchor on Page Load
+        // Alt+H: Highlight active selection or toggle drawer
+        if (e.altKey && (e.key === 'h' || e.key === 'H')) {
+          e.preventDefault();
+          if (activeSelectionContext) {
+            createHighlightFromSelection();
+          } else {
+            if (drawer?.classList.contains('translate-x-0')) {
+              closeDrawer();
+            } else {
+              openDrawer();
+            }
+          }
+        }
+      },
+      { signal }
+    );
+
+    // Initial Anchor on Page Load & Re-anchoring Routine
     function runReanchor() {
-      const stored = loadHighlights(postSlug);
-      updateBadge(stored.length);
-      reanchorAllHighlights(prose, stored);
+      if (isReanchoring) return;
+      isReanchoring = true;
+      observer.disconnect();
+
+      try {
+        const stored = loadHighlights(postSlug);
+        updateBadge(stored.length);
+        reanchorAllHighlights(prose, stored);
+
+        const currentMarks = prose.querySelectorAll('mark.blogly-highlight');
+        lastRenderedIds = new Set<string>();
+        currentMarks.forEach((m) => {
+          const id = m.getAttribute('data-highlight-id');
+          if (id) lastRenderedIds.add(id);
+        });
+      } finally {
+        observer.observe(prose, { childList: true, subtree: true });
+        isReanchoring = false;
+      }
     }
 
-    runReanchor();
-
-    // DOM Mutation Observer: Resurfaces highlights if AudioReader or another tool resets innerHTML
-    let mutationTimer: number | null = null;
+    // DOM Mutation Observer: Resurfaces highlights if AudioReader or another tool restores innerHTML
     const observer = new MutationObserver(() => {
+      if (isReanchoring) return;
       if (mutationTimer) clearTimeout(mutationTimer);
       mutationTimer = window.setTimeout(() => {
-        // If prose has no marks but stored highlights exist, re-anchor
+        if (isReanchoring) return;
         const stored = loadHighlights(postSlug);
-        if (stored.length > 0) {
-          const currentMarks = prose.querySelectorAll('mark.blogly-highlight');
-          if (currentMarks.length === 0) {
-            reanchorAllHighlights(prose, stored);
-          }
+        if (stored.length === 0) return;
+
+        const currentMarks = prose.querySelectorAll('mark.blogly-highlight');
+        const currentRenderedIds = new Set<string>();
+        currentMarks.forEach((m) => {
+          const id = m.getAttribute('data-highlight-id');
+          if (id) currentRenderedIds.add(id);
+        });
+
+        // If any highlight that was previously rendered is now missing (e.g. single block restoration),
+        // or if prose was completely wiped/reset
+        const missingAnyPreviouslyRendered = Array.from(lastRenderedIds).some(
+          (id) => !currentRenderedIds.has(id)
+        );
+
+        if (missingAnyPreviouslyRendered || (currentMarks.length === 0 && stored.length > 0)) {
+          runReanchor();
         }
-      }, 200);
+      }, 150);
     });
 
-    observer.observe(prose, { childList: true, subtree: true });
+    // Run initial anchor
+    runReanchor();
+
+    // Register teardown callback
+    cleanupHighlighter = () => {
+      abortController.abort();
+      observer.disconnect();
+      if (mutationTimer) clearTimeout(mutationTimer);
+      if (selectionTimer) clearTimeout(selectionTimer);
+      if (toastTimeout) clearTimeout(toastTimeout);
+      hideFloatingBar();
+      hideRemovePopover();
+      closeDrawer();
+    };
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initHighlighter);
+    document.addEventListener('DOMContentLoaded', initHighlighter, { once: true });
   } else {
     initHighlighter();
   }
 
   document.addEventListener('astro:page-load', initHighlighter);
-  document.addEventListener('astro:after-swap', initHighlighter);
+  document.addEventListener('astro:before-swap', () => {
+    if (cleanupHighlighter) {
+      cleanupHighlighter();
+      cleanupHighlighter = null;
+    }
+  });
 </script>

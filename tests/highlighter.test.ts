@@ -12,6 +12,8 @@ import {
   clearRenderedHighlights,
   removeRenderedHighlight,
   isExcludedElement,
+  resolvePointToCharOffset,
+  rangeIntersectsNode,
 } from '../src/lib/highlighter/anchor';
 import {
   loadHighlights,
@@ -21,6 +23,7 @@ import {
   clearHighlights,
   validateHighlight,
   getStorageKey,
+  getSafeLocalStorage,
   MAX_HIGHLIGHTS_PER_POST,
 } from '../src/lib/highlighter/storage';
 import { escapeMarkdown, generateHighlightsMarkdown } from '../src/lib/highlighter/export';
@@ -257,6 +260,82 @@ describe('Phase 8: Highlighter Tests', () => {
       expect(match?.end).toBe(19);
       expect(match?.matchType).toBe('exact_context');
     });
+
+    it('resolves DOM boundary points to exact character offsets without global indexOf fallback', () => {
+      const doc = domino.createDocument(
+        '<section class="prose"><p>First text segment. <span>Nested span segment.</span> Final trailing segment.</p></section>'
+      );
+      const container = doc.querySelector('.prose');
+      const index = buildTextIndex(container);
+
+      const span = doc.querySelector('span');
+      const spanTextNode = span.firstChild;
+
+      // Point directly inside span text node
+      const offsetInSpan = resolvePointToCharOffset(spanTextNode, 7, index, true);
+      expect(offsetInSpan).toBe(index.fullText.indexOf('Nested span segment.') + 7);
+
+      // Point at element child boundary on <p>
+      const p = doc.querySelector('p');
+      const offsetAtSpanStart = resolvePointToCharOffset(p, 1, index, true);
+      expect(offsetAtSpanStart).toBe(index.fullText.indexOf('Nested span segment.'));
+
+      const offsetAtSpanEnd = resolvePointToCharOffset(p, 2, index, false);
+      expect(offsetAtSpanEnd).toBe(
+        index.fullText.indexOf('Nested span segment.') + 'Nested span segment.'.length
+      );
+    });
+
+    it('detects when range intersects excluded elements using rangeIntersectsNode', () => {
+      const fakeNode = { ownerDocument: null } as unknown as Node;
+
+      // When browser supports range.intersectsNode directly
+      const mockRangeWithIntersects = {
+        intersectsNode: vi.fn((node: Node) => node === fakeNode),
+      } as unknown as Range;
+      expect(rangeIntersectsNode(mockRangeWithIntersects, fakeNode)).toBe(true);
+
+      // When fallback compareBoundaryPoints is used
+      const mockRangeWithCompare = {
+        compareBoundaryPoints: vi.fn((how: number) => {
+          // END_TO_START is 3, START_TO_END is 1
+          if (how === 3) return -1;
+          if (how === 1) return 1;
+          return 0;
+        }),
+      } as unknown as Range;
+
+      const mockDoc = {
+        createRange: vi.fn(() => ({
+          selectNode: vi.fn(),
+        })),
+      };
+      const nodeWithDoc = { ownerDocument: mockDoc } as unknown as Node;
+      expect(rangeIntersectsNode(mockRangeWithCompare, nodeWithDoc)).toBe(true);
+    });
+
+    it('anchors successfully when selection text was trimmed with duplicate phrases in post', () => {
+      // Document with duplicate phrase "memory leak"
+      const doc = domino.createDocument(
+        '<section class="prose"><p>Initial memory leak found in kernel.</p><p>Secondary memory leak found in userland daemon.</p></section>'
+      );
+      const container = doc.querySelector('.prose');
+
+      // Highlight for second occurrence with context that ends and starts immediately adjacent to trimmed text
+      const highlight: StoredHighlight = {
+        id: 'h-trimmed-2',
+        text: 'memory leak',
+        contextBefore: 'Secondary ',
+        contextAfter: ' found in userland daemon.',
+        color: 'default',
+        createdAt: '2026-09-29T00:00:00.000Z',
+      };
+
+      const marks = anchorHighlight(container, highlight);
+      expect(marks.length).toBe(1);
+      expect(marks[0].textContent).toBe('memory leak');
+      expect(marks[0].closest('p')?.textContent).toContain('Secondary memory leak');
+    });
   });
 
   describe('Storage Layer & Defensive Validation (storage.ts)', () => {
@@ -386,6 +465,34 @@ describe('Phase 8: Highlighter Tests', () => {
       }).not.toThrow();
     });
 
+    it('safely handles SecurityError on localStorage property access without crashing', () => {
+      const securityErr = new Error('The operation is insecure.');
+      securityErr.name = 'SecurityError';
+
+      const restrictedWindow = {};
+      Object.defineProperty(restrictedWindow, 'localStorage', {
+        get() {
+          throw securityErr;
+        },
+      });
+      vi.stubGlobal('window', restrictedWindow);
+
+      expect(() => {
+        const storage = getSafeLocalStorage();
+        expect(storage).toBeNull();
+
+        const loaded = loadHighlights('security-post');
+        expect(loaded).toEqual([]);
+
+        const saveRes = saveHighlights('security-post', []);
+        expect(saveRes.success).toBe(false);
+        expect(saveRes.error).toContain('not available or permitted');
+
+        const clearRes = clearHighlights('security-post');
+        expect(clearRes.success).toBe(false);
+      }).not.toThrow();
+    });
+
     it('validates single highlight objects using validateHighlight', () => {
       expect(validateHighlight(null)).toBeNull();
       expect(validateHighlight({})).toBeNull();
@@ -474,6 +581,27 @@ describe('Phase 8: Highlighter Tests', () => {
 
       expect(md).toContain('No highlights recorded on this post.');
     });
+
+    it('escapes Markdown special characters in post title and encodes parentheses in post URL', () => {
+      const md = generateHighlightsMarkdown({
+        postTitle: 'Understanding [Kernel] *Memory* #1',
+        postUrl: 'https://example.com/blog/post(part-1)',
+        exportedAt: '2026-09-29T10:00:00.000Z',
+        highlights: [
+          {
+            id: 'hl-test',
+            text: 'Special quote',
+            contextBefore: '',
+            contextAfter: '',
+            color: 'default',
+            createdAt: '2026-09-29T10:00:00.000Z',
+          },
+        ],
+      });
+
+      expect(md).toContain('# Highlights: Understanding \\[Kernel\\] \\*Memory\\* #1');
+      expect(md).toContain('https://example.com/blog/post%28part-1%29');
+    });
   });
 
   describe('Component Rendering (Highlighter.astro)', () => {
@@ -500,10 +628,13 @@ describe('Phase 8: Highlighter Tests', () => {
       expect(result).toContain('id="hl-confirm-btn-tui"');
       expect(result).toContain('id="hl-confirm-btn-std"');
 
-      // Remove popover with both TUI and Standard buttons
+      // Remove popover with both TUI and Standard buttons and Follow Link actions
       expect(result).toContain('id="highlighter-remove-popover"');
       expect(result).toContain('id="hl-remove-btn-tui"');
       expect(result).toContain('id="hl-remove-btn-std"');
+      expect(result).toContain('id="hl-follow-link-tui"');
+      expect(result).toContain('id="hl-follow-link-std"');
+      expect(result).toContain('Follow Link');
 
       // Drawer and actions
       expect(result).toContain('id="highlighter-drawer"');
