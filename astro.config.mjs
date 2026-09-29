@@ -40,7 +40,22 @@ try {
 // 1. In development ('astro dev' / 'bun run dev'), base must be root (undefined / '/') so localhost serves natively
 //    without asset 404s, Vite HMR failures, or Tailwind stylesheet loading issues.
 // 2. In production ('astro build' / 'astro preview'), base uses the repository subpath ('/glyph.sh') for GitHub Pages.
-const isDev = (process.env.NODE_ENV === 'development' || process.argv.includes('dev') || process.env.npm_lifecycle_event === 'dev') && !process.argv.includes('build');
+// 3. For external static deployment targets (Vercel, Netlify, Cloudflare Pages), root base ('/') is enforced.
+const isRootHost = Boolean(
+  process.env.VERCEL ||
+    process.env.NETLIFY ||
+    process.env.CF_PAGES ||
+    process.env.ROOT_BASE === 'true' ||
+    process.env.BASE_PATH === '/'
+);
+
+if (isRootHost) {
+  productionBase = undefined;
+}
+
+const isDev =
+  (process.env.NODE_ENV === 'development' || process.argv.includes('dev') || process.env.npm_lifecycle_event === 'dev') &&
+  !process.argv.includes('build');
 const base = isDev ? undefined : productionBase;
 const currentBase = (base || '').replace(/\/+$/, '');
 
@@ -1159,7 +1174,17 @@ function profileDevMiddleware() {
             const { initiateDeviceFlow } = await server.ssrLoadModule(deviceFlowPath);
             const codeData = await initiateDeviceFlow();
             res.writeHead(200, { 'Content-Type': 'application/json' });
-            res.end(JSON.stringify({ success: true, ...codeData }));
+            res.end(
+              JSON.stringify({
+                success: true,
+                ...codeData,
+                device_code: codeData.deviceCode,
+                user_code: codeData.userCode,
+                verification_uri: codeData.verificationUri,
+                expires_in: codeData.expiresIn,
+                interval: codeData.interval,
+              })
+            );
           } catch (err) {
             res.writeHead(500, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ success: false, error: err.message }));
@@ -1173,20 +1198,29 @@ function profileDevMiddleware() {
       registerApi('/api/device-poll', (req, res) => {
         if (req.method === 'POST') {
           let body = '';
-          req.on('data', (chunk) => { body += chunk; });
+          req.on('data', (chunk) => {
+            body += chunk;
+          });
           req.on('end', async () => {
             try {
-              const { deviceCode } = JSON.parse(body || '{}');
-              if (!deviceCode) {
+              const parsed = JSON.parse(body || '{}');
+              const resolvedCode = parsed.deviceCode || parsed.device_code;
+              if (!resolvedCode) {
                 res.writeHead(400, { 'Content-Type': 'application/json' });
                 res.end(JSON.stringify({ success: false, error: 'deviceCode is required' }));
                 return;
               }
               const deviceFlowPath = path.resolve(process.cwd(), 'src', 'lib', 'github-device-flow.ts');
               const { pollDeviceToken } = await server.ssrLoadModule(deviceFlowPath);
-              const pollResult = await pollDeviceToken(deviceCode);
+              const pollResult = await pollDeviceToken(resolvedCode);
               res.writeHead(200, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify({ success: true, ...pollResult }));
+              res.end(
+                JSON.stringify({
+                  success: pollResult.status !== 'error',
+                  ...pollResult,
+                  user: pollResult.authStatus ? { login: pollResult.authStatus.username } : undefined,
+                })
+              );
             } catch (err) {
               res.writeHead(500, { 'Content-Type': 'application/json' });
               res.end(JSON.stringify({ success: false, error: err.message }));
@@ -1498,11 +1532,41 @@ function profileDevMiddleware() {
                 token = getStoredToken();
               } catch {}
 
-              if (token && resolvedRemote && /^https?:\/\//i.test(resolvedRemote)) {
-                // In-memory HTTP extraHeader authentication (token is never written to disk or .git/config)
+              function isVerifiedGitHubRemote(urlStr) {
+                if (!urlStr) return false;
+                const clean = urlStr.trim();
+                if (clean.startsWith('git@github.com:') || clean.startsWith('ssh://git@github.com/')) return true;
+                try {
+                  const parsed = new URL(clean);
+                  return (
+                    (parsed.protocol === 'https:' || parsed.protocol === 'http:') &&
+                    (parsed.hostname === 'github.com' || parsed.hostname === 'api.github.com')
+                  );
+                } catch {
+                  return /^https?:\/\/github\.com\//i.test(clean);
+                }
+              }
+
+              function sanitizeGitError(text) {
+                if (!text) return '';
+                return text
+                  .replace(/gh[opsu]_[a-zA-Z0-9]{36,}/gi, '[REDACTED_TOKEN]')
+                  .replace(/AUTHORIZATION:\s*basic\s+[a-zA-Z0-9+/=]+/gi, 'AUTHORIZATION: [REDACTED]')
+                  .replace(/x-access-token:[a-zA-Z0-9_.-]+/gi, 'x-access-token:[REDACTED]');
+              }
+
+              const isGitHub = isVerifiedGitHubRemote(resolvedRemote);
+              if (token && isGitHub && /^https?:\/\//i.test(resolvedRemote)) {
+                // In-memory HTTP extraHeader authentication via Git config env variables (token is never in argv or process table, never on disk)
                 const basicAuth = Buffer.from(`x-access-token:${token}`).toString('base64');
-                const pushResult = await exec(`git -c http.extraHeader="AUTHORIZATION: basic ${basicAuth}" push -u origin ${targetBranch}`, {
+                const pushResult = await exec(`git push -u origin ${targetBranch}`, {
                   cwd,
+                  env: {
+                    ...process.env,
+                    GIT_CONFIG_COUNT: '1',
+                    GIT_CONFIG_KEY_0: 'http.extraHeader',
+                    GIT_CONFIG_VALUE_0: `AUTHORIZATION: basic ${basicAuth}`,
+                  },
                   timeout: 90000,
                   maxBuffer: 20 * 1024 * 1024,
                 });
@@ -1527,28 +1591,36 @@ function profileDevMiddleware() {
               } catch {}
 
               res.writeHead(200, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify({
-                success: true,
-                branch: targetBranch,
-                remote: resolvedRemote,
-                hasNewCommit,
-                commitOutput,
-                pushOutput: (pushStdout + '\n' + pushStderr).trim(),
-                lastCommit,
-                message: `Successfully pushed to origin/${targetBranch}!`,
-              }));
+              res.end(
+                JSON.stringify({
+                  success: true,
+                  branch: targetBranch,
+                  remote: resolvedRemote,
+                  hasNewCommit,
+                  commitOutput,
+                  pushOutput: sanitizeGitError((pushStdout + '\n' + pushStderr).trim()),
+                  lastCommit,
+                  message: `Successfully pushed to origin/${targetBranch}!`,
+                })
+              );
             } catch (err) {
-              const errText = (err.stderr || err.stdout || err.message || '').toString().trim();
-              const isAuthError = /authentication failed|could not read Username|Permission to .* denied|HTTP 401|HTTP 403|terminal prompts disabled/i.test(errText);
+              const rawErr = (err.stderr || err.stdout || err.message || '').toString().trim();
+              const errText = sanitizeGitError(rawErr);
+              const isAuthError =
+                /authentication failed|could not read Username|Permission to .* denied|HTTP 401|HTTP 403|terminal prompts disabled/i.test(
+                  errText
+                );
               res.writeHead(isAuthError ? 401 : 500, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify({
-                success: false,
-                error: errText,
-                needsAuth: isAuthError,
-                message: isAuthError
-                  ? 'GitHub authentication required to push. Please connect GitHub in Settings via Device Flow.'
-                  : 'Git push encountered an issue. You can run the terminal command shown below.',
-              }));
+              res.end(
+                JSON.stringify({
+                  success: false,
+                  error: errText,
+                  needsAuth: isAuthError,
+                  message: isAuthError
+                    ? 'GitHub authentication required to push. Please connect GitHub in Settings via Device Flow.'
+                    : 'Git push encountered an issue. You can run the terminal command shown below.',
+                })
+              );
             }
           });
         } else {

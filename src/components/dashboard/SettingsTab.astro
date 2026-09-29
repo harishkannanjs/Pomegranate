@@ -1270,9 +1270,21 @@ const deployTargets = siteConfig.deployTargets || {};
       } else if (action === 'enable-pages') {
         enableOrSyncPages();
       } else if (action === 'deploy-vercel') {
-        window.open(`https://vercel.com/new/clone?repository-url=${encodeURIComponent(remoteRepoWebUrl)}`, '_blank');
+        const repoUrl =
+          remoteRepoWebUrl || (document.getElementById('deploy-remote-repo') as HTMLAnchorElement | null)?.href || '';
+        if (!repoUrl || repoUrl === '#' || repoUrl.includes('harishkannanjs/glyph.sh')) {
+          notify('Please configure or connect your personal GitHub repository remote before deploying to Vercel.', true);
+          return;
+        }
+        window.open(`https://vercel.com/new/clone?repository-url=${encodeURIComponent(repoUrl)}`, '_blank');
       } else if (action === 'deploy-netlify') {
-        window.open(`https://app.netlify.com/start/deploy?repository=${encodeURIComponent(remoteRepoWebUrl)}`, '_blank');
+        const repoUrl =
+          remoteRepoWebUrl || (document.getElementById('deploy-remote-repo') as HTMLAnchorElement | null)?.href || '';
+        if (!repoUrl || repoUrl === '#' || repoUrl.includes('harishkannanjs/glyph.sh')) {
+          notify('Please configure or connect your personal GitHub repository remote before deploying to Netlify.', true);
+          return;
+        }
+        window.open(`https://app.netlify.com/start/deploy?repository=${encodeURIComponent(repoUrl)}`, '_blank');
       } else if (action === 'deploy-cloudflare') {
         window.open('https://dash.cloudflare.com/?to=/:account/pages/new', '_blank');
       } else if (action === 'save-target-vercel') {
@@ -1296,7 +1308,7 @@ const deployTargets = siteConfig.deployTargets || {};
     // 6. Device Flow and Deployment Handlers
     let deviceFlowInterval: any = null;
     let currentVerificationUri = 'https://github.com/login/device';
-    let remoteRepoWebUrl = 'https://github.com/harishkannanjs/glyph.sh';
+    let remoteRepoWebUrl = '';
 
     function openDeviceFlowModal() {
       const modal = document.getElementById('device-flow-modal');
@@ -1309,13 +1321,16 @@ const deployTargets = siteConfig.deployTargets || {};
       fetch('/api/device-code', { method: 'POST' })
         .then((r) => r.json())
         .then((data) => {
-          if (data.success && data.user_code && data.device_code) {
-            if (codeEl) codeEl.textContent = data.user_code;
-            currentVerificationUri = data.verification_uri || 'https://github.com/login/device';
+          const userCode = data.userCode || data.user_code;
+          const deviceCode = data.deviceCode || data.device_code;
+          const verificationUri = data.verificationUri || data.verification_uri || 'https://github.com/login/device';
+          if (data.success && userCode && deviceCode) {
+            if (codeEl) codeEl.textContent = userCode;
+            currentVerificationUri = verificationUri;
             if (statusEl) {
               statusEl.textContent = `Enter code at ${currentVerificationUri}. Waiting for authorization...`;
             }
-            startDeviceFlowPolling(data.device_code, data.interval || 5);
+            startDeviceFlowPolling(deviceCode, data.interval || 5);
           } else {
             if (statusEl) statusEl.textContent = `Error: ${data.error || 'Failed to initiate device flow'}`;
             notify(`Device flow error: ${data.error || 'Failed to initiate'}`, true);
@@ -1346,32 +1361,33 @@ const deployTargets = siteConfig.deployTargets || {};
           const res = await fetch('/api/device-poll', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ device_code: deviceCode }),
+            body: JSON.stringify({ deviceCode, device_code: deviceCode }),
           });
           const data = await res.json();
 
-          if (data.status === 'authorization_pending') {
+          if (data.status === 'pending' || data.status === 'authorization_pending') {
             if (statusEl) statusEl.textContent = 'Waiting for user authorization on GitHub...';
           } else if (data.status === 'slow_down') {
             pollIntervalMs += 5000;
             clearInterval(deviceFlowInterval);
             deviceFlowInterval = setInterval(poll, pollIntervalMs);
-          } else if (data.status === 'success') {
+          } else if (data.status === 'complete' || data.status === 'success') {
             clearInterval(deviceFlowInterval);
             deviceFlowInterval = null;
-            if (statusEl) statusEl.textContent = `Connected as @${data.user?.login || 'user'}!`;
-            notify(`Connected to GitHub as @${data.user?.login || 'user'}!`);
+            const username = data.authStatus?.username || data.user?.login || 'user';
+            if (statusEl) statusEl.textContent = `Connected as @${username}!`;
+            notify(`Connected to GitHub as @${username}!`);
             setTimeout(() => {
               closeDeviceFlowModal();
               checkAuthStatus();
               checkDeployStatus();
             }, 1200);
-          } else if (data.status === 'expired_token') {
+          } else if (data.status === 'expired' || data.status === 'expired_token') {
             clearInterval(deviceFlowInterval);
             deviceFlowInterval = null;
             if (statusEl) statusEl.textContent = 'Device code expired. Please try again.';
             notify('Device flow code expired. Please initiate again.', true);
-          } else if (data.status === 'access_denied') {
+          } else if (data.status === 'denied' || data.status === 'access_denied') {
             clearInterval(deviceFlowInterval);
             deviceFlowInterval = null;
             if (statusEl) statusEl.textContent = 'Authorization was denied on GitHub.';
@@ -1399,13 +1415,13 @@ const deployTargets = siteConfig.deployTargets || {};
       const avatarFallback = document.getElementById('gh-connected-avatar-fallback');
 
       try {
-        const res = await fetch('/api/auth-status');
+        const res = await fetch('/api/auth-status?verify=true');
         const data = await res.json();
         if (res.ok && data.connected) {
           if (disconnectedView) disconnectedView.classList.add('hidden');
           if (connectedView) connectedView.classList.remove('hidden');
           if (usernameEl) usernameEl.textContent = `@${data.username}`;
-          if (scopeEl && data.scopes) scopeEl.textContent = data.scopes;
+          if (scopeEl && (data.scope || data.scopes)) scopeEl.textContent = data.scope || data.scopes;
           if (data.avatarUrl && avatarImg && avatarFallback) {
             avatarImg.src = data.avatarUrl;
             avatarImg.classList.remove('hidden');
@@ -1414,8 +1430,8 @@ const deployTargets = siteConfig.deployTargets || {};
         } else {
           if (disconnectedView) disconnectedView.classList.remove('hidden');
           if (connectedView) connectedView.classList.add('hidden');
-          if (data.reason === 'expired') {
-            notify('GitHub token has expired. Please reconnect via Device Flow.', true);
+          if (data.expired) {
+            notify('GitHub token has expired or was revoked. Please reconnect via Device Flow.', true);
           }
         }
       } catch {}
@@ -1486,16 +1502,35 @@ const deployTargets = siteConfig.deployTargets || {};
     function updateLiveUrlDisplay(target: string, url: string) {
       const displayEl = document.getElementById(`live-url-display-${target}`);
       if (!displayEl) return;
-      if (!url) {
-        displayEl.innerHTML = '';
+      displayEl.replaceChildren();
+      if (!url) return;
+
+      // Validate URL scheme: only allow http: and https: to prevent javascript: or data: XSS
+      try {
+        const parsed = new URL(url);
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+          return;
+        }
+      } catch {
         return;
       }
-      displayEl.innerHTML = `
-        <div class="flex items-center gap-1.5 text-[11px] text-read-accent">
-          <span>●</span>
-          <a href="${url}" target="_blank" rel="noopener" class="underline hover:opacity-80 truncate">${url} ↗</a>
-        </div>
-      `;
+
+      const container = document.createElement('div');
+      container.className = 'flex items-center gap-1.5 text-[11px] text-read-accent';
+
+      const bullet = document.createElement('span');
+      bullet.textContent = '●';
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.className = 'underline hover:opacity-80 truncate';
+      link.textContent = `${url} ↗`;
+
+      container.appendChild(bullet);
+      container.appendChild(link);
+      displayEl.appendChild(container);
     }
 
     async function saveDeployTargetUrl(target: 'vercel' | 'netlify' | 'cloudflare') {

@@ -82,17 +82,13 @@ export function getClientId(): string {
  */
 export function saveAuthToken(data: StoredAuth): void {
   const filePath = getAuthFilePath();
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2), {
+    encoding: 'utf-8',
+    mode: 0o600,
+  });
   try {
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), {
-      encoding: 'utf-8',
-      mode: 0o600,
-    });
-    try {
-      fs.chmodSync(filePath, 0o600);
-    } catch {}
-  } catch (err: any) {
-    console.error('Failed to save auth token:', err.message);
-  }
+    fs.chmodSync(filePath, 0o600);
+  } catch {}
 }
 
 /**
@@ -227,14 +223,21 @@ export async function pollDeviceToken(deviceCode: string, clientId?: string): Pr
       }
     } catch {}
 
-    saveAuthToken({
-      accessToken: data.access_token,
-      tokenType: data.token_type || 'bearer',
-      scope: data.scope || DEFAULT_SCOPES,
-      username,
-      avatarUrl,
-      updatedAt: Date.now(),
-    });
+    try {
+      saveAuthToken({
+        accessToken: data.access_token,
+        tokenType: data.token_type || 'bearer',
+        scope: data.scope || DEFAULT_SCOPES,
+        username,
+        avatarUrl,
+        updatedAt: Date.now(),
+      });
+    } catch (saveErr: any) {
+      return {
+        status: 'error',
+        error: `Failed to safely persist credentials to disk: ${saveErr.message}`,
+      };
+    }
 
     return {
       status: 'complete',
@@ -333,13 +336,41 @@ export async function setupOrCheckGitHubPages(owner: string, repo: string): Prom
         }),
       });
 
-      if (enableRes.ok || enableRes.status === 201 || enableRes.status === 409) {
+      if (enableRes.ok || enableRes.status === 201) {
+        pagesData = await enableRes.json().catch(() => null);
+        if (!pagesData) {
+          pagesRes = await fetch(`${GITHUB_API_BASE}/repos/${owner}/${repo}/pages`, { headers });
+          if (pagesRes.ok) {
+            pagesData = await pagesRes.json();
+          }
+        }
+      } else if (enableRes.status === 409) {
         // Re-check
         pagesRes = await fetch(`${GITHUB_API_BASE}/repos/${owner}/${repo}/pages`, { headers });
         if (pagesRes.ok) {
           pagesData = await pagesRes.json();
         }
+      } else {
+        const errData = (await enableRes.json().catch(() => ({}))) as any;
+        const errMsg = errData?.message || enableRes.statusText || 'Access denied or invalid build configuration';
+        return {
+          success: false,
+          enabled: false,
+          error: `GitHub Pages setup rejected (${enableRes.status}): ${errMsg}`,
+        };
       }
+    }
+
+    if (!pagesData) {
+      const errData = (await pagesRes.json().catch(() => ({}))) as any;
+      const errMsg =
+        errData?.message ||
+        (pagesRes.status === 404 ? 'GitHub Pages is not enabled on this repository' : pagesRes.statusText);
+      return {
+        success: false,
+        enabled: false,
+        error: `GitHub Pages not enabled (${pagesRes.status}): ${errMsg}`,
+      };
     }
 
     // 3. Check for deploy workflow
@@ -363,11 +394,11 @@ export async function setupOrCheckGitHubPages(owner: string, repo: string): Prom
     } catch {}
 
     const defaultHtmlUrl = `https://${owner}.github.io/${repo}/`;
-    const finalUrl = pagesData?.html_url || defaultHtmlUrl;
+    const finalUrl = pagesData.html_url || defaultHtmlUrl;
     return {
       success: true,
-      enabled: pagesData ? true : false,
-      status: pagesData?.status || (workflowRuns.length > 0 ? workflowRuns[0].status : 'configured'),
+      enabled: true,
+      status: pagesData.status || (workflowRuns.length > 0 ? workflowRuns[0].status : 'configured'),
       htmlUrl: finalUrl,
       pagesUrl: finalUrl,
       workflowPresent,
