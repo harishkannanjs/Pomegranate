@@ -33,6 +33,8 @@ const privacyConfig = siteConfig.privacy || {
   analytics: false,
   footerNote: true,
 };
+
+const deployTargets = siteConfig.deployTargets || {};
 ---
 
 <div class="settings-tab-container space-y-8 font-mono">
@@ -268,45 +270,216 @@ const privacyConfig = siteConfig.privacy || {
     </Panel>
   </section>
 
-  <!-- 4. Deployment Section -->
-  <section class="space-y-4">
-    <div class="flex items-center gap-2 pb-2 border-b border-read-border">
-      <span class="text-read-accent font-bold">&gt;</span>
-      <h2 class="text-base font-bold text-read-text-primary">Deploy Status (GitHub Pages)</h2>
+  <!-- 4. Deployment & GitHub Authentication Section -->
+  <section class="space-y-6">
+    <div class="flex items-center justify-between pb-2 border-b border-read-border">
+      <div class="flex items-center gap-2">
+        <span class="text-read-accent font-bold">&gt;</span>
+        <h2 class="text-base font-bold text-read-text-primary">Deploy &amp; GitHub Authentication</h2>
+      </div>
+      <div id="github-auth-header-badge" class="flex items-center gap-2 text-xs">
+        <span class="text-[11px] text-read-text-tertiary">Checking GitHub auth...</span>
+      </div>
     </div>
 
-    <Panel title="Live Deployment Overview">
-      <div class="space-y-3 text-xs">
-        <div class="flex items-center gap-2 text-read-accent font-bold">
-          <span class="w-2 h-2 rounded-full bg-read-accent animate-pulse"></span>
-          <span id="deploy-status-badge">GitHub Pages Pipeline Configured</span>
+    <!-- GitHub Device Flow Connection Panel -->
+    <Panel title="GitHub Account Connection (Device Flow)">
+      <div class="space-y-4 text-xs">
+        <div id="gh-auth-disconnected-view" class="space-y-3">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div class="space-y-1">
+              <div class="font-bold text-read-text-primary">Connect with GitHub Device Flow</div>
+              <p class="text-read-text-secondary leading-relaxed text-[11px]">
+                Authenticate with your personal GitHub account to enable one-click publishing and automated GitHub Pages setup without requiring manual command-line git configuration. No client secret is ever stored on this machine.
+              </p>
+            </div>
+            <Button variant="primary" data-action="open-device-flow">
+              Connect GitHub
+            </Button>
+          </div>
+          <div class="p-2.5 bg-read-bg-base border border-read-border rounded-[2px] text-[11px] text-read-text-tertiary">
+            ℹ Device Flow runs entirely between your local browser, local Bun process, and GitHub. No credentials ever pass through a hosted server.
+          </div>
         </div>
 
+        <div id="gh-auth-connected-view" class="hidden space-y-3">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-3 bg-read-bg-base border border-read-border rounded-[2px]">
+            <div class="flex items-center gap-3">
+              <div id="gh-connected-avatar-box" class="w-9 h-9 rounded-full bg-read-bg-surface border border-read-border flex items-center justify-center text-read-accent font-bold overflow-hidden shrink-0">
+                <span id="gh-connected-avatar-fallback">GH</span>
+                <img id="gh-connected-avatar-img" class="w-full h-full object-cover hidden" alt="GitHub Avatar" />
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="font-bold text-read-text-primary text-sm" id="gh-connected-username">@username</span>
+                  <span class="text-[10px] px-1.5 py-0.2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold rounded-[2px]">
+                    ✓ Connected
+                  </span>
+                </div>
+                <div class="text-[11px] text-read-text-tertiary">
+                  Scope: <code class="text-read-text-secondary" id="gh-connected-scope">repo workflow read:user</code>
+                </div>
+              </div>
+            </div>
+            <Button variant="secondary" data-action="disconnect-github">
+              Disconnect
+            </Button>
+          </div>
+        </div>
+      </div>
+    </Panel>
+
+    <!-- Multi-Target Deploy Panels -->
+    <Panel title="Multi-Target Deployment (4 Targets)">
+      <div class="space-y-6 text-xs">
         <p class="text-read-text-secondary leading-relaxed">
-          Your site automatically builds and publishes via the continuous integration pipeline
-          (<code class="text-read-accent">.github/workflows/deploy.yml</code>) whenever changes are pushed to your remote repository.
+          Publish your static Blogly articles to any of the four supported hosting targets. GitHub Pages is pre-configured and runs automatically on every commit.
         </p>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-          <div class="p-3 bg-read-bg-base border border-read-border rounded-[2px]">
-            <div class="text-[10px] text-read-text-tertiary uppercase">Target Site URL</div>
-            <a id="deploy-target-url" href={siteConfig.siteUrl} target="_blank" rel="noopener" class="text-read-accent font-bold hover:underline block truncate mt-1">
-              {siteConfig.siteUrl}
-            </a>
+        <!-- 1. GitHub Pages (Emphasized Target) -->
+        <div class="p-4 border-2 border-read-accent/80 bg-read-bg-surface-raised/40 rounded-[2px] space-y-3 shadow-lg shadow-read-accent/5">
+          <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-read-border">
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-sm text-read-text-primary">1. GitHub Pages</span>
+              <span class="text-[10px] px-2 py-0.5 bg-read-accent/15 border border-read-accent text-read-accent font-bold rounded-[2px]">
+                ★ DEFAULT TARGET · ZERO SIGN-UP
+              </span>
+            </div>
+            <Button variant="primary" data-action="enable-pages">
+              Enable / Sync Pages
+            </Button>
           </div>
 
-          <div class="p-3 bg-read-bg-base border border-read-border rounded-[2px]">
-            <div class="text-[10px] text-read-text-tertiary uppercase">Remote Repository</div>
-            <a id="deploy-remote-repo" href={siteConfig.githubUrl} target="_blank" rel="noopener" class="text-read-text-primary font-bold hover:underline block truncate mt-1">
-              {siteConfig.githubUrl || 'https://github.com/harishkannanjs/glyph.sh'}
+          <p class="text-read-text-secondary text-[11px] leading-relaxed">
+            Runs fully automated builds inside your repository via GitHub Actions (<code class="text-read-accent">.github/workflows/deploy.yml</code>). Zero external platform registration required.
+          </p>
+
+          <!-- Timeline status indicator -->
+          <div id="gh-pages-timeline-container" class="p-2.5 bg-read-bg-base border border-read-border rounded-[2px] text-[11px] font-mono flex items-center gap-2">
+            <span id="gh-pages-timeline-icon" class="text-read-accent font-bold">●</span>
+            <span id="gh-pages-timeline-text" class="text-read-text-secondary">Ready to sync or trigger deployment.</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+            <div class="p-2.5 bg-read-bg-base border border-read-border rounded-[2px]">
+              <div class="text-[10px] text-read-text-tertiary uppercase">Target Site URL</div>
+              <a id="deploy-target-url" href={siteConfig.siteUrl} target="_blank" rel="noopener" class="text-read-accent font-bold hover:underline block truncate mt-0.5">
+                {siteConfig.siteUrl}
+              </a>
+            </div>
+
+            <div class="p-2.5 bg-read-bg-base border border-read-border rounded-[2px]">
+              <div class="text-[10px] text-read-text-tertiary uppercase">Remote Repository</div>
+              <a id="deploy-remote-repo" href={siteConfig.githubUrl} target="_blank" rel="noopener" class="text-read-text-primary font-bold hover:underline block truncate mt-0.5">
+                {siteConfig.githubUrl || 'https://github.com/harishkannanjs/glyph.sh'}
+              </a>
+            </div>
+          </div>
+
+          <div class="pt-1 flex items-center justify-between text-[11px]">
+            <a id="deploy-workflow-url" href="#" target="_blank" rel="noopener" class="text-read-accent hover:underline hidden">
+              → View GitHub Actions Deployment Runs ↗
             </a>
+            <span id="gh-pages-status-badge" class="text-[10px] text-read-text-tertiary">
+              Status: Checking...
+            </span>
           </div>
         </div>
 
-        <div class="pt-2">
-          <a id="deploy-workflow-url" href="#" target="_blank" rel="noopener" class="text-[11px] text-read-accent hover:underline hidden">
-            → View GitHub Actions Deployments Workflow
-          </a>
+        <!-- 3 External Target Cards Grid: Vercel, Netlify, Cloudflare Pages -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 pt-2">
+          <!-- 2. Vercel -->
+          <div class="p-3.5 bg-read-bg-base border border-read-border rounded-[2px] space-y-3 flex flex-col justify-between">
+            <div class="space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-xs text-read-text-primary">2. Vercel</span>
+                <span class="text-[10px] text-read-text-tertiary font-mono">vercel.json</span>
+              </div>
+              <p class="text-[11px] text-read-text-secondary leading-relaxed">
+                Import repository to Vercel's global edge network using zero-config static template.
+              </p>
+            </div>
+
+            <div class="space-y-2.5 pt-2 border-t border-read-border">
+              <Button variant="secondary" data-action="deploy-vercel" class="w-full justify-center">
+                Deploy to Vercel ↗
+              </Button>
+
+              <!-- Live URL paste and display -->
+              <div class="space-y-1.5 pt-1">
+                <label for="target-url-vercel" class="text-[10px] text-read-text-tertiary uppercase font-mono">Paste Live URL:</label>
+                <div class="flex items-center gap-1.5">
+                  <Input id="target-url-vercel" placeholder="https://your-blog.vercel.app" value={deployTargets.vercel || ''} class="text-[11px]" />
+                  <Button variant="secondary" data-action="save-target-vercel">Save</Button>
+                </div>
+                <div id="live-url-display-vercel" class="pt-1">
+                  <!-- Populated dynamically -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3. Netlify -->
+          <div class="p-3.5 bg-read-bg-base border border-read-border rounded-[2px] space-y-3 flex flex-col justify-between">
+            <div class="space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-xs text-read-text-primary">3. Netlify</span>
+                <span class="text-[10px] text-read-text-tertiary font-mono">netlify.toml</span>
+              </div>
+              <p class="text-[11px] text-read-text-secondary leading-relaxed">
+                Connect and build with Netlify's high-performance CDN using pre-configured security headers.
+              </p>
+            </div>
+
+            <div class="space-y-2.5 pt-2 border-t border-read-border">
+              <Button variant="secondary" data-action="deploy-netlify" class="w-full justify-center">
+                Deploy to Netlify ↗
+              </Button>
+
+              <!-- Live URL paste and display -->
+              <div class="space-y-1.5 pt-1">
+                <label for="target-url-netlify" class="text-[10px] text-read-text-tertiary uppercase font-mono">Paste Live URL:</label>
+                <div class="flex items-center gap-1.5">
+                  <Input id="target-url-netlify" placeholder="https://your-blog.netlify.app" value={deployTargets.netlify || ''} class="text-[11px]" />
+                  <Button variant="secondary" data-action="save-target-netlify">Save</Button>
+                </div>
+                <div id="live-url-display-netlify" class="pt-1">
+                  <!-- Populated dynamically -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. Cloudflare Pages -->
+          <div class="p-3.5 bg-read-bg-base border border-read-border rounded-[2px] space-y-3 flex flex-col justify-between">
+            <div class="space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-xs text-read-text-primary">4. Cloudflare Pages</span>
+                <span class="text-[10px] text-read-text-tertiary font-mono">wrangler.toml</span>
+              </div>
+              <p class="text-[11px] text-read-text-secondary leading-relaxed">
+                Zero cold-start edge distribution configured via root static build output.
+              </p>
+            </div>
+
+            <div class="space-y-2.5 pt-2 border-t border-read-border">
+              <Button variant="secondary" data-action="deploy-cloudflare" class="w-full justify-center">
+                Deploy to Cloudflare ↗
+              </Button>
+
+              <!-- Live URL paste and display -->
+              <div class="space-y-1.5 pt-1">
+                <label for="target-url-cloudflare" class="text-[10px] text-read-text-tertiary uppercase font-mono">Paste Live URL:</label>
+                <div class="flex items-center gap-1.5">
+                  <Input id="target-url-cloudflare" placeholder="https://your-blog.pages.dev" value={deployTargets.cloudflare || ''} class="text-[11px]" />
+                  <Button variant="secondary" data-action="save-target-cloudflare">Save</Button>
+                </div>
+                <div id="live-url-display-cloudflare" class="pt-1">
+                  <!-- Populated dynamically -->
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </Panel>
@@ -430,11 +603,12 @@ const privacyConfig = siteConfig.privacy || {
         <div class="flex flex-wrap items-center justify-between gap-3 p-3 bg-red-500/5 border border-red-500/30 rounded-[2px]">
           <div>
             <div class="font-bold text-red-400">Disconnect GitHub</div>
-            <div class="text-[11px] text-read-text-secondary">Unlink GitHub authentication credentials. Device Flow auth lands in Phase 7.</div>
+            <div class="text-[11px] text-read-text-secondary">
+              Wipe locally stored authentication token. (To revoke remote OAuth access, visit <a href="https://github.com/settings/connections/applications" target="_blank" rel="noopener" class="text-read-accent hover:underline">GitHub Authorized Applications ↗</a>).
+            </div>
           </div>
           <div class="flex items-center gap-2">
-            <span class="text-[10px] px-1.5 py-0.5 bg-amber-500/10 border border-amber-500/30 text-amber-400 font-bold rounded-[2px]">Coming Soon (Phase 7)</span>
-            <Button variant="danger" disabled={true} data-action="disconnect-github">Disconnect</Button>
+            <Button variant="danger" data-action="disconnect-github">Disconnect</Button>
           </div>
         </div>
       </div>
@@ -497,6 +671,58 @@ const privacyConfig = siteConfig.privacy || {
       </div>
     </Panel>
   </section>
+
+  <!-- GitHub Device Flow Authentication Modal -->
+  <div id="device-flow-modal" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 font-mono">
+    <div class="bg-read-bg-base border border-read-border-strong w-full max-w-md rounded-[2px] shadow-2xl p-6 space-y-5">
+      <div class="flex items-center justify-between border-b border-read-border pb-3">
+        <div class="flex items-center gap-2 text-xs">
+          <span class="text-read-accent font-bold">&gt;</span>
+          <span class="text-read-text-primary font-bold">Connect GitHub (Device Flow)</span>
+        </div>
+        <button type="button" data-action="close-device-flow-modal" class="text-read-text-tertiary hover:text-read-text-primary font-bold cursor-pointer">✕</button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <p class="text-read-text-secondary leading-relaxed">
+          1. Copy your one-time user verification code:
+        </p>
+
+        <div class="flex items-center justify-between gap-3 p-3 bg-read-bg-surface border border-read-border rounded-[2px]">
+          <div id="device-flow-user-code" class="text-xl sm:text-2xl font-bold tracking-widest text-read-accent select-all">
+            --------
+          </div>
+          <Button variant="secondary" data-action="copy-device-code">
+            Copy Code
+          </Button>
+        </div>
+
+        <p class="text-read-text-secondary leading-relaxed">
+          2. Visit GitHub's device activation page and authorize Blogly:
+        </p>
+
+        <Button variant="primary" data-action="open-device-url" class="w-full justify-center">
+          Open github.com/login/device ↗
+        </Button>
+      </div>
+
+      <div class="p-3 bg-read-bg-surface border border-read-border rounded-[2px] space-y-1.5 text-[11px]">
+        <div class="flex items-center gap-2 font-bold text-read-text-primary">
+          <span id="device-flow-spinner" class="animate-spin text-read-accent">◒</span>
+          <span id="device-flow-status-text">Requesting device authorization code...</span>
+        </div>
+        <div class="text-read-text-tertiary text-[10px]">
+          Direct local polling between your Bun process and api.github.com. Zero intermediary servers.
+        </div>
+      </div>
+
+      <div class="flex justify-end pt-1">
+        <Button variant="secondary" data-action="close-device-flow-modal">
+          Cancel
+        </Button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -1027,6 +1253,46 @@ const privacyConfig = siteConfig.privacy || {
         if (groqInp) groqInp.value = '';
         localStorage.removeItem('blogly_groq_api_key');
         notify('Groq API Key cleared.');
+      } else if (action === 'open-device-flow') {
+        openDeviceFlowModal();
+      } else if (action === 'close-device-flow-modal') {
+        closeDeviceFlowModal();
+      } else if (action === 'copy-device-code') {
+        const code = document.getElementById('device-flow-user-code')?.textContent?.trim();
+        if (code && code !== '--------') {
+          navigator.clipboard.writeText(code);
+          notify(`Copied one-time code "${code}" to clipboard!`);
+        }
+      } else if (action === 'open-device-url') {
+        window.open(currentVerificationUri, '_blank');
+      } else if (action === 'disconnect-github') {
+        disconnectGitHub();
+      } else if (action === 'enable-pages') {
+        enableOrSyncPages();
+      } else if (action === 'deploy-vercel') {
+        const repoUrl =
+          remoteRepoWebUrl || (document.getElementById('deploy-remote-repo') as HTMLAnchorElement | null)?.href || '';
+        if (!repoUrl || repoUrl === '#' || repoUrl.includes('harishkannanjs/glyph.sh')) {
+          notify('Please configure or connect your personal GitHub repository remote before deploying to Vercel.', true);
+          return;
+        }
+        window.open(`https://vercel.com/new/clone?repository-url=${encodeURIComponent(repoUrl)}`, '_blank');
+      } else if (action === 'deploy-netlify') {
+        const repoUrl =
+          remoteRepoWebUrl || (document.getElementById('deploy-remote-repo') as HTMLAnchorElement | null)?.href || '';
+        if (!repoUrl || repoUrl === '#' || repoUrl.includes('harishkannanjs/glyph.sh')) {
+          notify('Please configure or connect your personal GitHub repository remote before deploying to Netlify.', true);
+          return;
+        }
+        window.open(`https://app.netlify.com/start/deploy?repository=${encodeURIComponent(repoUrl)}`, '_blank');
+      } else if (action === 'deploy-cloudflare') {
+        window.open('https://dash.cloudflare.com/?to=/:account/pages/new', '_blank');
+      } else if (action === 'save-target-vercel') {
+        saveDeployTargetUrl('vercel');
+      } else if (action === 'save-target-netlify') {
+        saveDeployTargetUrl('netlify');
+      } else if (action === 'save-target-cloudflare') {
+        saveDeployTargetUrl('cloudflare');
       }
     });
 
@@ -1039,6 +1305,255 @@ const privacyConfig = siteConfig.privacy || {
       }
     }
 
+    // 6. Device Flow and Deployment Handlers
+    let deviceFlowInterval: any = null;
+    let currentVerificationUri = 'https://github.com/login/device';
+    let remoteRepoWebUrl = '';
+
+    function openDeviceFlowModal() {
+      const modal = document.getElementById('device-flow-modal');
+      const codeEl = document.getElementById('device-flow-user-code');
+      const statusEl = document.getElementById('device-flow-status-text');
+      if (modal) modal.classList.remove('hidden');
+      if (codeEl) codeEl.textContent = '--------';
+      if (statusEl) statusEl.textContent = 'Requesting device authorization code from GitHub...';
+
+      fetch('/api/device-code', { method: 'POST' })
+        .then((r) => r.json())
+        .then((data) => {
+          const userCode = data.userCode || data.user_code;
+          const deviceCode = data.deviceCode || data.device_code;
+          const verificationUri = data.verificationUri || data.verification_uri || 'https://github.com/login/device';
+          if (data.success && userCode && deviceCode) {
+            if (codeEl) codeEl.textContent = userCode;
+            currentVerificationUri = verificationUri;
+            if (statusEl) {
+              statusEl.textContent = `Enter code at ${currentVerificationUri}. Waiting for authorization...`;
+            }
+            startDeviceFlowPolling(deviceCode, data.interval || 5);
+          } else {
+            if (statusEl) statusEl.textContent = `Error: ${data.error || 'Failed to initiate device flow'}`;
+            notify(`Device flow error: ${data.error || 'Failed to initiate'}`, true);
+          }
+        })
+        .catch((err) => {
+          if (statusEl) statusEl.textContent = `Network error: ${err.message}`;
+          notify(`Connection error: ${err.message}`, true);
+        });
+    }
+
+    function closeDeviceFlowModal() {
+      const modal = document.getElementById('device-flow-modal');
+      if (modal) modal.classList.add('hidden');
+      if (deviceFlowInterval) {
+        clearInterval(deviceFlowInterval);
+        deviceFlowInterval = null;
+      }
+    }
+
+    function startDeviceFlowPolling(deviceCode: string, intervalSec: number) {
+      if (deviceFlowInterval) clearInterval(deviceFlowInterval);
+      let pollIntervalMs = Math.max(intervalSec * 1000, 5000);
+
+      const poll = async () => {
+        const statusEl = document.getElementById('device-flow-status-text');
+        try {
+          const res = await fetch('/api/device-poll', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ deviceCode, device_code: deviceCode }),
+          });
+          const data = await res.json();
+
+          if (data.status === 'pending' || data.status === 'authorization_pending') {
+            if (statusEl) statusEl.textContent = 'Waiting for user authorization on GitHub...';
+          } else if (data.status === 'slow_down') {
+            pollIntervalMs += 5000;
+            clearInterval(deviceFlowInterval);
+            deviceFlowInterval = setInterval(poll, pollIntervalMs);
+          } else if (data.status === 'complete' || data.status === 'success') {
+            clearInterval(deviceFlowInterval);
+            deviceFlowInterval = null;
+            const username = data.authStatus?.username || data.user?.login || 'user';
+            if (statusEl) statusEl.textContent = `Connected as @${username}!`;
+            notify(`Connected to GitHub as @${username}!`);
+            setTimeout(() => {
+              closeDeviceFlowModal();
+              checkAuthStatus();
+              checkDeployStatus();
+            }, 1200);
+          } else if (data.status === 'expired' || data.status === 'expired_token') {
+            clearInterval(deviceFlowInterval);
+            deviceFlowInterval = null;
+            if (statusEl) statusEl.textContent = 'Device code expired. Please try again.';
+            notify('Device flow code expired. Please initiate again.', true);
+          } else if (data.status === 'denied' || data.status === 'access_denied') {
+            clearInterval(deviceFlowInterval);
+            deviceFlowInterval = null;
+            if (statusEl) statusEl.textContent = 'Authorization was denied on GitHub.';
+            notify('GitHub authorization was denied.', true);
+          } else {
+            clearInterval(deviceFlowInterval);
+            deviceFlowInterval = null;
+            if (statusEl) statusEl.textContent = `Error: ${data.error || 'Authentication failed'}`;
+            notify(`Authentication error: ${data.error || 'Unknown error'}`, true);
+          }
+        } catch {
+          // Continue polling on transient network hiccup
+        }
+      };
+
+      deviceFlowInterval = setInterval(poll, pollIntervalMs);
+    }
+
+    async function checkAuthStatus() {
+      const disconnectedView = document.getElementById('gh-auth-disconnected-view');
+      const connectedView = document.getElementById('gh-auth-connected-view');
+      const usernameEl = document.getElementById('gh-connected-username');
+      const scopeEl = document.getElementById('gh-connected-scope');
+      const avatarImg = document.getElementById('gh-connected-avatar-img') as HTMLImageElement | null;
+      const avatarFallback = document.getElementById('gh-connected-avatar-fallback');
+
+      try {
+        const res = await fetch('/api/auth-status?verify=true');
+        const data = await res.json();
+        if (res.ok && data.connected) {
+          if (disconnectedView) disconnectedView.classList.add('hidden');
+          if (connectedView) connectedView.classList.remove('hidden');
+          if (usernameEl) usernameEl.textContent = `@${data.username}`;
+          if (scopeEl && (data.scope || data.scopes)) scopeEl.textContent = data.scope || data.scopes;
+          if (data.avatarUrl && avatarImg && avatarFallback) {
+            avatarImg.src = data.avatarUrl;
+            avatarImg.classList.remove('hidden');
+            avatarFallback.classList.add('hidden');
+          }
+        } else {
+          if (disconnectedView) disconnectedView.classList.remove('hidden');
+          if (connectedView) connectedView.classList.add('hidden');
+          if (data.expired) {
+            notify('GitHub token has expired or was revoked. Please reconnect via Device Flow.', true);
+          }
+        }
+      } catch {}
+    }
+
+    async function disconnectGitHub() {
+      if (!confirm('Disconnect GitHub? This wipes your locally stored token in .blogly/auth.json.')) {
+        return;
+      }
+      try {
+        const res = await fetch('/api/disconnect-github', { method: 'POST' });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          notify('Disconnected from GitHub. Local token wiped.');
+          checkAuthStatus();
+        } else {
+          notify(`Disconnect error: ${data.error || 'Failed to disconnect'}`, true);
+        }
+      } catch (err: any) {
+        notify(`Network error: ${err.message}`, true);
+      }
+    }
+
+    async function enableOrSyncPages() {
+      const timelineText = document.getElementById('gh-pages-timeline-text');
+      const timelineIcon = document.getElementById('gh-pages-timeline-icon');
+      const statusBadge = document.getElementById('gh-pages-status-badge');
+
+      if (timelineText) timelineText.textContent = 'Checking repository & configuring GitHub Pages...';
+      if (timelineIcon) timelineIcon.className = 'text-amber-400 font-bold animate-pulse';
+
+      try {
+        const res = await fetch('/api/enable-pages', { method: 'POST' });
+        const data = await res.json();
+
+        if (data.needsAuth) {
+          if (timelineText) timelineText.textContent = 'Authentication required. Connect GitHub via Device Flow above.';
+          if (timelineIcon) timelineIcon.className = 'text-red-400 font-bold';
+          notify('GitHub connection required to configure Pages.', true);
+          openDeviceFlowModal();
+          return;
+        }
+
+        if (res.ok && data.success) {
+          if (timelineText) {
+            timelineText.textContent = `Enabling Pages ✓ → Workflow running… → Live at ${data.pagesUrl || 'Pages URL'}`;
+          }
+          if (timelineIcon) timelineIcon.className = 'text-emerald-400 font-bold';
+          if (statusBadge) statusBadge.textContent = `Status: ${data.pagesStatus || 'active'}`;
+
+          const targetUrlEl = document.getElementById('deploy-target-url') as HTMLAnchorElement | null;
+          if (targetUrlEl && data.pagesUrl) {
+            targetUrlEl.href = data.pagesUrl;
+            targetUrlEl.textContent = data.pagesUrl;
+          }
+          notify(data.message || 'GitHub Pages configured successfully!');
+        } else {
+          if (timelineText) timelineText.textContent = `Pages setup: ${data.error || 'Failed to configure Pages'}`;
+          if (timelineIcon) timelineIcon.className = 'text-red-400 font-bold';
+          notify(`GitHub Pages error: ${data.error || 'Failed to configure'}`, true);
+        }
+      } catch (err: any) {
+        if (timelineText) timelineText.textContent = `Network error: ${err.message}`;
+        notify(`Network error: ${err.message}`, true);
+      }
+    }
+
+    function updateLiveUrlDisplay(target: string, url: string) {
+      const displayEl = document.getElementById(`live-url-display-${target}`);
+      if (!displayEl) return;
+      displayEl.replaceChildren();
+      if (!url) return;
+
+      // Validate URL scheme: only allow http: and https: to prevent javascript: or data: XSS
+      try {
+        const parsed = new URL(url);
+        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+          return;
+        }
+      } catch {
+        return;
+      }
+
+      const container = document.createElement('div');
+      container.className = 'flex items-center gap-1.5 text-[11px] text-read-accent';
+
+      const bullet = document.createElement('span');
+      bullet.textContent = '●';
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.className = 'underline hover:opacity-80 truncate';
+      link.textContent = `${url} ↗`;
+
+      container.appendChild(bullet);
+      container.appendChild(link);
+      displayEl.appendChild(container);
+    }
+
+    async function saveDeployTargetUrl(target: 'vercel' | 'netlify' | 'cloudflare') {
+      const inputEl = document.getElementById(`target-url-${target}`) as HTMLInputElement | null;
+      const url = (inputEl?.value || '').trim();
+      try {
+        const res = await fetch('/api/save-deploy-target', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ target, url }),
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          updateLiveUrlDisplay(target, url);
+          notify(`Saved ${target} live URL!`);
+        } else {
+          notify(`Failed to save ${target} URL: ${data.error || 'Unknown error'}`, true);
+        }
+      } catch (err: any) {
+        notify(`Save error: ${err.message}`, true);
+      }
+    }
+
     async function checkDeployStatus() {
       try {
         const res = await fetch('/api/deploy-status');
@@ -1047,27 +1562,47 @@ const privacyConfig = siteConfig.privacy || {
           const targetUrlEl = document.getElementById('deploy-target-url') as HTMLAnchorElement | null;
           const remoteRepoEl = document.getElementById('deploy-remote-repo') as HTMLAnchorElement | null;
           const workflowLinkEl = document.getElementById('deploy-workflow-url') as HTMLAnchorElement | null;
-          const statusBadge = document.getElementById('deploy-status-badge');
+          const statusBadge = document.getElementById('gh-pages-status-badge');
+
           if (targetUrlEl && data.pagesUrl) {
             targetUrlEl.href = data.pagesUrl;
             targetUrlEl.textContent = data.pagesUrl;
           }
           if (remoteRepoEl && data.remote) {
-            const webUrl = data.remote.replace(/^git@github\.com:/, 'https://github.com/').replace(/\.git$/, '');
-            remoteRepoEl.href = webUrl;
+            remoteRepoWebUrl = data.remote.replace(/^git@github\.com:/, 'https://github.com/').replace(/\.git$/, '');
+            remoteRepoEl.href = remoteRepoWebUrl;
             remoteRepoEl.textContent = data.remote;
           }
           if (workflowLinkEl && data.workflowUrl) {
             workflowLinkEl.href = data.workflowUrl;
             workflowLinkEl.classList.remove('hidden');
           }
-          if (statusBadge) {
-            statusBadge.textContent = 'GitHub Pages Pipeline Active';
+          if (statusBadge && data.pagesStatus) {
+            statusBadge.textContent = `Status: ${data.pagesStatus}`;
+          }
+
+          if (data.deployTargets) {
+            if (data.deployTargets.vercel) {
+              const el = document.getElementById('target-url-vercel') as HTMLInputElement | null;
+              if (el) el.value = data.deployTargets.vercel;
+              updateLiveUrlDisplay('vercel', data.deployTargets.vercel);
+            }
+            if (data.deployTargets.netlify) {
+              const el = document.getElementById('target-url-netlify') as HTMLInputElement | null;
+              if (el) el.value = data.deployTargets.netlify;
+              updateLiveUrlDisplay('netlify', data.deployTargets.netlify);
+            }
+            if (data.deployTargets.cloudflare) {
+              const el = document.getElementById('target-url-cloudflare') as HTMLInputElement | null;
+              if (el) el.value = data.deployTargets.cloudflare;
+              updateLiveUrlDisplay('cloudflare', data.deployTargets.cloudflare);
+            }
           }
         }
       } catch {}
     }
 
+    checkAuthStatus();
     checkDeployStatus();
   }
 

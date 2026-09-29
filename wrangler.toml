@@ -1,0 +1,6 @@
+name = "blogly"
+compatibility_date = "2025-02-24"
+pages_build_output_dir = "dist"
+
+[vars]
+ROOT_BASE = "true"

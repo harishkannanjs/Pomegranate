@@ -935,7 +935,12 @@ try {
               setAlert(`Pushed successfully to origin/${branch}! Live deploy initiated.`);
             } else {
               statusLog.textContent = `✗ Error: ${data.error || 'Git push encountered an error'}`;
-              setAlert(`Git push failed: ${data.error || 'Check terminal status'}`, true);
+              if (data.needsAuth) {
+                statusLog.textContent += `\n\n→ GitHub authentication required.\nPlease open the Settings tab and connect GitHub via Device Flow.`;
+                setAlert(`GitHub authentication required. Open Settings tab → Connect GitHub.`, true);
+              } else {
+                setAlert(`Git push failed: ${data.error || 'Check terminal status'}`, true);
+              }
             }
           }
         } catch (err: any) {
