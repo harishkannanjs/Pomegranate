@@ -15,6 +15,7 @@ import RelatedPosts from '@/components/RelatedPosts.astro';
 import PrevNextNav from '@/components/PrevNextNav.astro';
 import GiscusComments from '@/components/GiscusComments.astro';
 import CodeBlockEnhancer from '@/components/CodeBlockEnhancer.astro';
+import Highlighter from '@/components/Highlighter.astro';
 import { getReadingTime } from '@/lib/reading-time';
 import { getSeriesInfo } from '@/lib/series';
 import { siteConfig, getRelativePath } from '@/site.config';
@@ -53,6 +54,7 @@ const features = {
   tableOfContents: true,
   readingProgressBar: true,
   relatedPosts: true,
+  highlighter: true,
   ...(siteConfig.features || {}),
 };
 ---
@@ -141,11 +143,12 @@ const features = {
               ))}
             </div>
 
-            <!-- Right: Play Audio -> Reader's Mode (Eye Comfort) -> Text Magnifier -> Copy Link -> Copy as Markdown -->
+            <!-- Right: Play Audio -> Reader's Mode (Eye Comfort) -> Text Magnifier -> Highlighter -> Copy Link -> Copy as Markdown -->
             <div class="flex items-center gap-2">
               {features.audioReader && <div data-feature="audioReader"><AudioReader /></div>}
               {features.readerMode && <div data-feature="readerMode"><ReaderModeButton /></div>}
               {features.textMagnifier && <div data-feature="textMagnifier"><TextMagnifier /></div>}
+              {features.highlighter && <div data-feature="highlighter"><Highlighter postSlug={slug} postTitle={post.data.title} /></div>}
               {features.copyLink && <div data-feature="copyLink"><CopyLinkButton /></div>}
               {features.copyMarkdown && <div data-feature="copyMarkdown"><CopyMarkdownButton rawContent={post.body || ''} /></div>}
             </div>

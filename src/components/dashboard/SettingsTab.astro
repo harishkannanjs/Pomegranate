@@ -26,7 +26,7 @@ const featuresConfig = siteConfig.features || {
   tableOfContents: true,
   readingProgressBar: true,
   relatedPosts: true,
-  highlighter: false,
+  highlighter: true,
 };
 
 const privacyConfig = siteConfig.privacy || {
@@ -210,18 +210,13 @@ const deployTargets = siteConfig.deployTargets || {};
           <Toggle id="feature-relatedPosts" checked={featuresConfig.relatedPosts} data-feature-key="relatedPosts" />
         </div>
 
-        <!-- 9. Highlighter (Coming Soon in Phase 8) -->
-        <div class="pt-3 flex items-center justify-between gap-4 opacity-60">
+        <!-- 9. Highlighter -->
+        <div class="pt-3 flex items-center justify-between gap-4">
           <div class="space-y-0.5">
-            <div class="flex items-center gap-2">
-              <span class="text-xs font-bold text-read-text-primary">Highlighter</span>
-              <span class="text-[10px] px-1.5 py-0.2 bg-amber-500/10 border border-amber-500/40 text-amber-400 rounded-[2px] font-bold">
-                Coming Soon (Phase 8)
-              </span>
-            </div>
+            <div class="text-xs font-bold text-read-text-primary">Highlighter</div>
             <div class="text-[11px] text-read-text-secondary">Visitor passage highlighter with client-side localStorage persistence.</div>
           </div>
-          <Toggle id="feature-highlighter" checked={false} disabled={true} data-feature-key="highlighter" />
+          <Toggle id="feature-highlighter" checked={featuresConfig.highlighter} data-feature-key="highlighter" />
         </div>
       </div>
     </Panel>

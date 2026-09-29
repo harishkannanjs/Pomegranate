@@ -72,9 +72,8 @@ describe('Phase 4: Dashboard Restructure Tests', () => {
     expect(result).toContain('data-feature-key="tableOfContents"');
     expect(result).toContain('data-feature-key="readingProgressBar"');
     expect(result).toContain('data-feature-key="relatedPosts"');
-    // Highlighter marked coming soon in Phase 8
+    // Highlighter active in Phase 8
     expect(result).toContain('data-feature-key="highlighter"');
-    expect(result).toContain('Coming Soon (Phase 8)');
 
     // 3. Post Management section
     expect(result).toContain('Post Management');
@@ -115,7 +114,7 @@ describe('Phase 4: Dashboard Restructure Tests', () => {
     expect(siteConfig.features?.tableOfContents).toBe(true);
     expect(siteConfig.features?.readingProgressBar).toBe(true);
     expect(siteConfig.features?.relatedPosts).toBe(true);
-    expect(siteConfig.features?.highlighter).toBe(false);
+    expect(siteConfig.features?.highlighter).toBe(true);
 
     expect(siteConfig.privacy).toBeDefined();
     expect(siteConfig.privacy?.analytics).toBe(false);

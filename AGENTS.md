@@ -57,13 +57,20 @@ file conversion, or dashboard settings as **pivot work**, not a bug fix — chec
 - **Components** (`src/components/`): each reader-facing feature is one
   self-contained `.astro` file — `AudioReader`, `ReaderModeButton` (this
   IS "Eye Comfort" — distraction-free layout + warm/blue-light-reduced
-  palette, `Alt+R`), `TextMagnifier`, `CopyLinkButton`,
+  palette, `Alt+R`), `TextMagnifier`, `Highlighter`, `CopyLinkButton`,
   `CopyMarkdownButton`, `CommandPalette`, `Mermaid`, `Asciinema`,
   `Spoiler`, `Sidenote`/`Footnotes`, `ChangelogPopover`, `SeriesStrip`,
   `RelatedPosts`, `PrevNextNav`, `TableOfContents`, `ReadingProgressBar`,
-  `GiscusComments`. None of these currently have a settings-page toggle —
-  they render unconditionally. A **Highlighter** component does not exist
-  yet; it's planned, not built.
+  `GiscusComments`.
+- **Highlighter** (`src/components/Highlighter.astro`, `src/lib/highlighter/`):
+  Client-side passage highlighting persisted in `localStorage` under
+  `blogly:highlights:<postSlug>` with schema `{ id, text, contextBefore, contextAfter, color, createdAt }`.
+  Zero network transmission. Re-anchoring algorithm matches
+  `contextBefore + text + contextAfter` first, falling back to `text` alone only
+  if exactly one match exists in the rendered prose (drops silently on
+  ambiguity or removal). Wrapped per text-node segment with `<mark>` to safely
+  span inline formatting (bold, links, inline code). Accepted limitation:
+  changing a published post's slug orphans its highlights in visitors' browsers.
 - **Local dashboard**: `src/pages/profile.astro` +
   `src/components/ProfileEditor.astro` (author identity/social/bio editing)
   and `src/components/BlogUploader.astro` (current content-intake —

@@ -98,7 +98,7 @@ export const siteConfig: SiteConfig = {
     tableOfContents: true,
     readingProgressBar: true,
     relatedPosts: true,
-    highlighter: false,
+    highlighter: true,
     ...((profileData as any).features || {}),
   },
   privacy: {
