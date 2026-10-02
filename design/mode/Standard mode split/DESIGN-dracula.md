@@ -1,13 +1,13 @@
 # DESIGN-dracula.md — Dracula theme
 
 > Uses the **Standard mode** UI language from `DESIGN.md` §1B — NOT the
-> TUI language from §1, which is reserved for the Blogly signature theme
+> TUI language from §1, which is reserved for the Pomegranate signature theme
 > only. This means ordinary rounded sliding toggles (not bracketed `[ Y ]`/
 > `[ N ]`), rounded cards and buttons, a normal tab bar, and no box-drawing
 > panel borders, status bar, or blinking-cursor treatment anywhere in the
 > product while this theme is active.
 > This file defines only the Dracula palette and font. **The light variant
-> below is Blogly's own design** — Dracula has no official light palette;
+> below is Pomegranate's own design** — Dracula has no official light palette;
 > this was built by inverting Dracula's own background/foreground roles
 > and darkening its accents for contrast, rather than inventing new colors.
 
@@ -40,7 +40,7 @@ Secondary accent (used only for the toggle-ON fill and active-tab
 indicator, to give this theme its characteristic multi-color liveliness):
 `#ff79c6` (pink).
 
-### Light (Blogly-designed companion — not official Dracula)
+### Light (Pomegranate-designed companion — not official Dracula)
 
 | Token | Hex | Use |
 |---|---|---|

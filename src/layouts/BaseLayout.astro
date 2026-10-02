@@ -19,7 +19,7 @@ interface Props {
 }
 
 const {
-  title = siteConfig.name || 'Blogly',
+  title = siteConfig.name || 'Pomegranate',
   description = siteConfig.description,
   image = '/og/default.png',
   canonicalUrl = Astro.url.href,
@@ -30,7 +30,7 @@ const {
   mode = 'dark',
 } = Astro.props;
 
-const pageTitle = title || siteConfig.name || 'Blogly';
+const pageTitle = title || siteConfig.name || 'Pomegranate';
 const resolvedOgImage = new URL(getRelativePath(image), Astro.site || Astro.url.origin).href;
 ---
 
@@ -66,7 +66,11 @@ const resolvedOgImage = new URL(getRelativePath(image), Astro.site || Astro.url.
     <script is:inline>
       (function() {
         const savedMode = localStorage.getItem('mode') || localStorage.getItem('theme') || 'dark';
-        const savedThemePack = localStorage.getItem('theme-pack') || document.documentElement.getAttribute('data-theme') || 'catppuccin';
+        let savedThemePack = localStorage.getItem('theme-pack') || document.documentElement.getAttribute('data-theme') || 'catppuccin';
+        if (savedThemePack === 'blogly') {
+          savedThemePack = 'pomegranate';
+          try { localStorage.setItem('theme-pack', 'pomegranate'); } catch (_) {}
+        }
         const isDark = savedMode !== 'light';
         document.documentElement.setAttribute('data-theme', savedThemePack);
         document.documentElement.setAttribute('data-mode', isDark ? 'dark' : 'light');
@@ -80,7 +84,11 @@ const resolvedOgImage = new URL(getRelativePath(image), Astro.site || Astro.url.
       })();
       document.addEventListener('astro:after-swap', () => {
         const savedMode = localStorage.getItem('mode') || localStorage.getItem('theme') || 'dark';
-        const savedThemePack = localStorage.getItem('theme-pack') || 'catppuccin';
+        let savedThemePack = localStorage.getItem('theme-pack') || 'catppuccin';
+        if (savedThemePack === 'blogly') {
+          savedThemePack = 'pomegranate';
+          try { localStorage.setItem('theme-pack', 'pomegranate'); } catch (_) {}
+        }
         const isDark = savedMode !== 'light';
         document.documentElement.setAttribute('data-theme', savedThemePack);
         document.documentElement.setAttribute('data-mode', isDark ? 'dark' : 'light');
@@ -98,10 +106,20 @@ const resolvedOgImage = new URL(getRelativePath(image), Astro.site || Astro.url.
     <script is:inline>
       (function() {
         try {
-          const storedPrivacy = localStorage.getItem('blogly_privacy');
+          let storedPrivacy = localStorage.getItem('pomegranate_privacy');
+          if (!storedPrivacy) {
+            const legacyPrivacy = localStorage.getItem('blogly_privacy');
+            if (legacyPrivacy) {
+              storedPrivacy = legacyPrivacy;
+              try {
+                localStorage.setItem('pomegranate_privacy', legacyPrivacy);
+                localStorage.removeItem('blogly_privacy');
+              } catch {}
+            }
+          }
           const isEnabled = storedPrivacy ? JSON.parse(storedPrivacy).analytics : false;
           if (isEnabled && typeof window !== 'undefined') {
-            window.dispatchEvent(new CustomEvent('blogly:analytics', {
+            window.dispatchEvent(new CustomEvent('pomegranate:analytics', {
               detail: {
                 path: window.location.pathname,
                 referrer: document.referrer || null,

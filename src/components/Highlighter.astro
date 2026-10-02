@@ -54,11 +54,11 @@ const { postSlug, postTitle = 'Blog Post' } = Astro.props;
     role="toolbar"
     aria-label="Highlighter selection menu"
   >
-    <!-- TUI Mode (Blogly Signature Theme) -->
+    <!-- TUI Mode (Pomegranate Signature Theme) -->
     <button
       type="button"
       id="hl-confirm-btn-tui"
-      class="chrome-tui-inline items-center gap-1.5 font-mono text-xs px-2.5 py-1 bg-read-bg-surface border border-read-accent text-read-accent hover:bg-read-accent hover:text-read-bg-base font-bold shadow-lg cursor-pointer rounded-none"
+      class="chrome-tui-inline items-center gap-1.5 font-mono text-xs px-2.5 py-1 bg-read-bg-surface border border-read-accent text-read-accent hover:bg-read-accent-fill hover:text-[#FDF8F5] font-bold shadow-lg cursor-pointer rounded-none"
       title="Highlight selected text [Alt+H]"
     >
       <span class="text-read-text-tertiary">[</span>
@@ -107,7 +107,7 @@ const { postSlug, postTitle = 'Blog Post' } = Astro.props;
       <a
         id="hl-follow-link-tui"
         href="#"
-        class="chrome-tui-inline items-center gap-1 px-2.5 py-1 bg-read-bg-surface border border-read-accent text-read-accent hover:bg-read-accent hover:text-read-bg-base font-bold shadow-lg cursor-pointer rounded-none hidden"
+        class="chrome-tui-inline items-center gap-1 px-2.5 py-1 bg-read-bg-surface border border-read-accent text-read-accent hover:bg-read-accent-fill hover:text-[#FDF8F5] font-bold shadow-lg cursor-pointer rounded-none hidden"
       >
         <span class="text-read-text-tertiary">[</span>
         <span>Follow Link &rarr;</span>
@@ -220,7 +220,7 @@ const { postSlug, postTitle = 'Blog Post' } = Astro.props;
 
 <style>
   /* Base highlight visual styling derived strictly from active theme's read.accent */
-  :global(mark.blogly-highlight) {
+  :global(mark.pomegranate-highlight) {
     background-color: color-mix(in srgb, var(--read-accent) 26%, transparent) !important;
     color: inherit !important;
     border-bottom: 2px solid color-mix(in srgb, var(--read-accent) 65%, transparent) !important;
@@ -232,21 +232,21 @@ const { postSlug, postTitle = 'Blog Post' } = Astro.props;
     transition: background-color 0.15s ease, border-color 0.15s ease !important;
   }
 
-  :global(mark.blogly-highlight:hover),
-  :global(mark.blogly-highlight:focus-visible) {
+  :global(mark.pomegranate-highlight:hover),
+  :global(mark.pomegranate-highlight:focus-visible) {
     background-color: color-mix(in srgb, var(--read-accent) 42%, transparent) !important;
     border-bottom-color: var(--read-accent) !important;
     outline: none !important;
   }
 
-  /* Sharp corners in Blogly theme (TUI mode) */
-  :global(html[data-theme="blogly"] mark.blogly-highlight) {
+  /* Sharp corners in Pomegranate theme (TUI mode) */
+  :global(html[data-theme="pomegranate"] mark.pomegranate-highlight) {
     border-radius: 0 !important;
     border-bottom-width: 1px !important;
   }
 
   /* Pulse animation when jumping to highlight from drawer */
-  :global(mark.blogly-highlight.hl-pulse) {
+  :global(mark.pomegranate-highlight.hl-pulse) {
     animation: hlPulse 1.2s ease-out;
   }
 
@@ -427,7 +427,7 @@ const { postSlug, postTitle = 'Blog Post' } = Astro.props;
 
     function jumpToHighlight(id: string) {
       closeDrawer();
-      const mark = prose.querySelector(`mark.blogly-highlight[data-highlight-id="${id}"]`);
+      const mark = prose.querySelector(`mark.pomegranate-highlight[data-highlight-id="${id}"]`);
       if (mark) {
         mark.scrollIntoView({ behavior: 'smooth', block: 'center' });
         mark.classList.remove('hl-pulse');
@@ -622,7 +622,7 @@ const { postSlug, postTitle = 'Blog Post' } = Astro.props;
       'click',
       (e) => {
         const target = e.target as HTMLElement | null;
-        const mark = target?.closest('mark.blogly-highlight') as HTMLElement | null;
+        const mark = target?.closest('mark.pomegranate-highlight') as HTMLElement | null;
         if (!mark) {
           hideRemovePopover();
           return;
@@ -791,7 +791,7 @@ const { postSlug, postTitle = 'Blog Post' } = Astro.props;
         updateBadge(stored.length);
         reanchorAllHighlights(prose, stored);
 
-        const currentMarks = prose.querySelectorAll('mark.blogly-highlight');
+        const currentMarks = prose.querySelectorAll('mark.pomegranate-highlight');
         lastRenderedIds = new Set<string>();
         currentMarks.forEach((m) => {
           const id = m.getAttribute('data-highlight-id');
@@ -812,7 +812,7 @@ const { postSlug, postTitle = 'Blog Post' } = Astro.props;
         const stored = loadHighlights(postSlug);
         if (stored.length === 0) return;
 
-        const currentMarks = prose.querySelectorAll('mark.blogly-highlight');
+        const currentMarks = prose.querySelectorAll('mark.pomegranate-highlight');
         const currentRenderedIds = new Set<string>();
         currentMarks.forEach((m) => {
           const id = m.getAttribute('data-highlight-id');

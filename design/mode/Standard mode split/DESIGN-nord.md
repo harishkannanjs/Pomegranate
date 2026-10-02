@@ -1,13 +1,13 @@
 # DESIGN-nord.md — Nord theme
 
 > Uses the **Standard mode** UI language from `DESIGN.md` §1B — NOT the
-> TUI language from §1, which is reserved for the Blogly signature theme
+> TUI language from §1, which is reserved for the Pomegranate signature theme
 > only. This means ordinary rounded sliding toggles (not bracketed `[ Y ]`/
 > `[ N ]`), rounded cards and buttons, a normal tab bar, and no box-drawing
 > panel borders, status bar, or blinking-cursor treatment anywhere in the
 > product while this theme is active.
 > This file defines only the Nord palette and font. **The light variant
-> below is Blogly's own design** — Nord has no official light palette;
+> below is Pomegranate's own design** — Nord has no official light palette;
 > this was built by inverting Nord's own tones (Snow Storm as backgrounds,
 > Polar Night as text) rather than inventing new colors, so it still reads
 > as unmistakably "Nord" to anyone who knows the original.
@@ -36,7 +36,7 @@ deviate).
 | `chrome.danger` | `#bf616a` | Destructive actions (nord11) |
 | `chrome.success` | `#a3be8c` | Confirmations (nord14) |
 
-### Light (Blogly-designed companion — not official Nord)
+### Light (Pomegranate-designed companion — not official Nord)
 
 | Token | Hex | Use |
 |---|---|---|

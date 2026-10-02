@@ -37,3 +37,16 @@ jobs:
 
       - name: Run Test Suite
         run: bun run test
+
+      - name: Build Production Site
+        run: bun run build
+
+      - name: Security Gate - Verify Dashboard Structurally Absent from Build Output
+        run: |
+          test ! -d dist/profile
+          test ! -f dist/profile/index.html
+          ! grep -rn "FileUploadTab" dist/
+          ! grep -rn "SettingsTab" dist/
+          ! grep -rn "Pomegranate Dashboard" dist/
+          ! grep -rn "disconnect-github" dist/
+          ! grep -rn "raw-markdown-input" dist/

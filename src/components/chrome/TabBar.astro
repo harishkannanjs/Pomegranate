@@ -26,20 +26,20 @@ const { tabs, class: className = '' } = Astro.props;
         class:list={[
           'px-3 py-1.5 transition-colors flex items-center gap-1.5 rounded-none border',
           tab.active
-            ? 'bg-read-accent text-read-bg-base border-read-accent font-bold'
+            ? 'bg-read-accent-fill text-[#FDF8F5] border-read-accent-fill font-bold'
             : 'border-read-border-strong text-read-text-secondary hover:text-read-text-primary hover:bg-read-bg-surface-raised',
         ]}
       >
-        <span class={tab.active ? 'text-read-bg-base/70' : 'text-read-text-tertiary'}>
+        <span class={tab.active ? 'text-[#FDF8F5]/80' : 'text-read-text-tertiary'}>
           [{idx + 1}
         </span>
         <span>{tab.label}</span>
         {tab.count !== undefined && (
-          <span class={tab.active ? 'text-read-bg-base/80' : 'text-read-accent font-bold'}>
+          <span class={tab.active ? 'text-[#FDF8F5]/90' : 'text-read-accent font-bold'}>
             ({tab.count})
           </span>
         )}
-        <span class={tab.active ? 'text-read-bg-base/70' : 'text-read-text-tertiary'}>
+        <span class={tab.active ? 'text-[#FDF8F5]/80' : 'text-read-text-tertiary'}>
           ]
         </span>
       </Tag>

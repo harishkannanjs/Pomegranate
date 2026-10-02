@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 const hexColor = z
   .string()
-  .regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, 'Must be a valid hex color');
+  .regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/, 'Must be a valid hex color');
 
 export const readTokensSchema = z.object({
   'bg-base': hexColor,
@@ -14,6 +14,7 @@ export const readTokensSchema = z.object({
   'text-secondary': hexColor,
   'text-tertiary': hexColor,
   accent: hexColor,
+  'accent-fill': hexColor,
 });
 
 export const chromeTokensSchema = z.object({
@@ -32,7 +33,7 @@ export const modeTokensSchema = z.object({
 
 export const themePackSchema = z.object({
   id: z.enum([
-    'blogly',
+    'pomegranate',
     'catppuccin',
     'gruvbox',
     'solarized',

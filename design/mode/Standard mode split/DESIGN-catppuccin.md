@@ -1,7 +1,7 @@
 # DESIGN-catppuccin.md — Catppuccin theme
 
 > Uses the **Standard mode** UI language from `DESIGN.md` §1B — NOT the
-> TUI language from §1, which is reserved for the Blogly signature theme
+> TUI language from §1, which is reserved for the Pomegranate signature theme
 > only. This means ordinary rounded sliding toggles (not bracketed `[ Y ]`/
 > `[ N ]`), rounded cards and buttons, a normal tab bar, and no box-drawing
 > panel borders, status bar, or blinking-cursor treatment anywhere in the

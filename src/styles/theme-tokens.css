@@ -11,30 +11,15 @@
 @import "@fontsource/fira-code/400.css";
 @import "@fontsource/fira-code/700.css";
 
-@font-face {
-  font-family: 'Monocraft';
-  src: url('/fonts/monocraft/Monocraft.otf') format('opentype');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Monocraft';
-  src: url('/fonts/monocraft/Monocraft-Bold.otf') format('opentype');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-
 /* Default font fallback */
 :root {
   --font-theme: 'JetBrains Mono', monospace;
 }
 
 /* Theme Fonts */
+html[data-theme="pomegranate"],
 html[data-theme="blogly"] {
-  --font-theme: 'Monocraft', monospace;
+  --font-theme: Consolas, "Courier New", Courier, monospace;
 }
 html[data-theme="catppuccin"],
 html:not([data-theme]) {
@@ -57,50 +42,65 @@ html[data-theme="dracula"] {
 }
 
 /* ========================================================================= */
-/* 1. Blogly (TUI Mode)                                                      */
+/* 1. Pomegranate (TUI Mode)                                                 */
 /* ========================================================================= */
 
-/* Blogly - Dark */
+/* Pomegranate - Dark */
+html[data-theme="pomegranate"][data-mode="dark"],
+html[data-theme="pomegranate"].dark,
 html[data-theme="blogly"][data-mode="dark"],
 html[data-theme="blogly"].dark {
-  --read-bg-base: #070a14;
-  --read-bg-surface: #0d1224;
-  --read-bg-surface-raised: #131a33;
-  --read-border: #232b4d;
-  --read-border-strong: #34406e;
-  --read-text-primary: #d7dbf0;
-  --read-text-secondary: #8891bb;
-  --read-text-tertiary: #565f8c;
-  --read-accent: #4d8dff;
+  --read-bg-base: #210F13;
+  --read-bg-surface: #320B21;
+  --read-bg-surface-raised: #490C19;
+  --read-border: #82545D;
+  --read-border-strong: #B59D9F;
+  --read-text-primary: #B59D9F;
+  --read-text-secondary: rgba(181, 157, 159, 0.75);
+  --read-text-tertiary: rgba(181, 157, 159, 0.5);
+  --read-accent: #B59D9F;
+  --read-accent-fill: #991E34;
 
-  --chrome-input-bg: #0d1224;
-  --chrome-input-border-focus: #4d8dff;
-  --chrome-hover-bg: #131a33;
-  --chrome-danger: #f2555a;
-  --chrome-success: #3ddc84;
-  --chrome-secondary-accent: #4d8dff;
+  --chrome-input-bg: #320B21;
+  --chrome-input-border-focus: #B59D9F;
+  --chrome-hover-bg: #490C19;
+  --chrome-danger: #991E34;
+  --chrome-success: #B59D9F;
+  --chrome-secondary-accent: #B59D9F;
 }
 
-/* Blogly - Light */
+/* Underline links on dark mode per OSC-8 convention */
+html[data-theme="pomegranate"][data-mode="dark"] a:not([class*="no-underline"]),
+html[data-theme="pomegranate"].dark a:not([class*="no-underline"]),
+html[data-theme="blogly"][data-mode="dark"] a:not([class*="no-underline"]),
+html[data-theme="blogly"].dark a:not([class*="no-underline"]) {
+  text-decoration: underline;
+}
+
+/* Pomegranate - Light */
+html[data-theme="pomegranate"][data-mode="light"],
+html[data-theme="pomegranate"].light,
+html[data-theme="pomegranate"]:not(.dark),
 html[data-theme="blogly"][data-mode="light"],
 html[data-theme="blogly"].light,
 html[data-theme="blogly"]:not(.dark) {
-  --read-bg-base: #f6f7fb;
-  --read-bg-surface: #ffffff;
-  --read-bg-surface-raised: #eceffa;
-  --read-border: #d7dceb;
-  --read-border-strong: #b3bcdb;
-  --read-text-primary: #10142a;
-  --read-text-secondary: #4b5170;
-  --read-text-tertiary: #767c9c;
-  --read-accent: #2955d9;
+  --read-bg-base: #FAF4F5;
+  --read-bg-surface: #FFFFFF;
+  --read-bg-surface-raised: #F3E7E9;
+  --read-border: #B59D9F;
+  --read-border-strong: #82545D;
+  --read-text-primary: #210F13;
+  --read-text-secondary: #490C19;
+  --read-text-tertiary: #82545D;
+  --read-accent: #991E34;
+  --read-accent-fill: #991E34;
 
-  --chrome-input-bg: #ffffff;
-  --chrome-input-border-focus: #2955d9;
-  --chrome-hover-bg: #eceffa;
-  --chrome-danger: #c0342f;
-  --chrome-success: #1f9d5c;
-  --chrome-secondary-accent: #2955d9;
+  --chrome-input-bg: #FFFFFF;
+  --chrome-input-border-focus: #991E34;
+  --chrome-hover-bg: #F3E7E9;
+  --chrome-danger: #991E34;
+  --chrome-success: #210F13;
+  --chrome-secondary-accent: #991E34;
 }
 
 /* ========================================================================= */
@@ -120,6 +120,7 @@ html:not([data-theme]).dark {
   --read-text-secondary: #a6adc8;
   --read-text-tertiary: #6c7086;
   --read-accent: #89b4fa;
+  --read-accent-fill: #89b4fa;
 
   --chrome-input-bg: #181825;
   --chrome-input-border-focus: #89b4fa;
@@ -144,6 +145,7 @@ html:not([data-theme]):not(.dark) {
   --read-text-secondary: #6c6f85;
   --read-text-tertiary: #8c8fa1;
   --read-accent: #1e66f5;
+  --read-accent-fill: #1e66f5;
 
   --chrome-input-bg: #ffffff;
   --chrome-input-border-focus: #1e66f5;
@@ -169,6 +171,7 @@ html[data-theme="gruvbox"].dark {
   --read-text-secondary: #bdae93;
   --read-text-tertiary: #928374;
   --read-accent: #d79921;
+  --read-accent-fill: #d79921;
 
   --chrome-input-bg: #1d2021;
   --chrome-input-border-focus: #d79921;
@@ -191,6 +194,7 @@ html[data-theme="gruvbox"]:not(.dark) {
   --read-text-secondary: #665c54;
   --read-text-tertiary: #7c6f64;
   --read-accent: #af3a03;
+  --read-accent-fill: #af3a03;
 
   --chrome-input-bg: #ffffff;
   --chrome-input-border-focus: #af3a03;
@@ -216,6 +220,7 @@ html[data-theme="solarized"].dark {
   --read-text-secondary: #839496;
   --read-text-tertiary: #586e75;
   --read-accent: #268bd2;
+  --read-accent-fill: #268bd2;
 
   --chrome-input-bg: #073642;
   --chrome-input-border-focus: #268bd2;
@@ -238,6 +243,7 @@ html[data-theme="solarized"]:not(.dark) {
   --read-text-secondary: #657b83;
   --read-text-tertiary: #93a1a1;
   --read-accent: #268bd2;
+  --read-accent-fill: #268bd2;
 
   --chrome-input-bg: #ffffff;
   --chrome-input-border-focus: #268bd2;
@@ -263,6 +269,7 @@ html[data-theme="tokyo-night"].dark {
   --read-text-secondary: #a9b1d6;
   --read-text-tertiary: #565f89;
   --read-accent: #7aa2f7;
+  --read-accent-fill: #7aa2f7;
 
   --chrome-input-bg: #16161e;
   --chrome-input-border-focus: #7aa2f7;
@@ -285,6 +292,7 @@ html[data-theme="tokyo-night"]:not(.dark) {
   --read-text-secondary: #5a4a78;
   --read-text-tertiary: #848cb5;
   --read-accent: #2e7de9;
+  --read-accent-fill: #2e7de9;
 
   --chrome-input-bg: #ffffff;
   --chrome-input-border-focus: #2e7de9;
@@ -310,6 +318,7 @@ html[data-theme="nord"].dark {
   --read-text-secondary: #d8dee9;
   --read-text-tertiary: #4c566a;
   --read-accent: #88c0d0;
+  --read-accent-fill: #88c0d0;
 
   --chrome-input-bg: #242933;
   --chrome-input-border-focus: #88c0d0;
@@ -332,6 +341,7 @@ html[data-theme="nord"]:not(.dark) {
   --read-text-secondary: #4c566a;
   --read-text-tertiary: #7b88a1;
   --read-accent: #5e81ac;
+  --read-accent-fill: #5e81ac;
 
   --chrome-input-bg: #ffffff;
   --chrome-input-border-focus: #5e81ac;
@@ -357,6 +367,7 @@ html[data-theme="dracula"].dark {
   --read-text-secondary: #6272a4;
   --read-text-tertiary: #4d5273;
   --read-accent: #bd93f9;
+  --read-accent-fill: #bd93f9;
 
   --chrome-input-bg: #21222c;
   --chrome-input-border-focus: #bd93f9;
@@ -379,6 +390,7 @@ html[data-theme="dracula"]:not(.dark) {
   --read-text-secondary: #4d4f6b;
   --read-text-tertiary: #7b7d9e;
   --read-accent: #7841c9;
+  --read-accent-fill: #7841c9;
 
   --chrome-input-bg: #ffffff;
   --chrome-input-border-focus: #7841c9;
@@ -409,6 +421,7 @@ html {
   --outline: var(--read-border);
   --outline-variant: var(--read-border);
   --primary: var(--read-accent);
+  --primary-fill: var(--read-accent-fill, var(--read-accent));
   --primary-container: var(--read-bg-surface-raised);
   --on-primary: var(--read-bg-base);
   --secondary: var(--chrome-secondary-accent, var(--read-accent));
@@ -424,28 +437,33 @@ html {
 /* ========================================================================= */
 /* Chrome Mode Structural Switching (TUI vs. Standard)                       */
 /* ========================================================================= */
+html[data-theme="pomegranate"] .chrome-std,
+html[data-theme="pomegranate"] .chrome-std-inline,
+html[data-theme="pomegranate"] .chrome-std-block,
 html[data-theme="blogly"] .chrome-std,
 html[data-theme="blogly"] .chrome-std-inline,
 html[data-theme="blogly"] .chrome-std-block {
   display: none !important;
 }
 
+html[data-theme="pomegranate"] .chrome-tui-inline,
 html[data-theme="blogly"] .chrome-tui-inline {
   display: inline-flex !important;
 }
+html[data-theme="pomegranate"] .chrome-tui-block,
 html[data-theme="blogly"] .chrome-tui-block {
   display: block !important;
 }
 
-html:not([data-theme="blogly"]) .chrome-tui,
-html:not([data-theme="blogly"]) .chrome-tui-inline,
-html:not([data-theme="blogly"]) .chrome-tui-block {
+html:not([data-theme="pomegranate"]):not([data-theme="blogly"]) .chrome-tui,
+html:not([data-theme="pomegranate"]):not([data-theme="blogly"]) .chrome-tui-inline,
+html:not([data-theme="pomegranate"]):not([data-theme="blogly"]) .chrome-tui-block {
   display: none !important;
 }
 
-html:not([data-theme="blogly"]) .chrome-std-inline {
+html:not([data-theme="pomegranate"]):not([data-theme="blogly"]) .chrome-std-inline {
   display: inline-flex !important;
 }
-html:not([data-theme="blogly"]) .chrome-std-block {
+html:not([data-theme="pomegranate"]):not([data-theme="blogly"]) .chrome-std-block {
   display: block !important;
 }

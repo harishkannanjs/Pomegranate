@@ -8,11 +8,11 @@ describe('Theme Pack Architecture', () => {
     expect(themes).toHaveLength(7);
     const ids = themes.map((t) => t.id).sort();
     expect(ids).toEqual([
-      'blogly',
       'catppuccin',
       'dracula',
       'gruvbox',
       'nord',
+      'pomegranate',
       'solarized',
       'tokyo-night',
     ]);
@@ -28,8 +28,8 @@ describe('Theme Pack Architecture', () => {
     }
   });
 
-  it('correctly sets TUI mode for Blogly and Standard mode for community themes', () => {
-    expect(themePacks.blogly.mode).toBe('tui');
+  it('correctly sets TUI mode for Pomegranate and Standard mode for community themes', () => {
+    expect(themePacks.pomegranate.mode).toBe('tui');
     expect(themePacks.catppuccin.mode).toBe('standard');
     expect(themePacks.gruvbox.mode).toBe('standard');
     expect(themePacks.solarized.mode).toBe('standard');
@@ -38,8 +38,8 @@ describe('Theme Pack Architecture', () => {
     expect(themePacks.dracula.mode).toBe('standard');
   });
 
-  it('assigns exact self-hosted fonts per theme specification', () => {
-    expect(themePacks.blogly.font).toBe('Monocraft');
+  it('assigns exact fonts per theme specification', () => {
+    expect(themePacks.pomegranate.font).toBe('Consolas');
     expect(themePacks.catppuccin.font).toBe('JetBrains Mono');
     expect(themePacks.gruvbox.font).toBe('IBM Plex Mono');
     expect(themePacks.solarized.font).toBe('Source Code Pro');
@@ -49,9 +49,19 @@ describe('Theme Pack Architecture', () => {
   });
 
   it('has exact hex values for dark and light modes matching specs', () => {
-    // Blogly check
-    expect(themePacks.blogly.tokens.dark.read['text-primary']).toBe('#d7dbf0');
-    expect(themePacks.blogly.tokens.light.read['text-primary']).toBe('#10142a');
+    // Pomegranate check
+    expect(themePacks.pomegranate.tokens.dark.read['text-primary']).toBe('#B59D9F');
+    expect(themePacks.pomegranate.tokens.light.read['text-primary']).toBe('#210F13');
+    expect(themePacks.pomegranate.tokens.dark.read['accent-fill']).toBe('#991E34');
+    expect(themePacks.pomegranate.tokens.light.read['accent-fill']).toBe('#991E34');
+    expect(themePacks.pomegranate.tokens.dark.read['text-secondary']).toBe('#B59D9FBF');
+    expect(themePacks.pomegranate.tokens.dark.read['text-tertiary']).toBe('#B59D9F80');
+
+    // All themes have accent-fill defined
+    for (const theme of getAllThemes()) {
+      expect(theme.tokens.dark.read['accent-fill']).toBeDefined();
+      expect(theme.tokens.light.read['accent-fill']).toBeDefined();
+    }
 
     // Catppuccin check
     expect(themePacks.catppuccin.tokens.dark.read['bg-base']).toBe('#1e1e2e');
@@ -84,6 +94,7 @@ describe('Theme Pack Architecture', () => {
 
   it('getTheme helper retrieves theme or falls back to default', () => {
     expect(getTheme('dracula').id).toBe('dracula');
+    expect(getTheme('blogly').id).toBe('pomegranate');
     expect(getTheme('non-existent').id).toBe(DEFAULT_THEME_ID);
     expect(getTheme(null).id).toBe(DEFAULT_THEME_ID);
   });

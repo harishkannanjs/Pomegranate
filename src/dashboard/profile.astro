@@ -15,7 +15,10 @@ userPosts.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
 
 // Compute user's blog stats directly from published articles
 const totalPosts = userPosts.length;
-const totalWords = userPosts.reduce((acc, post) => acc + (post.data.words || getReadingTime(post.body || '').words), 0);
+const totalWords = userPosts.reduce(
+  (acc, post) => acc + (post.data.words || getReadingTime(post.body || '').words),
+  0
+);
 
 // Author's blog series
 const seriesMap = new Map<string, { total: number; posts: typeof userPosts }>();
@@ -39,28 +42,28 @@ userPosts.forEach((post) => {
     tagCounts[tag] = (tagCounts[tag] || 0) + 1;
   });
 });
-const authorTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
-
-const isDev = import.meta.env.DEV;
+const authorTags = Object.entries(tagCounts).sort(
+  (a, b) => b[1] - a[1] || a[0].localeCompare(b[0])
+);
 
 const dashboardTabs = [
-  { id: 'file-upload', label: 'File Upload', active: isDev },
+  { id: 'file-upload', label: 'File Upload', active: true },
   { id: 'settings', label: 'Settings', active: false },
-  { id: 'public-profile', label: 'Public Profile View', active: !isDev },
+  { id: 'public-profile', label: 'Public Profile View', active: false },
 ];
 ---
 
-<BaseLayout title={isDev ? "Dashboard & Profile" : "Author Profile"} activePath="/profile">
+<BaseLayout title="Pomegranate Dashboard" activePath="/profile">
   <div class="max-w-[1040px] mx-auto px-4 md:px-8 py-8 font-mono space-y-6">
     <!-- Dashboard Top Header Bar & Mode-Aware TabBar -->
     <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-read-border">
       <div class="flex items-center gap-2">
         <span class="text-read-accent font-bold text-base">&gt;</span>
         <h1 class="text-xl sm:text-2xl font-bold text-read-text-primary tracking-tight">
-          {isDev ? 'Blogly Dashboard' : 'Author Profile'}
+          Pomegranate Dashboard
         </h1>
         <span class="text-read-accent text-[10px] font-bold px-2 py-0.5 border border-read-border rounded-[2px] bg-read-bg-surface select-none">
-          {isDev ? 'DEV // LOCALHOST' : 'PUBLIC PROFILE'}
+          DEV // LOCALHOST
         </span>
       </div>
 
@@ -69,7 +72,7 @@ const dashboardTabs = [
     </div>
 
     <!-- Tab 1: File Upload Tab (Split Editor + Seam) -->
-    <div id="tab-content-file-upload" class={isDev ? '' : 'hidden'}>
+    <div id="tab-content-file-upload">
       <FileUploadTab />
     </div>
 
@@ -79,7 +82,7 @@ const dashboardTabs = [
     </div>
 
     <!-- Tab 3: Public Profile View (Visitor Perspective & Published Feed) -->
-    <div id="tab-content-public-profile" class={isDev ? 'hidden max-w-[760px] mx-auto space-y-10' : 'max-w-[760px] mx-auto space-y-10'}>
+    <div id="tab-content-public-profile" class="hidden max-w-[760px] mx-auto space-y-10">
       <!-- Public Profile Context -->
       <section class="flex flex-col space-y-3">
         <div class="flex items-center gap-2 text-read-accent text-[13px]">
@@ -101,7 +104,11 @@ const dashboardTabs = [
           >
             <img
               id="profile-avatar-img"
-              src={siteConfig.avatar || siteConfig.logo ? getRelativePath(siteConfig.avatar || siteConfig.logo) : ''}
+              src={
+                siteConfig.avatar || siteConfig.logo
+                  ? getRelativePath(siteConfig.avatar || siteConfig.logo)
+                  : ''
+              }
               alt={`${siteConfig.author} Logo`}
               class={`w-full h-full object-cover ${siteConfig.avatar || siteConfig.logo ? '' : 'hidden'}`}
               data-profile-logo-img
@@ -113,7 +120,12 @@ const dashboardTabs = [
               data-profile-logo-fallback
             >
               <span class="text-read-accent text-[32px] font-bold leading-none">&gt;_</span>
-              <span class="text-read-accent font-semibold text-[11px] mt-1.5 truncate max-w-full" data-profile-handle>{siteConfig.handle}</span>
+              <span
+                class="text-read-accent font-semibold text-[11px] mt-1.5 truncate max-w-full"
+                data-profile-handle
+              >
+                {siteConfig.handle}
+              </span>
             </div>
           </div>
         </div>
@@ -121,15 +133,24 @@ const dashboardTabs = [
         <!-- Author Bio & Coordinates -->
         <div class="flex flex-col space-y-3 flex-1 text-[13px] text-read-text-secondary leading-relaxed">
           <div>
-            <h3 class="text-[18px] text-read-text-primary font-semibold tracking-tight break-words" data-profile-author>
+            <h3
+              class="text-[18px] text-read-text-primary font-semibold tracking-tight break-words"
+              data-profile-author
+            >
               {siteConfig.author || siteConfig.handle || 'User'}
             </h3>
-            <p class={`text-[12px] text-read-accent mt-0.5 ${siteConfig.role ? '' : 'hidden'}`} data-profile-role>
+            <p
+              class={`text-[12px] text-read-accent mt-0.5 ${siteConfig.role ? '' : 'hidden'}`}
+              data-profile-role
+            >
               {siteConfig.role}
             </p>
           </div>
 
-          <p class={`break-words ${siteConfig.description ? '' : 'text-read-text-tertiary italic text-[12px]'}`} data-profile-bio>
+          <p
+            class={`break-words ${siteConfig.description ? '' : 'text-read-text-tertiary italic text-[12px]'}`}
+            data-profile-bio
+          >
             {siteConfig.description || 'No description provided yet.'}
           </p>
 
@@ -194,8 +215,12 @@ const dashboardTabs = [
           <div class="text-[18px] text-read-text-primary font-bold mt-1">{authorTags.length}</div>
         </div>
         <div class="p-3 bg-read-bg-surface border border-read-border rounded-[2px]">
-          <div class="text-[10px] text-read-text-tertiary uppercase tracking-wider">Total Words</div>
-          <div class="text-[18px] text-read-text-tertiary font-bold mt-1">~{totalWords.toLocaleString()}</div>
+          <div class="text-[10px] text-read-text-tertiary uppercase tracking-wider">
+            Total Words
+          </div>
+          <div class="text-[18px] text-read-text-tertiary font-bold mt-1">
+            ~{totalWords.toLocaleString()}
+          </div>
         </div>
       </section>
 
@@ -211,10 +236,14 @@ const dashboardTabs = [
             {[...seriesMap.entries()].map(([seriesName, data]) => (
               <div class="p-3.5 bg-read-bg-surface border border-read-border rounded-[2px] space-y-2">
                 <div class="flex items-center justify-between text-[12px] gap-2">
-                  <span class="text-read-text-primary font-semibold break-words">'{seriesName}'</span>
+                  <span class="text-read-text-primary font-semibold break-words">
+                    '{seriesName}'
+                  </span>
                   <span class="text-read-text-tertiary text-[11px] shrink-0">
                     {data.posts.length} {data.posts.length === 1 ? 'part' : 'parts'} published
-                    {data.total > data.posts.length ? ` (${data.posts.length}/${data.total} total)` : ''}
+                    {data.total > data.posts.length
+                      ? ` (${data.posts.length}/${data.total} total)`
+                      : ''}
                   </span>
                 </div>
                 <div class="flex flex-wrap gap-2 pt-1">
@@ -228,8 +257,13 @@ const dashboardTabs = [
                           href={getRelativePath(`/blog/${slug}`)}
                           class="px-2.5 py-1 bg-read-bg-base border border-read-border hover:border-read-accent text-read-text-secondary hover:text-read-accent text-[11px] rounded-[2px] transition-colors flex items-center gap-1.5"
                         >
-                          <span class="text-read-accent font-bold">[{p.data.seriesPart}{totalPart ? `/${totalPart}` : ''}]</span>
-                          <span class="truncate max-w-[200px] sm:max-w-[300px]">{p.data.title}</span>
+                          <span class="text-read-accent font-bold">
+                            [{p.data.seriesPart}
+                            {totalPart ? `/${totalPart}` : ''}]
+                          </span>
+                          <span class="truncate max-w-[200px] sm:max-w-[300px]">
+                            {p.data.title}
+                          </span>
                         </a>
                       );
                     })}
@@ -263,7 +297,9 @@ const dashboardTabs = [
             <span class="text-read-accent font-bold">&gt;</span>
             <span>Published Posts</span>
           </div>
-          <span class="text-read-text-tertiary font-mono text-[11px]">{userPosts.length} entries</span>
+          <span class="text-read-text-tertiary font-mono text-[11px]">
+            {userPosts.length} entries
+          </span>
         </div>
 
         <div class="flex flex-col space-y-6">
@@ -281,12 +317,13 @@ const dashboardTabs = [
     const tabTriggers = document.querySelectorAll('[data-tab-id]');
     const tabPanels: Record<string, HTMLElement | null> = {
       'file-upload': document.getElementById('tab-content-file-upload'),
-      'settings': document.getElementById('tab-content-settings'),
+      settings: document.getElementById('tab-content-settings'),
       'public-profile': document.getElementById('tab-content-public-profile'),
     };
 
     function switchActiveTab(targetId: string) {
-      localStorage.setItem('blogly_active_tab', targetId);
+      localStorage.setItem('pomegranate_active_tab', targetId);
+      localStorage.removeItem('blogly_active_tab');
 
       tabTriggers.forEach((btn) => {
         const id = btn.getAttribute('data-tab-id');
@@ -295,10 +332,20 @@ const dashboardTabs = [
         // TUI mode styling
         if (btn.classList.contains('chrome-tui-inline') || btn.closest('.chrome-tui-inline')) {
           if (isActive) {
-            btn.classList.add('bg-read-accent', 'text-read-bg-base', 'border-read-accent', 'font-bold');
+            btn.classList.add(
+              'bg-read-accent-fill',
+              'text-[#FDF8F5]',
+              'border-read-accent-fill',
+              'font-bold'
+            );
             btn.classList.remove('border-read-border-strong', 'text-read-text-secondary');
           } else {
-            btn.classList.remove('bg-read-accent', 'text-read-bg-base', 'border-read-accent', 'font-bold');
+            btn.classList.remove(
+              'bg-read-accent-fill',
+              'text-[#FDF8F5]',
+              'border-read-accent-fill',
+              'font-bold'
+            );
             btn.classList.add('border-read-border-strong', 'text-read-text-secondary');
           }
         }
@@ -308,7 +355,12 @@ const dashboardTabs = [
           btn.classList.add('bg-read-bg-surface', 'text-read-accent', 'shadow-sm', 'font-semibold');
           btn.classList.remove('text-read-text-secondary');
         } else {
-          btn.classList.remove('bg-read-bg-surface', 'text-read-accent', 'shadow-sm', 'font-semibold');
+          btn.classList.remove(
+            'bg-read-bg-surface',
+            'text-read-accent',
+            'shadow-sm',
+            'font-semibold'
+          );
           btn.classList.add('text-read-text-secondary');
         }
       });
@@ -337,12 +389,24 @@ const dashboardTabs = [
     // Support query param or localStorage tab memory
     const urlParams = new URLSearchParams(window.location.search);
     const queryTab = urlParams.get('tab');
-    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    const defaultTab = isLocalhost ? 'file-upload' : 'public-profile';
-    const storedTab = localStorage.getItem('blogly_active_tab');
-    const initialTab = queryTab && tabPanels[queryTab]
-      ? queryTab
-      : (!isLocalhost && (!storedTab || storedTab === 'file-upload') ? 'public-profile' : (storedTab || defaultTab));
+    const defaultTab = 'file-upload';
+    let storedTab = localStorage.getItem('pomegranate_active_tab');
+    if (!storedTab) {
+      const legacyTab = localStorage.getItem('blogly_active_tab');
+      if (legacyTab) {
+        storedTab = legacyTab;
+        try {
+          localStorage.setItem('pomegranate_active_tab', legacyTab);
+          localStorage.removeItem('blogly_active_tab');
+        } catch {}
+      }
+    }
+    const initialTab =
+      queryTab && tabPanels[queryTab]
+        ? queryTab
+        : storedTab && tabPanels[storedTab]
+          ? storedTab
+          : defaultTab;
     switchActiveTab(initialTab);
   }
 

@@ -1,6 +1,6 @@
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { describe, it, expect } from 'vitest';
-import ProfilePage from '../src/pages/profile.astro';
+import ProfilePage from '../src/dashboard/profile.astro';
 import FileUploadTab from '../src/components/dashboard/FileUploadTab.astro';
 import SettingsTab from '../src/components/dashboard/SettingsTab.astro';
 import { siteConfig } from '../src/site.config';
@@ -12,7 +12,7 @@ describe('Phase 4: Dashboard Restructure Tests', () => {
 
     expect(result).toBeDefined();
     // Header brand and title
-    expect(result).toContain('Blogly Dashboard');
+    expect(result).toContain('Pomegranate Dashboard');
     expect(result).toContain('DEV // LOCALHOST');
 
     // Tab navigation buttons
@@ -59,7 +59,7 @@ describe('Phase 4: Dashboard Restructure Tests', () => {
     expect(result).toContain('Appearance &amp; Theming');
     expect(result).toContain('Active Theme Picker');
     expect(result).toContain('Typography / Font Picker');
-    expect(result).toContain('data-theme-id="blogly"');
+    expect(result).toContain('data-theme-id="pomegranate"');
     expect(result).toContain('data-theme-id="catppuccin"');
 
     // 2. Features toggles

@@ -10,9 +10,11 @@ node_modules/
 .env.*
 !.env.example
 
-# Blogly Local Authentication & Credentials (never committable)
+# Pomegranate & Legacy Local Authentication & Credentials (never committable)
 .blogly/
 .blogly*.json
+.pomegranate/
+.pomegranate*.json
 
 # Logs
 npm-debug.log*

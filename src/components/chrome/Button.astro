@@ -32,7 +32,7 @@ const Tag = href ? 'a' : 'button';
   aria-disabled={disabled ? 'true' : undefined}
   class:list={[
     'chrome-tui-inline items-center gap-1.5 font-mono text-xs px-3 py-1.5 transition-colors select-none rounded-none',
-    variant === 'primary' && 'border border-read-accent text-read-accent hover:bg-read-accent hover:text-read-bg-base font-bold',
+    variant === 'primary' && 'border border-read-accent text-read-accent hover:bg-read-accent-fill hover:text-[#FDF8F5] font-bold',
     variant === 'secondary' && 'border border-read-border-strong text-read-text-primary hover:bg-read-bg-surface-raised hover:border-read-accent',
     variant === 'danger' && 'border border-chrome-danger text-chrome-danger hover:bg-chrome-danger hover:text-white',
     disabled && 'opacity-40 cursor-not-allowed pointer-events-none',

@@ -1,6 +1,7 @@
 import type { StoredHighlight, StorageOperationResult } from './types';
 
-export const HIGHLIGHT_STORAGE_PREFIX = 'blogly:highlights:';
+export const HIGHLIGHT_STORAGE_PREFIX = 'pomegranate:highlights:';
+export const LEGACY_HIGHLIGHT_STORAGE_PREFIX = 'blogly:highlights:';
 export const MAX_HIGHLIGHTS_PER_POST = 100;
 
 /**
@@ -10,6 +11,14 @@ export const MAX_HIGHLIGHTS_PER_POST = 100;
 export function getStorageKey(postSlug: string): string {
   const cleanSlug = (postSlug || '').replace(/^\/+|\/+$/g, '');
   return `${HIGHLIGHT_STORAGE_PREFIX}${cleanSlug}`;
+}
+
+/**
+ * Returns the legacy scoped localStorage key (blogly prefix) for backward compatibility migration.
+ */
+export function getLegacyStorageKey(postSlug: string): string {
+  const cleanSlug = (postSlug || '').replace(/^\/+|\/+$/g, '');
+  return `${LEGACY_HIGHLIGHT_STORAGE_PREFIX}${cleanSlug}`;
 }
 
 /**
@@ -95,8 +104,19 @@ export function loadHighlights(postSlug: string): StoredHighlight[] {
   }
 
   const key = getStorageKey(postSlug);
+  const legacyKey = getLegacyStorageKey(postSlug);
   try {
-    const raw = storage.getItem(key);
+    let raw = storage.getItem(key);
+    let migrated = false;
+
+    if (!raw) {
+      const legacyRaw = storage.getItem(legacyKey);
+      if (legacyRaw) {
+        raw = legacyRaw;
+        migrated = true;
+      }
+    }
+
     if (!raw) {
       return [];
     }
@@ -114,6 +134,16 @@ export function loadHighlights(postSlug: string): StoredHighlight[] {
         if (validated.length >= MAX_HIGHLIGHTS_PER_POST) {
           break;
         }
+      }
+    }
+
+    // Auto-migrate validated legacy highlights to current key and remove legacy key
+    if (migrated && validated.length > 0) {
+      try {
+        storage.setItem(key, JSON.stringify(validated));
+        storage.removeItem(legacyKey);
+      } catch {
+        // Silently ignore quota/write errors during auto-migration
       }
     }
 
@@ -252,8 +282,10 @@ export function clearHighlights(postSlug: string): StorageOperationResult {
   }
 
   const key = getStorageKey(postSlug);
+  const legacyKey = getLegacyStorageKey(postSlug);
   try {
     storage.removeItem(key);
+    storage.removeItem(legacyKey);
     return { success: true };
   } catch (err: unknown) {
     return {

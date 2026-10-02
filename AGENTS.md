@@ -1,4 +1,4 @@
-# AGENTS.md — Blogly (repo: glyph.sh)
+# AGENTS.md — glyph.sh (→ Blogly → Pomegranate)
 
 > Repository-specific rules only. Global cross-project rules (scoped diffs,
 > confirm before destructive actions, run checks before declaring done,
@@ -8,8 +8,8 @@
 ## Design specs — read before any UI/theming work
 
 Full visual and interaction specs live in `design/`, not in this file:
-`design/DESIGN.md` (the Blogly signature theme, and the two structural UI
-languages — TUI mode for Blogly, Standard mode for every community theme
+`design/DESIGN.md` (the Pomegranate signature theme, and the two structural UI
+languages — TUI mode for Pomegranate, Standard mode for every community theme
 — that everything else inherits from) plus one file per community theme:
 `design/DESIGN-catppuccin.md`, `design/DESIGN-gruvbox.md`,
 `design/DESIGN-solarized.md`, `design/DESIGN-tokyo-night.md`,
@@ -21,14 +21,15 @@ from this file or from existing CSS alone, since the current CSS
 
 ## What this repo actually is right now
 
-The product is **Blogly**, a general-purpose, forkable blog-authoring tool.
-The in-code rename from `glyph.sh` to `Blogly` is complete across `package.json`,
-`site.config.ts`, `profile.json`, UI wordmarks (`blogly_`), and documentation.
-Note that the underlying GitHub repository and git remote intentionally retain the
-name `glyph.sh` (`github.com/harishkannanjs/glyph.sh`) to preserve external links,
-fork relationships, and stars. Treat any task that touches the onboarding flow,
-file conversion, or dashboard settings as **pivot work**, not a bug fix — check
-`SPEC.md`/`ROADMAP.md` before assuming current behavior is the target behavior.
+The product is **Pomegranate**, a general-purpose, forkable blog-authoring tool.
+The rename progression is `glyph.sh` → `Blogly` → `Pomegranate`. The in-code rename
+to `Pomegranate` is complete across `package.json`, `site.config.ts`, `profile.json`,
+UI wordmarks (`pomegranate_`), and documentation. Note that the underlying GitHub
+repository and git remote intentionally retain the name `glyph.sh`
+(`github.com/harishkannanjs/glyph.sh`) to preserve external links, fork relationships,
+and stars. Treat any task that touches the onboarding flow, file conversion, or
+dashboard settings as **pivot work**, not a bug fix — check `SPEC.md`/`ROADMAP.md`
+before assuming current behavior is the target behavior.
 
 ## Real architecture
 
@@ -64,19 +65,25 @@ file conversion, or dashboard settings as **pivot work**, not a bug fix — chec
   `GiscusComments`.
 - **Highlighter** (`src/components/Highlighter.astro`, `src/lib/highlighter/`):
   Client-side passage highlighting persisted in `localStorage` under
-  `blogly:highlights:<postSlug>` with schema `{ id, text, contextBefore, contextAfter, color, createdAt }`.
+  `pomegranate:highlights:<postSlug>` with schema `{ id, text, contextBefore, contextAfter, color, createdAt }`.
   Zero network transmission. Re-anchoring algorithm matches
   `contextBefore + text + contextAfter` first, falling back to `text` alone only
   if exactly one match exists in the rendered prose (drops silently on
   ambiguity or removal). Wrapped per text-node segment with `<mark>` to safely
   span inline formatting (bold, links, inline code). Accepted limitation:
   changing a published post's slug orphans its highlights in visitors' browsers.
-- **Local dashboard**: `src/pages/profile.astro` +
-  `src/components/ProfileEditor.astro` (author identity/social/bio editing)
-  and `src/components/BlogUploader.astro` (current content-intake —
-  presently a `.md`/`.mdx` drag-drop, NOT the planned universal
-  any-file-to-Markdown conversion pipeline with Tier 1/Tier 2 and a
-  raw/preview split — that's future work, not current behavior).
+- **Local dashboard & Dev-Only Route Boundary**: The authoring dashboard
+  lives in `src/dashboard/profile.astro` (outside `src/pages/`) alongside
+  `src/components/dashboard/FileUploadTab.astro` and
+  `src/components/dashboard/SettingsTab.astro`. It is NEVER a static route
+  in `src/pages/`. Instead, it is injected via Astro's `astro:config:setup`
+  hook (`devDashboardIntegration()` in `astro.config.mjs`) strictly when
+  `command === 'dev'`. In production builds (`bun run build`), the route is
+  never registered, preventing dashboard markup, settings, and client JS
+  from being bundled into `dist/`. Any new dashboard page, management tab, or
+  admin tool must be placed in `src/dashboard/` or injected via this dev-only
+  hook — never placed directly under `src/pages/`. The public blog's read-only
+  author view lives at `src/pages/about.astro` (`/about`).
 - **OG images**: build-time generation via `satori` + `@resvg/resvg-js`,
   wired in `src/lib/og-image.ts` and `src/pages/og/`.
 - **Search**: Pagefind (`pagefind@1.5.2`), indexed as a post-build step.

@@ -95,6 +95,7 @@
   --color-read-text-secondary: var(--read-text-secondary);
   --color-read-text-tertiary: var(--read-text-tertiary);
   --color-read-accent: var(--read-accent);
+  --color-read-accent-fill: var(--read-accent-fill, var(--read-accent));
   --color-chrome-input-bg: var(--chrome-input-bg);
   --color-chrome-input-border-focus: var(--chrome-input-border-focus);
   --color-chrome-hover-bg: var(--chrome-hover-bg);

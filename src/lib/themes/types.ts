@@ -1,5 +1,5 @@
 export type ThemeId =
-  | 'blogly'
+  | 'pomegranate'
   | 'catppuccin'
   | 'gruvbox'
   | 'solarized'
@@ -21,6 +21,7 @@ export interface ReadTokens {
   'text-secondary': string;
   'text-tertiary': string;
   accent: string;
+  'accent-fill': string;
 }
 
 export interface ChromeTokens {

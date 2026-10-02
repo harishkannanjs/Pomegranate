@@ -1090,7 +1090,7 @@ function profileDevMiddleware() {
       registerApi('/api/export-zip', async (req, res) => {
         if (req.method === 'GET') {
           const cwd = process.cwd();
-          const uniqueName = `blogly-export-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.zip`;
+          const uniqueName = `pomegranate-export-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.zip`;
           const tmpZip = path.resolve(os.tmpdir(), uniqueName);
           try {
             const itemsToZip = ['Blogs', 'public', 'profile.json', 'src', 'package.json', 'README.md'].filter((item) =>
@@ -1129,7 +1129,7 @@ function profileDevMiddleware() {
             const zipBuffer = fs.readFileSync(tmpZip);
             res.writeHead(200, {
               'Content-Type': 'application/zip',
-              'Content-Disposition': 'attachment; filename="blogly-site-export.zip"',
+              'Content-Disposition': 'attachment; filename="pomegranate-site-export.zip"',
               'Content-Length': zipBuffer.length,
             });
             res.end(zipBuffer);
@@ -1633,7 +1633,21 @@ function profileDevMiddleware() {
   };
 }
 
-// https://astro.build/config
+function devDashboardIntegration() {
+  return {
+    name: 'pomegranate-dev-dashboard',
+    hooks: {
+      'astro:config:setup'({ command, injectRoute }) {
+        if (command === 'dev') {
+          injectRoute({
+            pattern: '/profile',
+            entrypoint: './src/dashboard/profile.astro',
+          });
+        }
+      },
+    },
+  };
+}
 
 // https://astro.build/config
 export default defineConfig({
@@ -1644,6 +1658,7 @@ export default defineConfig({
     enabled: false,
   },
   integrations: [
+    devDashboardIntegration(),
     mdx({
       syntaxHighlight: 'shiki',
       shikiConfig: {

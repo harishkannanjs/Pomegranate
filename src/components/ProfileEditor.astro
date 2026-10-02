@@ -803,14 +803,14 @@ const currentProfile = {
         el.textContent = p.author ? `Published Posts by ${p.author}` : 'Published Posts';
       });
 
-      // Keep Header Brand as blogly_
+      // Keep Header Brand as pomegranate_
       document.querySelectorAll('[data-author-brand]').forEach((el) => {
-        el.textContent = 'blogly_';
+        el.textContent = 'pomegranate_';
       });
 
-      // Keep Footer Brand as Blogly
+      // Keep Footer Brand as Pomegranate
       document.querySelectorAll('[data-footer-brand]').forEach((el) => {
-        el.textContent = `© ${new Date().getFullYear()} Blogly`;
+        el.textContent = `© ${new Date().getFullYear()} Pomegranate`;
       });
 
       // Update Footer Social links
@@ -973,7 +973,7 @@ const currentProfile = {
         logo: profile.logo || '',
         role,
         twitterHandle,
-        title: profile.title || "Blogly",
+        title: profile.title || "Pomegranate",
         description,
         siteUrl,
         githubUrl,
