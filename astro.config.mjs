@@ -9,15 +9,53 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import { promisify } from 'node:util';
-import { exec as execCb } from 'node:child_process';
+import { exec as execCb, execSync } from 'node:child_process';
 import yaml from 'js-yaml';
 import { slug as githubSlug } from 'github-slugger';
 
 const exec = promisify(execCb);
 
 let site = 'https://example.github.io';
-let productionBase = '/glyph.sh';
+let productionBase = undefined;
 
+// Critical distinction for seamless developer and user experience:
+// 1. In development ('astro dev' / 'bun run dev'), base must be root (undefined / '/') so localhost serves natively
+//    without asset 404s, Vite HMR failures, or Tailwind stylesheet loading issues.
+// 2. In production ('astro build' / 'astro preview'), base uses the repository subpath (e.g. '/Pomegranate') for GitHub Pages.
+// 3. For external static deployment targets (Vercel, Netlify, Cloudflare Pages), root base ('/') is enforced.
+const isRootHost = Boolean(
+  process.env.VERCEL ||
+    process.env.NETLIFY ||
+    process.env.CF_PAGES ||
+    process.env.ROOT_BASE === 'true' ||
+    process.env.BASE_PATH === '/' ||
+    process.env.BASE_PATH === ''
+);
+
+// 1. Highest priority for base path: process.env.BASE_PATH (set by GitHub Actions configure-pages step or user)
+if (process.env.BASE_PATH !== undefined) {
+  const trimmed = process.env.BASE_PATH.trim();
+  if (trimmed === '/' || trimmed === '') {
+    productionBase = undefined;
+  } else {
+    productionBase = '/' + trimmed.replace(/^\/+|\/+$/g, '');
+  }
+}
+
+// 2. Next: inspect GitHub Actions repository environment
+if (productionBase === undefined && !isRootHost && process.env.GITHUB_REPOSITORY) {
+  const [ghOwner, ghRepo] = process.env.GITHUB_REPOSITORY.split('/');
+  if (ghRepo && ghOwner) {
+    if (ghRepo.toLowerCase() === `${ghOwner.toLowerCase()}.github.io`) {
+      productionBase = undefined;
+    } else {
+      productionBase = `/${ghRepo}`;
+    }
+    site = `https://${ghOwner}.github.io`;
+  }
+}
+
+// 3. Next: profile.json custom URL
 try {
   const profileRaw = fs.readFileSync(path.resolve(process.cwd(), 'profile.json'), 'utf-8');
   const profileData = JSON.parse(profileRaw);
@@ -27,28 +65,55 @@ try {
       raw = `https://${raw}`;
     }
     const parsed = new URL(raw);
-    site = parsed.origin;
-    if (parsed.pathname && parsed.pathname !== '/') {
-      productionBase = parsed.pathname.replace(/\/+$/, '');
-    } else {
-      productionBase = undefined;
+    const isPlaceholder =
+      parsed.hostname.includes('username.github.io') ||
+      parsed.hostname.includes('example.com') ||
+      parsed.hostname.includes('example.github.io');
+
+    if (!isPlaceholder) {
+      site = parsed.origin;
+      if (productionBase === undefined && !isRootHost) {
+        if (parsed.pathname && parsed.pathname !== '/') {
+          productionBase = parsed.pathname.replace(/\/+$/, '');
+        } else {
+          productionBase = undefined;
+        }
+      }
+    } else if (productionBase === undefined && !isRootHost) {
+      if (parsed.pathname && parsed.pathname !== '/') {
+        productionBase = parsed.pathname.replace(/\/+$/, '');
+      }
     }
   }
 } catch {}
 
-// Critical distinction for seamless developer and user experience:
-// 1. In development ('astro dev' / 'bun run dev'), base must be root (undefined / '/') so localhost serves natively
-//    without asset 404s, Vite HMR failures, or Tailwind stylesheet loading issues.
-// 2. In production ('astro build' / 'astro preview'), base uses the repository subpath ('/glyph.sh') for GitHub Pages.
-// 3. For external static deployment targets (Vercel, Netlify, Cloudflare Pages), root base ('/') is enforced.
-const isRootHost = Boolean(
-  process.env.VERCEL ||
-    process.env.NETLIFY ||
-    process.env.CF_PAGES ||
-    process.env.ROOT_BASE === 'true' ||
-    process.env.BASE_PATH === '/'
-);
+// 4. Next: check git remote origin if still undefined and not root host
+if (productionBase === undefined && !isRootHost) {
+  try {
+    const remote = execSync('git remote get-url origin', { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'ignore'] }).trim();
+    if (remote) {
+      const clean = remote.replace(/\.git$/i, '').replace(/\/+$/, '');
+      const parts = clean.split(/[\/:]/);
+      if (parts.length >= 2) {
+        const repoName = parts[parts.length - 1];
+        const owner = parts[parts.length - 2];
+        if (repoName.toLowerCase() === `${owner.toLowerCase()}.github.io`) {
+          productionBase = undefined;
+        } else {
+          productionBase = `/${repoName}`;
+        }
+        if (site === 'https://example.github.io') {
+          site = `https://${owner}.github.io`;
+        }
+      }
+    }
+  } catch {}
+}
 
+// 5. Default fallback
+if (productionBase === undefined && !isRootHost) {
+  productionBase = '/Pomegranate';
+}
 if (isRootHost) {
   productionBase = undefined;
 }
@@ -1355,7 +1420,7 @@ function profileDevMiddleware() {
               siteUrl = pData.siteUrl || '';
               deployTargets = pData.deployTargets || {};
             } catch {}
-            let repoName = 'glyph.sh';
+            let repoName = productionBase ? productionBase.replace(/^\//, '') : 'Pomegranate';
             let owner = 'username';
             if (remote) {
               const clean = remote.replace(/\.git$/i, '').replace(/\/+$/, '');

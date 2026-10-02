@@ -79,17 +79,20 @@ const avatarSrc = siteConfig.avatar || siteConfig.logo ? getRelativePath(siteCon
           alt={siteConfig.githubUsername}
           class={`w-full h-full object-cover ${avatarSrc ? '' : 'hidden'}`}
           data-header-avatar
-          onerror="this.classList.add('hidden'); const fallback = this.nextElementSibling; if (fallback) fallback.classList.remove('hidden');"
+          onerror="this.classList.add('hidden'); this.style.display='none'; const fallback = this.nextElementSibling; if (fallback) { fallback.classList.remove('hidden'); fallback.style.display='block'; }"
         />
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
+          width="14"
+          height="14"
           fill="none"
           stroke="currentColor"
           stroke-width="1.8"
           stroke-linecap="round"
           stroke-linejoin="round"
           class={`w-3.5 h-3.5 ${siteConfig.avatar || siteConfig.logo ? 'hidden' : ''}`}
+          style={siteConfig.avatar || siteConfig.logo ? 'display: none; width: 14px; height: 14px;' : 'width: 14px; height: 14px;'}
           data-header-avatar-fallback
           aria-hidden="true"
         >
