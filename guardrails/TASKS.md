@@ -1,45 +1,23 @@
-# TASKS.md — Current phase only: Phase 7 (Device Flow Push + Multi-Target Deploy)
+# TASKS.md — Current phase only: Phase 8 (Highlighter)
 
-> Per `ROADMAP.md` Phase 7 and prompt instructions. Each item is scoped to be one reviewable unit of work.
+> Per `ROADMAP.md` Phase 8 and master prompt instructions. Each item is scoped to be one reviewable unit of work.
 
-- [x] Initialize Phase 7 task checklist (`guardrails/TASKS.md`) and create feature branch `feat/phase-7-device-flow-deploy`.
-- [x] Ensure `.gitignore` covers `.blogly/` and local credential files with zero token committability.
-- [x] Create zero-config deployment configurations for static output:
-  - `vercel.json` (Astro framework, bun run build, dist output)
-  - `netlify.toml` (build command, publish dist, security headers)
-  - `wrangler.toml` (Cloudflare Pages dist static build output)
-- [x] Implement backend Device Flow module (`src/lib/github-device-flow.ts`):
-  - Request user & device code from GitHub (`POST https://github.com/login/device/code`).
-  - Background polling mechanism respecting `interval` and `slow_down` responses.
-  - Safe, uncommitted local token storage in `.blogly/auth.json` with restrictive permissions.
-  - Token verification (`GET https://api.github.com/user`) and 401 expiration detection.
-  - Disconnect action clearing local tokens and linking to GitHub App revocation.
-  - Device-authenticated git push execution for users without pre-configured git credentials.
-  - GitHub Pages enable & status querying via GitHub REST API.
-- [x] Register Device Flow and deployment endpoints in `astro.config.mjs`:
-  - `GET /api/auth-status`: Returns connected state and user handle (never exposes raw token).
-  - `POST /api/device-code`: Initiates flow and returns userCode + verificationUri.
-  - `POST /api/device-poll`: Backend polling trigger for token exchange.
-  - `POST /api/disconnect-github`: Wipes local token and resets auth state.
-  - `POST /api/enable-pages`: Enables Pages with GitHub Actions workflow on user's repo.
-  - Upgrade `/api/git-push`: Uses Device Flow token if available to push over HTTPS without credential prompts.
-- [x] Update `src/components/dashboard/SettingsTab.astro` Deploy & Danger Zone UI:
-  - Multi-target deploy section:
-    - GitHub Pages emphasized with one-click enable, workflow validation, and inline status indicator.
-    - Vercel, Netlify, and Cloudflare Pages buttons opening synchronously in new tabs with pre-filled repo URLs.
-    - Persistent "Paste your live URL" inputs for Vercel, Netlify, and Cloudflare Pages saving to `profile.json`.
-  - Connect GitHub (Device Flow) modal and banner:
-    - User code display, copy-to-clipboard, direct link to `github.com/login/device`.
-    - Polling status feedback (`Waiting for approval... → Connected as @username`).
-  - Active Disconnect GitHub button in Danger Zone with revocation guidance.
-  - Dual-mode styling compliance (TUI and Standard modes).
-- [x] Update `src/components/dashboard/FileUploadTab.astro`:
-  - Prompt or badge to connect GitHub via Device Flow if push fails or credentials are required.
-- [x] Write comprehensive test suite (`tests/device-flow-deploy.test.ts`):
-  - Verify Device Flow initiation and polling handling.
-  - Verify local token storage and `.gitignore` coverage.
-  - Verify zero token leakage in API responses or logs.
-  - Verify 401 expiration handling.
-  - Verify multi-target deploy URLs generation and paste-URL persistence.
-  - Verify zero-config build files syntax and contents.
-- [x] Execute native verification suite (`bun run astro check`, `bun run lint`, `bun run format:check`, `bun run test`, `bun run build`).
+- [x] Task 1: Initialize Phase 8 task checklist and create feature branch `feat/phase-8-highlighter`.
+- [x] Task 2: Implement Highlighter core data model, schema validation, and defensive localStorage layer (`src/lib/highlighter/storage.ts` & `types.ts`).
+- [x] Task 3: Implement re-anchoring algorithm with context matching, single-match fallback, multi-node wrapping, and excluded element filtering (`src/lib/highlighter/anchor.ts`).
+- [x] Task 4: Build client-side Markdown exporter for visitor highlights (`src/lib/highlighter/export.ts`).
+- [x] Task 5: Create `src/components/Highlighter.astro` with floating selection control, click-to-remove popover, and "Your highlights on this post" drawer/panel.
+- [x] Task 6: Style Highlighter components with Phase 2 mode-aware chrome (TUI mode for Blogly theme, Standard mode for community themes) using `color-mix` with `read.accent`.
+- [x] Task 7: Wire Highlighter into `src/layouts/BlogPostLayout.astro` and integrate with Astro view transitions (`astro:page-load`, `astro:after-swap`).
+- [x] Task 8: Activate Highlighter toggle in `src/components/dashboard/SettingsTab.astro` and `src/site.config.ts` (removing "coming soon" badge and disabled attribute).
+- [x] Task 9: Resolve interaction conflicts with `AudioReader`, `TextMagnifier`, Reader Mode (Eye Comfort), and responsive mobile selection.
+- [x] Task 10: Write unit test suite (`tests/highlighter.test.ts`) covering:
+  - Exact context match
+  - Unrelated edit elsewhere in post
+  - Text-only single-match fallback
+  - Text-only ambiguous multiple matches (dropped silently)
+  - Passage removed (dropped silently)
+  - Inline element spanning (bold, links, code)
+  - Storage error handling (quota exceeded, corrupt JSON, disabled storage)
+- [x] Task 11: Update `AGENTS.md` to document the Highlighter component, storage key schema, and slug change limitations.
+- [x] Task 12: Run complete project verification suite (`bun run astro check`, `bun run lint`, `bun run format:check`, `bun run test`, `bun run build`).

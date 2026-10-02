@@ -1,0 +1,863 @@
+---
+// Highlighter.astro: Visitor-side text highlighter with localStorage persistence and mode-aware chrome.
+interface Props {
+  postSlug: string;
+  postTitle?: string;
+}
+
+const { postSlug, postTitle = 'Blog Post' } = Astro.props;
+---
+
+<div id="highlighter-root" data-post-slug={postSlug} data-post-title={postTitle} class="inline-flex items-center">
+  <!-- Toolbar Button (Toggles "Your Highlights" Drawer) -->
+  <div class="relative group inline-flex" id="highlighter-tool-container">
+    <button
+      type="button"
+      id="highlighter-drawer-toggle-btn"
+      class="flex items-center justify-center gap-1 h-7 px-2 bg-surface-container border border-outline-variant hover:border-primary text-on-surface-variant hover:text-primary rounded-[2px] transition-colors cursor-pointer select-none font-mono text-[11px]"
+      title="Your Highlights [Alt+H]"
+      aria-label="View highlights on this post"
+      aria-expanded="false"
+      aria-controls="highlighter-drawer"
+    >
+      <!-- Highlighter Marker SVG Icon -->
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="w-3.5 h-3.5 transition-transform group-hover:scale-105"
+      >
+        <path d="m9 11-6 6v3h3l6-6"></path>
+        <path d="m22 7-4.5-4.5a2.12 2.12 0 0 0-3 0L10.5 6.5l4.5 4.5 4-4a2.12 2.12 0 0 0 0-3Z"></path>
+        <line x1="18" y1="11" x2="22" y2="15"></line>
+      </svg>
+      <span id="highlighter-count-badge" class="font-bold text-[10px] px-1 bg-surface-container-high rounded-[2px] text-read-accent">0</span>
+    </button>
+
+    <!-- Tooltip -->
+    <span
+      id="highlighter-tooltip"
+      class="pointer-events-none absolute -bottom-7 left-1/2 -translate-x-1/2 whitespace-nowrap bg-surface-container-highest border border-outline-variant text-[10px] text-on-surface px-1.5 py-0.5 rounded-[2px] opacity-0 group-hover:opacity-100 transition-opacity z-30 font-mono select-none"
+    >
+      Highlights [Alt+H]
+    </span>
+  </div>
+
+  <!-- Floating Selection Control (surfaces when text in prose is selected) -->
+  <div
+    id="highlighter-floating-bar"
+    class="fixed z-50 opacity-0 pointer-events-none transition-all duration-150 transform -translate-x-1/2 -translate-y-2 select-none"
+    role="toolbar"
+    aria-label="Highlighter selection menu"
+  >
+    <!-- TUI Mode (Blogly Signature Theme) -->
+    <button
+      type="button"
+      id="hl-confirm-btn-tui"
+      class="chrome-tui-inline items-center gap-1.5 font-mono text-xs px-2.5 py-1 bg-read-bg-surface border border-read-accent text-read-accent hover:bg-read-accent hover:text-read-bg-base font-bold shadow-lg cursor-pointer rounded-none"
+      title="Highlight selected text [Alt+H]"
+    >
+      <span class="text-read-text-tertiary">[</span>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-3 h-3">
+        <path d="m9 11-6 6v3h3l6-6"></path>
+        <path d="m22 7-4.5-4.5a2.12 2.12 0 0 0-3 0L10.5 6.5l4.5 4.5 4-4a2.12 2.12 0 0 0 0-3Z"></path>
+      </svg>
+      <span>Highlight</span>
+      <span class="text-read-text-tertiary ml-1 text-[10px] font-normal">^H</span>
+      <span class="text-read-text-tertiary">]</span>
+    </button>
+
+    <!-- Standard Mode (Community Themes) -->
+    <button
+      type="button"
+      id="hl-confirm-btn-std"
+      class="chrome-std-inline items-center gap-1.5 text-xs font-medium px-3.5 py-1.5 rounded-full bg-read-accent text-white hover:opacity-95 shadow-md hover:shadow-lg cursor-pointer transition-transform active:scale-95"
+      title="Highlight selected text [Alt+H]"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-3.5 h-3.5">
+        <path d="m9 11-6 6v3h3l6-6"></path>
+        <path d="m22 7-4.5-4.5a2.12 2.12 0 0 0-3 0L10.5 6.5l4.5 4.5 4-4a2.12 2.12 0 0 0 0-3Z"></path>
+      </svg>
+      <span>Highlight</span>
+    </button>
+  </div>
+
+  <!-- Click-to-Remove Popover (surfaces when an existing highlight is clicked) -->
+  <div
+    id="highlighter-remove-popover"
+    class="fixed z-50 opacity-0 pointer-events-none transition-all duration-150 transform -translate-x-1/2 -translate-y-2 select-none"
+    role="dialog"
+    aria-label="Highlight options"
+  >
+    <!-- TUI Mode -->
+    <div class="chrome-tui-inline items-center gap-1.5 font-mono text-xs">
+      <button
+        type="button"
+        id="hl-remove-btn-tui"
+        class="chrome-tui-inline items-center gap-1 px-2.5 py-1 bg-read-bg-surface border border-chrome-danger text-chrome-danger hover:bg-chrome-danger hover:text-white font-bold shadow-lg cursor-pointer rounded-none"
+      >
+        <span class="text-read-text-tertiary">[</span>
+        <span>Remove Highlight</span>
+        <span class="text-read-text-tertiary">]</span>
+      </button>
+      <a
+        id="hl-follow-link-tui"
+        href="#"
+        class="chrome-tui-inline items-center gap-1 px-2.5 py-1 bg-read-bg-surface border border-read-accent text-read-accent hover:bg-read-accent hover:text-read-bg-base font-bold shadow-lg cursor-pointer rounded-none hidden"
+      >
+        <span class="text-read-text-tertiary">[</span>
+        <span>Follow Link &rarr;</span>
+        <span class="text-read-text-tertiary">]</span>
+      </a>
+    </div>
+
+    <!-- Standard Mode -->
+    <div class="chrome-std-inline items-center gap-1.5 text-xs font-medium">
+      <button
+        type="button"
+        id="hl-remove-btn-std"
+        class="chrome-std-inline items-center gap-1.5 px-3 py-1.5 rounded-lg bg-chrome-danger text-white hover:opacity-90 shadow-md cursor-pointer"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3.5 h-3.5">
+          <path d="M3 6h18"></path>
+          <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+          <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+        </svg>
+        <span>Remove Highlight</span>
+      </button>
+      <a
+        id="hl-follow-link-std"
+        href="#"
+        class="chrome-std-inline items-center gap-1.5 px-3 py-1.5 rounded-lg bg-read-bg-surface-raised border border-read-border hover:border-read-accent text-read-text-primary hover:text-read-accent shadow-md cursor-pointer hidden"
+      >
+        <span>Follow Link &rarr;</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- "Your Highlights" Drawer / Backdrop -->
+  <div
+    id="highlighter-backdrop"
+    class="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs opacity-0 pointer-events-none transition-opacity duration-200"
+    aria-hidden="true"
+  ></div>
+
+  <!-- "Your Highlights" Side Panel -->
+  <div
+    id="highlighter-drawer"
+    class="fixed top-0 right-0 bottom-0 z-50 w-full sm:w-[420px] max-w-full bg-read-bg-base border-l border-read-border shadow-2xl flex flex-col transform translate-x-full transition-transform duration-200 ease-out"
+    role="dialog"
+    aria-labelledby="highlighter-drawer-title"
+    aria-modal="true"
+  >
+    <!-- Drawer Header -->
+    <div class="p-4 border-b border-read-border flex items-center justify-between bg-read-bg-surface">
+      <div class="flex items-center gap-2">
+        <span class="text-read-accent font-bold">&gt;</span>
+        <h2 id="highlighter-drawer-title" class="font-mono text-sm font-bold text-read-text-primary">
+          Your Highlights
+        </h2>
+        <span id="drawer-count-badge" class="font-mono text-xs text-read-text-secondary">(0)</span>
+      </div>
+
+      <button
+        type="button"
+        id="highlighter-drawer-close-btn"
+        class="w-7 h-7 flex items-center justify-center font-mono text-xs text-read-text-secondary hover:text-read-text-primary border border-read-border hover:border-read-border-strong rounded-[2px] cursor-pointer"
+        aria-label="Close drawer"
+      >
+        ✕
+      </button>
+    </div>
+
+    <!-- Drawer Content / Highlights List -->
+    <div id="highlighter-list-container" class="flex-1 overflow-y-auto p-4 space-y-3">
+      <!-- Injected dynamically via client script -->
+    </div>
+
+    <!-- Drawer Footer Actions -->
+    <div class="p-4 border-t border-read-border bg-read-bg-surface flex items-center justify-between gap-2">
+      <!-- Download Highlights as Markdown -->
+      <button
+        type="button"
+        id="highlighter-download-btn"
+        class="inline-flex items-center gap-1.5 font-mono text-xs px-3 py-1.5 border border-read-border hover:border-read-accent text-read-text-primary hover:text-read-accent rounded-[2px] cursor-pointer transition-colors"
+        title="Export highlights as Markdown file"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-3.5 h-3.5">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7 10 12 15 17 10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        <span>Download .md</span>
+      </button>
+
+      <!-- Clear All Highlights -->
+      <button
+        type="button"
+        id="highlighter-clear-all-btn"
+        class="inline-flex items-center gap-1.5 font-mono text-xs px-3 py-1.5 border border-read-border hover:border-chrome-danger text-read-text-secondary hover:text-chrome-danger rounded-[2px] cursor-pointer transition-colors"
+      >
+        <span>Clear all</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div
+    id="highlighter-toast"
+    class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] opacity-0 pointer-events-none transition-all duration-200 px-3 py-1.5 font-mono text-xs border rounded-[2px] shadow-lg flex items-center gap-2 bg-read-bg-surface-raised border-read-border text-read-text-primary"
+    role="status"
+    aria-live="polite"
+  >
+    <span id="highlighter-toast-msg"></span>
+  </div>
+</div>
+
+<style>
+  /* Base highlight visual styling derived strictly from active theme's read.accent */
+  :global(mark.blogly-highlight) {
+    background-color: color-mix(in srgb, var(--read-accent) 26%, transparent) !important;
+    color: inherit !important;
+    border-bottom: 2px solid color-mix(in srgb, var(--read-accent) 65%, transparent) !important;
+    padding: 0.08em 0.12em !important;
+    border-radius: 2px !important;
+    cursor: pointer !important;
+    user-select: text !important;
+    text-decoration: none !important;
+    transition: background-color 0.15s ease, border-color 0.15s ease !important;
+  }
+
+  :global(mark.blogly-highlight:hover),
+  :global(mark.blogly-highlight:focus-visible) {
+    background-color: color-mix(in srgb, var(--read-accent) 42%, transparent) !important;
+    border-bottom-color: var(--read-accent) !important;
+    outline: none !important;
+  }
+
+  /* Sharp corners in Blogly theme (TUI mode) */
+  :global(html[data-theme="blogly"] mark.blogly-highlight) {
+    border-radius: 0 !important;
+    border-bottom-width: 1px !important;
+  }
+
+  /* Pulse animation when jumping to highlight from drawer */
+  :global(mark.blogly-highlight.hl-pulse) {
+    animation: hlPulse 1.2s ease-out;
+  }
+
+  @keyframes hlPulse {
+    0% {
+      background-color: color-mix(in srgb, var(--read-accent) 70%, transparent);
+      box-shadow: 0 0 8px var(--read-accent);
+    }
+    100% {
+      background-color: color-mix(in srgb, var(--read-accent) 26%, transparent);
+      box-shadow: none;
+    }
+  }
+</style>
+
+<script>
+  import {
+    loadHighlights,
+    addHighlight,
+    removeHighlight,
+    clearHighlights,
+  } from '@/lib/highlighter/storage';
+  import {
+    reanchorAllHighlights,
+    anchorHighlight,
+    removeRenderedHighlight,
+    extractSelectionContext,
+  } from '@/lib/highlighter/anchor';
+  import {
+    generateHighlightsMarkdown,
+    triggerMarkdownDownload,
+  } from '@/lib/highlighter/export';
+  import type { StoredHighlight } from '@/lib/highlighter/types';
+
+  let cleanupHighlighter: (() => void) | null = null;
+
+  function initHighlighter() {
+    if (cleanupHighlighter) {
+      cleanupHighlighter();
+      cleanupHighlighter = null;
+    }
+
+    const root = document.getElementById('highlighter-root');
+    if (!root) return;
+
+    const postSlug = root.dataset.postSlug || '';
+    const postTitle = root.dataset.postTitle || document.title;
+    if (!postSlug) return;
+
+    const proseEl = (
+      document.querySelector('article[data-pagefind-body] section.prose') ||
+      document.querySelector('article section.prose')
+    ) as HTMLElement | null;
+    if (!proseEl) return;
+    const prose: HTMLElement = proseEl;
+
+    const abortController = new AbortController();
+    const { signal } = abortController;
+
+    // Elements
+    const floatingBar = document.getElementById('highlighter-floating-bar');
+    const removePopover = document.getElementById('highlighter-remove-popover');
+    const hlFollowLinkTui = document.getElementById('hl-follow-link-tui') as HTMLAnchorElement | null;
+    const hlFollowLinkStd = document.getElementById('hl-follow-link-std') as HTMLAnchorElement | null;
+    const drawer = document.getElementById('highlighter-drawer');
+    const backdrop = document.getElementById('highlighter-backdrop');
+    const drawerToggleBtn = document.getElementById('highlighter-drawer-toggle-btn');
+    const drawerCloseBtn = document.getElementById('highlighter-drawer-close-btn');
+    const countBadge = document.getElementById('highlighter-count-badge');
+    const drawerCountBadge = document.getElementById('drawer-count-badge');
+    const listContainer = document.getElementById('highlighter-list-container');
+    const downloadBtn = document.getElementById('highlighter-download-btn');
+    const clearAllBtn = document.getElementById('highlighter-clear-all-btn');
+    const toast = document.getElementById('highlighter-toast');
+    const toastMsg = document.getElementById('highlighter-toast-msg');
+
+    let activeSelectionContext: { text: string; contextBefore: string; contextAfter: string } | null = null;
+    let activeHighlightIdForRemoval: string | null = null;
+    let toastTimeout: number | null = null;
+    let selectionTimer: number | null = null;
+    let mutationTimer: number | null = null;
+    let isReanchoring = false;
+    let lastRenderedIds = new Set<string>();
+
+    function showToast(message: string, isError = false) {
+      if (!toast || !toastMsg) return;
+      if (toastTimeout) clearTimeout(toastTimeout);
+
+      toastMsg.textContent = message;
+      toast.classList.remove('opacity-0', 'pointer-events-none', '-translate-y-2');
+      toast.classList.add('opacity-100', 'pointer-events-auto', 'translate-y-0');
+
+      if (isError) {
+        toast.classList.add('border-chrome-danger', 'text-chrome-danger');
+      } else {
+        toast.classList.remove('border-chrome-danger', 'text-chrome-danger');
+      }
+
+      toastTimeout = window.setTimeout(() => {
+        toast.classList.remove('opacity-100', 'pointer-events-auto', 'translate-y-0');
+        toast.classList.add('opacity-0', 'pointer-events-none', '-translate-y-2');
+      }, 2500);
+    }
+
+    function updateBadge(count: number) {
+      if (countBadge) countBadge.textContent = String(count);
+      if (drawerCountBadge) drawerCountBadge.textContent = `(${count})`;
+    }
+
+    function renderDrawerList(highlights: StoredHighlight[]) {
+      if (!listContainer) return;
+
+      if (highlights.length === 0) {
+        listContainer.innerHTML = `
+          <div class="py-12 text-center space-y-2 font-mono">
+            <div class="text-read-text-tertiary text-2xl">✎</div>
+            <p class="text-xs text-read-text-secondary">No highlights on this post yet.</p>
+            <p class="text-[11px] text-read-text-tertiary">Select any text in the article to create a highlight.</p>
+          </div>
+        `;
+        return;
+      }
+
+      listContainer.innerHTML = '';
+      highlights.forEach((h) => {
+        const card = document.createElement('div');
+        card.className =
+          'p-3 border border-read-border rounded-[2px] bg-read-bg-surface hover:border-read-accent transition-colors space-y-2';
+
+        const quote = document.createElement('blockquote');
+        quote.className =
+          'text-xs text-read-text-primary italic border-l-2 border-read-accent pl-2.5 my-1 line-clamp-4 leading-relaxed font-sans';
+        quote.textContent = `“${h.text}”`;
+        card.appendChild(quote);
+
+        const metaRow = document.createElement('div');
+        metaRow.className =
+          'flex items-center justify-between text-[11px] font-mono text-read-text-secondary pt-1 border-t border-read-border/40';
+
+        const dateSpan = document.createElement('span');
+        dateSpan.textContent = new Date(h.createdAt).toLocaleDateString(undefined, {
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        });
+        metaRow.appendChild(dateSpan);
+
+        const actions = document.createElement('div');
+        actions.className = 'flex items-center gap-2';
+
+        const jumpBtn = document.createElement('button');
+        jumpBtn.type = 'button';
+        jumpBtn.className = 'hover:text-read-accent text-read-text-primary transition-colors cursor-pointer font-bold';
+        jumpBtn.textContent = 'Jump ↑';
+        jumpBtn.onclick = (e) => {
+          e.stopPropagation();
+          jumpToHighlight(h.id);
+        };
+        actions.appendChild(jumpBtn);
+
+        const delBtn = document.createElement('button');
+        delBtn.type = 'button';
+        delBtn.className = 'hover:text-chrome-danger text-read-text-secondary transition-colors cursor-pointer font-bold';
+        delBtn.textContent = '✕';
+        delBtn.title = 'Delete highlight';
+        delBtn.onclick = (e) => {
+          e.stopPropagation();
+          handleRemoveHighlight(h.id);
+        };
+        actions.appendChild(delBtn);
+
+        metaRow.appendChild(actions);
+        card.appendChild(metaRow);
+        listContainer.appendChild(card);
+      });
+    }
+
+    function jumpToHighlight(id: string) {
+      closeDrawer();
+      const mark = prose.querySelector(`mark.blogly-highlight[data-highlight-id="${id}"]`);
+      if (mark) {
+        mark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        mark.classList.remove('hl-pulse');
+        void (mark as HTMLElement).offsetWidth; // trigger reflow
+        mark.classList.add('hl-pulse');
+        setTimeout(() => mark.classList.remove('hl-pulse'), 1500);
+      } else {
+        showToast('Passage could not be found in current text', true);
+      }
+    }
+
+    function openDrawer() {
+      if (!drawer || !backdrop) return;
+      const highlights = loadHighlights(postSlug);
+      renderDrawerList(highlights);
+      updateBadge(highlights.length);
+
+      drawer.classList.remove('translate-x-full');
+      drawer.classList.add('translate-x-0');
+      backdrop.classList.remove('opacity-0', 'pointer-events-none');
+      backdrop.classList.add('opacity-100', 'pointer-events-auto');
+      drawerToggleBtn?.setAttribute('aria-expanded', 'true');
+    }
+
+    function closeDrawer() {
+      if (!drawer || !backdrop) return;
+      drawer.classList.remove('translate-x-0');
+      drawer.classList.add('translate-x-full');
+      backdrop.classList.remove('opacity-100', 'pointer-events-auto');
+      backdrop.classList.add('opacity-0', 'pointer-events-none');
+      drawerToggleBtn?.setAttribute('aria-expanded', 'false');
+    }
+
+    function hideFloatingBar() {
+      if (!floatingBar) return;
+      floatingBar.classList.remove('opacity-100', 'pointer-events-auto');
+      floatingBar.classList.add('opacity-0', 'pointer-events-none');
+      activeSelectionContext = null;
+    }
+
+    function hideRemovePopover() {
+      if (!removePopover) return;
+      removePopover.classList.remove('opacity-100', 'pointer-events-auto');
+      removePopover.classList.add('opacity-0', 'pointer-events-none');
+      activeHighlightIdForRemoval = null;
+      if (hlFollowLinkTui) hlFollowLinkTui.classList.add('hidden');
+      if (hlFollowLinkStd) hlFollowLinkStd.classList.add('hidden');
+    }
+
+    function handleSelectionChange() {
+      const sel = window.getSelection();
+      if (!sel || sel.rangeCount === 0 || sel.isCollapsed) {
+        hideFloatingBar();
+        return;
+      }
+
+      const context = extractSelectionContext(prose, sel);
+      if (!context || !context.text) {
+        hideFloatingBar();
+        return;
+      }
+
+      activeSelectionContext = context;
+      hideRemovePopover();
+
+      const range = sel.getRangeAt(0);
+      const rect = range.getBoundingClientRect();
+      if (rect.width === 0 && rect.height === 0) {
+        hideFloatingBar();
+        return;
+      }
+
+      // Position floating bar
+      if (floatingBar) {
+        const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+        let top = rect.top - 46;
+        if (top < 50 || (isTouch && rect.bottom + 50 < window.innerHeight)) {
+          top = rect.bottom + 12;
+        }
+
+        const left = Math.max(80, Math.min(window.innerWidth - 80, rect.left + rect.width / 2));
+        floatingBar.style.top = `${top}px`;
+        floatingBar.style.left = `${left}px`;
+        floatingBar.classList.remove('opacity-0', 'pointer-events-none');
+        floatingBar.classList.add('opacity-100', 'pointer-events-auto');
+      }
+    }
+
+    function createHighlightFromSelection() {
+      if (!activeSelectionContext) return;
+      const { text, contextBefore, contextAfter } = activeSelectionContext;
+
+      const res = addHighlight(postSlug, {
+        text,
+        contextBefore,
+        contextAfter,
+        color: 'default',
+      });
+
+      if (!res.success || !res.data) {
+        showToast(res.error || 'Failed to save highlight', true);
+        hideFloatingBar();
+        return;
+      }
+
+      anchorHighlight(prose, res.data);
+      lastRenderedIds.add(res.data.id);
+      const updated = loadHighlights(postSlug);
+      updateBadge(updated.length);
+
+      hideFloatingBar();
+      window.getSelection()?.removeAllRanges();
+      showToast('Highlight saved');
+    }
+
+    function handleRemoveHighlight(id: string) {
+      const res = removeHighlight(postSlug, id);
+      if (!res.success) {
+        showToast(res.error || 'Failed to remove highlight from storage', true);
+        return;
+      }
+
+      removeRenderedHighlight(prose, id);
+      lastRenderedIds.delete(id);
+      const updated = res.data || loadHighlights(postSlug);
+      updateBadge(updated.length);
+      renderDrawerList(updated);
+      hideRemovePopover();
+      showToast('Highlight removed');
+    }
+
+    // Attach listeners with AbortSignal for lifecycle cleanup
+    document.addEventListener(
+      'selectionchange',
+      () => {
+        if (selectionTimer) clearTimeout(selectionTimer);
+        selectionTimer = window.setTimeout(handleSelectionChange, 10);
+      },
+      { signal }
+    );
+
+    // Floating bar confirm buttons
+    const tuiConfirm = document.getElementById('hl-confirm-btn-tui');
+    const stdConfirm = document.getElementById('hl-confirm-btn-std');
+    tuiConfirm?.addEventListener(
+      'click',
+      (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        createHighlightFromSelection();
+      },
+      { signal }
+    );
+    stdConfirm?.addEventListener(
+      'click',
+      (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        createHighlightFromSelection();
+      },
+      { signal }
+    );
+
+    // Remove popover buttons
+    const tuiRemove = document.getElementById('hl-remove-btn-tui');
+    const stdRemove = document.getElementById('hl-remove-btn-std');
+    tuiRemove?.addEventListener(
+      'click',
+      (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (activeHighlightIdForRemoval) handleRemoveHighlight(activeHighlightIdForRemoval);
+      },
+      { signal }
+    );
+    stdRemove?.addEventListener(
+      'click',
+      (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (activeHighlightIdForRemoval) handleRemoveHighlight(activeHighlightIdForRemoval);
+      },
+      { signal }
+    );
+
+    // Follow link buttons in popover
+    hlFollowLinkTui?.addEventListener('click', () => hideRemovePopover(), { signal });
+    hlFollowLinkStd?.addEventListener('click', () => hideRemovePopover(), { signal });
+
+    // Clicking an existing highlight in the article
+    prose.addEventListener(
+      'click',
+      (e) => {
+        const target = e.target as HTMLElement | null;
+        const mark = target?.closest('mark.blogly-highlight') as HTMLElement | null;
+        if (!mark) {
+          hideRemovePopover();
+          return;
+        }
+
+        // Allow Ctrl+Click, Cmd+Click, Shift+Click, or middle-click to follow links natively
+        if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) {
+          return;
+        }
+
+        const hlId = mark.dataset.highlightId;
+        if (!hlId || !removePopover) return;
+
+        // Check if the mark is inside an anchor link or contains one
+        const linkEl = (mark.closest('a') || mark.querySelector('a')) as HTMLAnchorElement | null;
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        activeHighlightIdForRemoval = hlId;
+        hideFloatingBar();
+
+        if (linkEl && linkEl.href) {
+          if (hlFollowLinkTui) {
+            hlFollowLinkTui.href = linkEl.href;
+            hlFollowLinkTui.target = linkEl.target || '';
+            hlFollowLinkTui.rel = linkEl.rel || '';
+            hlFollowLinkTui.classList.remove('hidden');
+          }
+          if (hlFollowLinkStd) {
+            hlFollowLinkStd.href = linkEl.href;
+            hlFollowLinkStd.target = linkEl.target || '';
+            hlFollowLinkStd.rel = linkEl.rel || '';
+            hlFollowLinkStd.classList.remove('hidden');
+          }
+        } else {
+          if (hlFollowLinkTui) {
+            hlFollowLinkTui.classList.add('hidden');
+            hlFollowLinkTui.href = '#';
+          }
+          if (hlFollowLinkStd) {
+            hlFollowLinkStd.classList.add('hidden');
+            hlFollowLinkStd.href = '#';
+          }
+        }
+
+        const rect = mark.getBoundingClientRect();
+        let top = rect.top - 42;
+        if (top < 50) top = rect.bottom + 10;
+        const left = Math.max(80, Math.min(window.innerWidth - 80, rect.left + rect.width / 2));
+
+        removePopover.style.top = `${top}px`;
+        removePopover.style.left = `${left}px`;
+        removePopover.classList.remove('opacity-0', 'pointer-events-none');
+        removePopover.classList.add('opacity-100', 'pointer-events-auto');
+      },
+      { signal }
+    );
+
+    // Drawer toggle & close
+    drawerToggleBtn?.addEventListener(
+      'click',
+      (e) => {
+        e.stopPropagation();
+        openDrawer();
+      },
+      { signal }
+    );
+    drawerCloseBtn?.addEventListener('click', closeDrawer, { signal });
+    backdrop?.addEventListener('click', closeDrawer, { signal });
+
+    // Download Markdown action
+    downloadBtn?.addEventListener(
+      'click',
+      () => {
+        const highlights = loadHighlights(postSlug);
+        if (highlights.length === 0) {
+          showToast('No highlights to export', true);
+          return;
+        }
+
+        const md = generateHighlightsMarkdown({
+          postTitle,
+          postUrl: window.location.href,
+          exportedAt: new Date().toISOString(),
+          highlights,
+        });
+
+        const cleanSlug = postSlug.replace(/[^a-zA-Z0-9_-]+/g, '-');
+        triggerMarkdownDownload(`highlights-${cleanSlug}.md`, md);
+        showToast('Downloaded highlights markdown');
+      },
+      { signal }
+    );
+
+    // Clear all action
+    clearAllBtn?.addEventListener(
+      'click',
+      () => {
+        const highlights = loadHighlights(postSlug);
+        if (highlights.length === 0) return;
+
+        if (!confirm('Are you sure you want to clear all highlights on this post? This cannot be undone.')) {
+          return;
+        }
+
+        const res = clearHighlights(postSlug);
+        if (!res.success) {
+          showToast(res.error || 'Failed to clear highlights from storage', true);
+          return;
+        }
+
+        highlights.forEach((h) => removeRenderedHighlight(prose, h.id));
+        lastRenderedIds.clear();
+        updateBadge(0);
+        renderDrawerList([]);
+        showToast('All highlights cleared');
+      },
+      { signal }
+    );
+
+    // Keyboard Shortcuts
+    document.addEventListener(
+      'keydown',
+      (e) => {
+        if (e.key === 'Escape') {
+          if (drawer?.classList.contains('translate-x-0')) {
+            closeDrawer();
+            return;
+          }
+          if (removePopover && !removePopover.classList.contains('opacity-0')) {
+            hideRemovePopover();
+            return;
+          }
+          if (floatingBar && !floatingBar.classList.contains('opacity-0')) {
+            hideFloatingBar();
+            return;
+          }
+        }
+
+        // Alt+H: Highlight active selection or toggle drawer
+        if (e.altKey && (e.key === 'h' || e.key === 'H')) {
+          e.preventDefault();
+          if (activeSelectionContext) {
+            createHighlightFromSelection();
+          } else {
+            if (drawer?.classList.contains('translate-x-0')) {
+              closeDrawer();
+            } else {
+              openDrawer();
+            }
+          }
+        }
+      },
+      { signal }
+    );
+
+    // Initial Anchor on Page Load & Re-anchoring Routine
+    function runReanchor() {
+      if (isReanchoring) return;
+      isReanchoring = true;
+      observer.disconnect();
+
+      try {
+        const stored = loadHighlights(postSlug);
+        updateBadge(stored.length);
+        reanchorAllHighlights(prose, stored);
+
+        const currentMarks = prose.querySelectorAll('mark.blogly-highlight');
+        lastRenderedIds = new Set<string>();
+        currentMarks.forEach((m) => {
+          const id = m.getAttribute('data-highlight-id');
+          if (id) lastRenderedIds.add(id);
+        });
+      } finally {
+        observer.observe(prose, { childList: true, subtree: true });
+        isReanchoring = false;
+      }
+    }
+
+    // DOM Mutation Observer: Resurfaces highlights if AudioReader or another tool restores innerHTML
+    const observer = new MutationObserver(() => {
+      if (isReanchoring) return;
+      if (mutationTimer) clearTimeout(mutationTimer);
+      mutationTimer = window.setTimeout(() => {
+        if (isReanchoring) return;
+        const stored = loadHighlights(postSlug);
+        if (stored.length === 0) return;
+
+        const currentMarks = prose.querySelectorAll('mark.blogly-highlight');
+        const currentRenderedIds = new Set<string>();
+        currentMarks.forEach((m) => {
+          const id = m.getAttribute('data-highlight-id');
+          if (id) currentRenderedIds.add(id);
+        });
+
+        // If any highlight that was previously rendered is now missing (e.g. single block restoration),
+        // or if prose was completely wiped/reset
+        const missingAnyPreviouslyRendered = Array.from(lastRenderedIds).some(
+          (id) => !currentRenderedIds.has(id)
+        );
+
+        if (missingAnyPreviouslyRendered || (currentMarks.length === 0 && stored.length > 0)) {
+          runReanchor();
+        }
+      }, 150);
+    });
+
+    // Run initial anchor
+    runReanchor();
+
+    // Register teardown callback
+    cleanupHighlighter = () => {
+      abortController.abort();
+      observer.disconnect();
+      if (mutationTimer) clearTimeout(mutationTimer);
+      if (selectionTimer) clearTimeout(selectionTimer);
+      if (toastTimeout) clearTimeout(toastTimeout);
+      hideFloatingBar();
+      hideRemovePopover();
+      closeDrawer();
+    };
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initHighlighter, { once: true });
+  } else {
+    initHighlighter();
+  }
+
+  document.addEventListener('astro:page-load', initHighlighter);
+  document.addEventListener('astro:before-swap', () => {
+    if (cleanupHighlighter) {
+      cleanupHighlighter();
+      cleanupHighlighter = null;
+    }
+  });
+</script>
