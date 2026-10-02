@@ -21,6 +21,7 @@ const themes = getAllThemes();
   <div
     id="theme-pack-menu"
     class="hidden absolute right-0 mt-1 w-44 bg-surface-container-low border border-outline-variant rounded-[2px] shadow-lg z-50 font-mono py-1 text-xs"
+    style="display: none;"
     role="menu"
     aria-orientation="vertical"
   >
@@ -72,12 +73,14 @@ const themes = getAllThemes();
     // Toggle dropdown
     button.onclick = (e) => {
       e.stopPropagation();
-      const isHidden = menu.classList.contains('hidden');
+      const isHidden = menu.classList.contains('hidden') || menu.style.display === 'none';
       if (isHidden) {
         menu.classList.remove('hidden');
+        menu.style.display = 'block';
         button.setAttribute('aria-expanded', 'true');
       } else {
         menu.classList.add('hidden');
+        menu.style.display = 'none';
         button.setAttribute('aria-expanded', 'false');
       }
     };
@@ -86,6 +89,7 @@ const themes = getAllThemes();
     document.addEventListener('click', (e) => {
       if (container && !container.contains(e.target)) {
         menu.classList.add('hidden');
+        menu.style.display = 'none';
         button.setAttribute('aria-expanded', 'false');
       }
     });
@@ -102,6 +106,7 @@ const themes = getAllThemes();
         if (activeLabel && selectedName) activeLabel.textContent = selectedName;
 
         menu.classList.add('hidden');
+        menu.style.display = 'none';
         button.setAttribute('aria-expanded', 'false');
 
         window.dispatchEvent(new CustomEvent('theme-pack-change', { detail: { theme: selectedId } }));

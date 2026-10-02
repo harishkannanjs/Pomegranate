@@ -106,7 +106,7 @@ You can customize your details in two ways:
    - **Tagline / Role**: Your job title or technical focus.
    - **Bio**: Short description for your profile.
    - **GitHub / Twitter / Email**: Your contact coordinates.
-   - **Site URL**: Your planned live deployment URL (e.g. `https://username.github.io/glyph.sh` or `https://yourdomain.com`).
+   - **Site URL**: Your planned live deployment URL (e.g. `https://username.github.io/Pomegranate` or `https://yourdomain.com`).
 4. Click **Save to profile.json**. Your changes are immediately written to disk and visible on the page.
 5. **Change Your Logo/Avatar**: Hover over the avatar image on the profile page and click **Upload Logo**. Pick your PNG or JPG file; it will be saved to `public/profile-logo.png` and update automatically.
 
@@ -124,7 +124,7 @@ Open `profile.json` in your favorite code editor and edit the fields:
   "twitterHandle": "@alicereed",
   "title": "Pomegranate",
   "description": "Explorations into low-level systems, kernel development, and distributed consensus.",
-  "siteUrl": "https://alice.github.io/glyph.sh",
+  "siteUrl": "https://alice.github.io/Pomegranate",
   "githubUrl": "https://github.com/alice",
   "twitterUrl": "https://x.com/alice",
   "email": "alice@example.com",
@@ -274,7 +274,7 @@ Follow these steps once to configure automated deployment:
 ### 3. Configure Your `siteUrl` in `profile.json`
 - **If deploying to `<username>.github.io/<repo>`** (default project page):
   ```json
-  "siteUrl": "https://<your-username>.github.io/glyph.sh"
+  "siteUrl": "https://<your-username>.github.io/Pomegranate"
   ```
 - **If deploying to `<username>.github.io`** (user page, repository named `<username>.github.io`):
   ```json
@@ -319,7 +319,7 @@ git push origin master
 | Issue | Cause | Proven Solution |
 | :--- | :--- | :--- |
 | **GitHub Action fails at `actions/jekyll-build-pages`** | GitHub Pages is set to "Deploy from a branch", causing GitHub to try building your Astro site as a legacy Jekyll site. | Go to your GitHub repository $\rightarrow$ **Settings** $\rightarrow$ **Pages** $\rightarrow$ change **Source** to **GitHub Actions**. |
-| **Site looks unstyled or CSS/JS gives 404 on GitHub Pages** | `siteUrl` in `profile.json` does not include the repository subpath. | If your repository is `https://github.com/alice/glyph.sh`, set `"siteUrl": "https://alice.github.io/glyph.sh"` in `profile.json`. |
+| **Site looks unstyled or CSS/JS gives 404 on GitHub Pages** | The repository subpath was not detected. | In GitHub Actions this is now automatically configured via `actions/configure-pages` and `BASE_PATH`. If building locally or previewing, verify your repo name in `profile.json` or pass `BASE_PATH=/your-repo-name`. |
 | **Workflow fails with `Permission denied to github-actions[bot]`** | Repository Actions permissions do not permit deployments. | In repository **Settings** $\rightarrow$ **Actions** $\rightarrow$ **General** $\rightarrow$ set **Workflow permissions** to **Read and write permissions**. |
 | **`bun run dev` shows broken styles on localhost** | An outdated server was running with a subpath base in memory. | Stop all dev processes and start fresh with `bun run dev`. In development, Astro serves from root (`/`) natively with Vite HMR. |
 | **Git Push fails with `Permission denied (publickey)` or asks for credentials** | Git on your local machine requires authentication credentials. | Create a GitHub Personal Access Token (classic) with `repo` scope at `github.com/settings/tokens`, or configure your SSH key: `ssh-keygen -t ed25519`. |

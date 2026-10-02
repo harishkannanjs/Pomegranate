@@ -1,4 +1,4 @@
-name: Deploy glyph.sh to GitHub Pages
+name: Deploy Pomegranate to GitHub Pages
 
 on:
   push:
@@ -30,6 +30,10 @@ jobs:
         with:
           bun-version: latest
 
+      - name: Setup Pages
+        id: pages
+        uses: actions/configure-pages@v5
+
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
@@ -38,12 +42,11 @@ jobs:
 
       - name: Build Static Site & OG Images
         run: bun run build:astro
+        env:
+          BASE_PATH: ${{ steps.pages.outputs.base_path }}
 
       - name: Build Pagefind Static Search Index
         run: bun run pagefind
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
 
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3

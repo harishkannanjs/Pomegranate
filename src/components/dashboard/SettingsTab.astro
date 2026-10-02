@@ -366,7 +366,7 @@ const deployTargets = siteConfig.deployTargets || {};
             <div class="p-2.5 bg-read-bg-base border border-read-border rounded-[2px]">
               <div class="text-[10px] text-read-text-tertiary uppercase">Remote Repository</div>
               <a id="deploy-remote-repo" href={siteConfig.githubUrl} target="_blank" rel="noopener" class="text-read-text-primary font-bold hover:underline block truncate mt-0.5">
-                {siteConfig.githubUrl || 'https://github.com/harishkannanjs/glyph.sh'}
+                {siteConfig.githubUrl || 'https://github.com/harishkannanjs/Pomegranate'}
               </a>
             </div>
           </div>
@@ -1330,7 +1330,7 @@ const deployTargets = siteConfig.deployTargets || {};
       } else if (action === 'deploy-vercel') {
         const repoUrl =
           remoteRepoWebUrl || (document.getElementById('deploy-remote-repo') as HTMLAnchorElement | null)?.href || '';
-        if (!repoUrl || repoUrl === '#' || repoUrl.includes('harishkannanjs/glyph.sh')) {
+        if (!repoUrl || repoUrl === '#' || repoUrl.includes('harishkannanjs/glyph.sh') || repoUrl.includes('harishkannanjs/Pomegranate')) {
           notify('Please configure or connect your personal GitHub repository remote before deploying to Vercel.', true);
           return;
         }
@@ -1338,7 +1338,7 @@ const deployTargets = siteConfig.deployTargets || {};
       } else if (action === 'deploy-netlify') {
         const repoUrl =
           remoteRepoWebUrl || (document.getElementById('deploy-remote-repo') as HTMLAnchorElement | null)?.href || '';
-        if (!repoUrl || repoUrl === '#' || repoUrl.includes('harishkannanjs/glyph.sh')) {
+        if (!repoUrl || repoUrl === '#' || repoUrl.includes('harishkannanjs/glyph.sh') || repoUrl.includes('harishkannanjs/Pomegranate')) {
           notify('Please configure or connect your personal GitHub repository remote before deploying to Netlify.', true);
           return;
         }
