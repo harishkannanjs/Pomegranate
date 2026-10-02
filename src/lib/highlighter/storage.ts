@@ -1,6 +1,6 @@
 import type { StoredHighlight, StorageOperationResult } from './types';
 
-export const HIGHLIGHT_STORAGE_PREFIX = 'blogly:highlights:';
+export const HIGHLIGHT_STORAGE_PREFIX = 'pomegranate:highlights:';
 export const MAX_HIGHLIGHTS_PER_POST = 100;
 
 /**

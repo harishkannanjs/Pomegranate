@@ -49,7 +49,7 @@ describe('Phase 8: Highlighter Tests', () => {
       const marks = anchorHighlight(container, highlight);
       expect(marks.length).toBe(1);
       expect(marks[0].tagName.toLowerCase()).toBe('mark');
-      expect(marks[0].className).toContain('blogly-highlight');
+      expect(marks[0].className).toContain('pomegranate-highlight');
       expect(marks[0].getAttribute('data-highlight-id')).toBe('h-1');
       expect(marks[0].textContent).toBe('kernel memory structure');
     });
@@ -116,7 +116,7 @@ describe('Phase 8: Highlighter Tests', () => {
       const marks = anchorHighlight(container, highlight);
       // Multiple matches and no valid context -> must drop silently (never guess)
       expect(marks.length).toBe(0);
-      expect(container.querySelectorAll('mark.blogly-highlight').length).toBe(0);
+      expect(container.querySelectorAll('mark.pomegranate-highlight').length).toBe(0);
     });
 
     it('drops silently when highlighted passage was deleted from post', () => {
@@ -216,22 +216,22 @@ describe('Phase 8: Highlighter Tests', () => {
       // Reanchor first pass
       const res1 = reanchorAllHighlights(container, highlights);
       expect(res1.anchoredCount).toBe(2);
-      expect(container.querySelectorAll('mark.blogly-highlight').length).toBe(2);
+      expect(container.querySelectorAll('mark.pomegranate-highlight').length).toBe(2);
 
       // Reanchor second pass (must clean previous marks without duplicating)
       const res2 = reanchorAllHighlights(container, highlights);
       expect(res2.anchoredCount).toBe(2);
-      expect(container.querySelectorAll('mark.blogly-highlight').length).toBe(2);
+      expect(container.querySelectorAll('mark.pomegranate-highlight').length).toBe(2);
 
       // Remove single highlight
       removeRenderedHighlight(container, 'h-alpha');
-      expect(container.querySelectorAll('mark.blogly-highlight').length).toBe(1);
+      expect(container.querySelectorAll('mark.pomegranate-highlight').length).toBe(1);
       expect(container.querySelector('[data-highlight-id="h-alpha"]')).toBeFalsy();
       expect(container.querySelector('[data-highlight-id="h-gamma"]')).toBeTruthy();
 
       // Clear all
       clearRenderedHighlights(container);
-      expect(container.querySelectorAll('mark.blogly-highlight').length).toBe(0);
+      expect(container.querySelectorAll('mark.pomegranate-highlight').length).toBe(0);
       expect(container.textContent).toBe('Alpha beta gamma delta epsilon.');
     });
 
@@ -364,10 +364,10 @@ describe('Phase 8: Highlighter Tests', () => {
       vi.restoreAllMocks();
     });
 
-    it('generates consistent storage keys formatted as blogly:highlights:<slug>', () => {
-      expect(getStorageKey('standalone/my-post')).toBe('blogly:highlights:standalone/my-post');
+    it('generates consistent storage keys formatted as pomegranate:highlights:<slug>', () => {
+      expect(getStorageKey('standalone/my-post')).toBe('pomegranate:highlights:standalone/my-post');
       expect(getStorageKey('/series/kernel/01-hooks/')).toBe(
-        'blogly:highlights:series/kernel/01-hooks'
+        'pomegranate:highlights:series/kernel/01-hooks'
       );
     });
 
@@ -388,7 +388,7 @@ describe('Phase 8: Highlighter Tests', () => {
         { id: 'valid-2', text: 'Another good text', contextBefore: '', contextAfter: '' },
       ];
 
-      mockStorage['blogly:highlights:test-post'] = JSON.stringify(corruptData);
+      mockStorage['pomegranate:highlights:test-post'] = JSON.stringify(corruptData);
 
       const loaded = loadHighlights('test-post');
       expect(loaded.length).toBe(2);
@@ -398,7 +398,7 @@ describe('Phase 8: Highlighter Tests', () => {
     });
 
     it('handles corrupt JSON in localStorage without throwing', () => {
-      mockStorage['blogly:highlights:test-post'] = '<<<NOT JSON AT ALL>>>';
+      mockStorage['pomegranate:highlights:test-post'] = '<<<NOT JSON AT ALL>>>';
 
       expect(() => {
         const loaded = loadHighlights('test-post');
@@ -610,14 +610,14 @@ describe('Phase 8: Highlighter Tests', () => {
       const result = await container.renderToString(HighlighterComponent, {
         props: {
           postSlug: 'standalone/welcome-to-glyph',
-          postTitle: 'Welcome to Blogly',
+          postTitle: 'Welcome to Pomegranate',
         },
       });
 
       // Root container and metadata
       expect(result).toContain('id="highlighter-root"');
       expect(result).toContain('data-post-slug="standalone/welcome-to-glyph"');
-      expect(result).toContain('data-post-title="Welcome to Blogly"');
+      expect(result).toContain('data-post-title="Welcome to Pomegranate"');
 
       // Toolbar toggle button
       expect(result).toContain('id="highlighter-drawer-toggle-btn"');

@@ -77,11 +77,11 @@ describe('Phase 5: File Conversion Pipeline Tests', () => {
     });
 
     it('converts arbitrary JSON object into a fenced code block', () => {
-      const json = JSON.stringify({ settings: { theme: 'blogly', local: true } });
+      const json = JSON.stringify({ settings: { theme: 'pomegranate', local: true } });
       const result = jsonToMarkdown(json);
 
       expect(result).toContain('```json');
-      expect(result).toContain('"theme": "blogly"');
+      expect(result).toContain('"theme": "pomegranate"');
     });
   });
 

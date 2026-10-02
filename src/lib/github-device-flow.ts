@@ -48,13 +48,13 @@ export interface PagesStatusResult {
 const GITHUB_DEVICE_CODE_URL = 'https://github.com/login/device/code';
 const GITHUB_ACCESS_TOKEN_URL = 'https://github.com/login/oauth/access_token';
 const GITHUB_API_BASE = 'https://api.github.com';
-const USER_AGENT = 'Blogly-Local-Dashboard/1.0.0 (https://blogly.sh)';
+const USER_AGENT = 'Pomegranate-Local-Dashboard/1.0.0 (https://pomegranate.sh)';
 
 // Default public GitHub App client ID (OAuth Device Flow allows public client_id)
-export const DEFAULT_CLIENT_ID = 'Ov23li7vQ1bBloglyApp';
+export const DEFAULT_CLIENT_ID = 'Ov23li7vQ1bPomegranateApp';
 export const DEFAULT_SCOPES = 'repo workflow read:user';
 
-export const AUTH_DIR = path.resolve(process.cwd(), '.blogly');
+export const AUTH_DIR = path.resolve(process.cwd(), '.pomegranate');
 export const AUTH_FILE = path.resolve(AUTH_DIR, 'auth.json');
 
 /**

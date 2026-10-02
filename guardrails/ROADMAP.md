@@ -1,4 +1,4 @@
-# ROADMAP.md — Blogly (`glyph.sh` → Blogly)
+# ROADMAP.md — Pomegranate (glyph.sh → Blogly → Pomegranate)
 
 > Continuing in the existing codebase (decided). Phases are ordered so
 > nothing touches the ~15 already-working, pivot-unrelated components
@@ -24,7 +24,7 @@
 - Delivers: the dual-mode token system from `design/DESIGN.md` §1/§1B,
   replacing the current hardcoded Catppuccin-only CSS — a loadable
   theme-pack format (`read` + `chrome` tokens, dark + light, per theme)
-  and the two structural component sets (TUI widgets for Blogly, standard
+  and the two structural component sets (TUI widgets for Pomegranate, standard
   widgets for every community theme).
 - Depends on: Phase 1 (so this refactor is covered by the new harness as
   it lands).
@@ -43,6 +43,19 @@
   or config defaults (grep-verifiable); existing GitHub remote/repo
   naming addressed as a separate, explicit decision (not silently
   renamed).
+
+## Phase 3 Addendum: Rebrand Blogly → Pomegranate
+- Delivers: product rename from Blogly to Pomegranate across `package.json`,
+  `wrangler.toml`, `site.config.ts`, `profile.json`, UI wordmarks (`pomegranate_`),
+  all `localStorage` keys (`pomegranate_*`), auth storage (`.pomegranate/`),
+  tests, and documentation. Rethemes the signature theme from Blogly (dark-blue/Monocraft)
+  to Pomegranate (deep burgundy/rose `#210F13`, `#320B21`, `#490C19`, `#82545D`, `#B59D9F`,
+  `#991E34`, and Consolas system monospace font stack per `design/DESIGN.md` §2).
+  Adds `read.accent-fill` to the theme schema and all theme packs.
+- Depends on: Phase 2, Phase 3.
+- Exit criteria: zero occurrences of `blogly`/`Blogly` outside explicit historical
+  records; all tests pass; `bun run astro check`, `bun run lint`, `bun run test`, and
+  `bun run build` succeed cleanly.
 
 ## Phase 4: Dashboard restructure — File Upload & Settings tabs
 - Delivers: `BlogUploader.astro` evolved into the full File Upload tab

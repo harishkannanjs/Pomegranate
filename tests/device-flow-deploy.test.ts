@@ -28,14 +28,14 @@ describe('Phase 7: Device Flow & Multi-Target Deployment Tests', () => {
     vi.restoreAllMocks();
   });
 
-  describe('Security & Safe Token Storage (.blogly/auth.json)', () => {
-    it('verifies .blogly is strictly included in .gitignore', () => {
+  describe('Security & Safe Token Storage (.pomegranate/auth.json)', () => {
+    it('verifies .pomegranate is strictly included in .gitignore', () => {
       const gitignorePath = path.resolve(process.cwd(), '.gitignore');
       expect(fs.existsSync(gitignorePath)).toBe(true);
       const gitignoreContent = fs.readFileSync(gitignorePath, 'utf-8');
 
-      expect(gitignoreContent).toMatch(/\.blogly\//);
-      expect(gitignoreContent).toMatch(/\.blogly\*\.json/);
+      expect(gitignoreContent).toMatch(/\.pomegranate\//);
+      expect(gitignoreContent).toMatch(/\.pomegranate\*\.json/);
     });
 
     it('safely stores token with restrictive file permissions (0o600) and wipes it on disconnect', () => {

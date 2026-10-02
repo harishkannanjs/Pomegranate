@@ -71,7 +71,7 @@ const showFooterPrivacyNote = siteConfig.privacy?.footerNote !== false;
   <script is:inline>
     function updateFooterPrivacy() {
       try {
-        const raw = localStorage.getItem('blogly_privacy');
+        const raw = localStorage.getItem('pomegranate_privacy');
         if (raw) {
           const p = JSON.parse(raw);
           const noteEl = document.querySelector('[data-footer-privacy-note]');

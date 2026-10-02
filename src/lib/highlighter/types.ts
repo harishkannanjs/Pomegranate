@@ -1,5 +1,5 @@
 /**
- * Core type definitions for the Blogly visitor-side Highlighter.
+ * Core type definitions for the Pomegranate visitor-side Highlighter.
  * Persisted in browser localStorage only (keyed per post slug).
  */
 

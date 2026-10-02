@@ -1,50 +1,54 @@
 import type { ThemePack, ThemeId } from './types';
 
-export const bloglyTheme: ThemePack = {
-  id: 'blogly',
-  name: 'Blogly',
+export const pomegranateTheme: ThemePack = {
+  id: 'pomegranate',
+  name: 'Pomegranate',
   mode: 'tui',
-  font: 'Monocraft',
-  fontFamily: "'Monocraft', monospace",
+  font: 'Consolas',
+  fontFamily: 'Consolas, "Courier New", Courier, monospace',
   tokens: {
     dark: {
       read: {
-        'bg-base': '#070a14',
-        'bg-surface': '#0d1224',
-        'bg-surface-raised': '#131a33',
-        border: '#232b4d',
-        'border-strong': '#34406e',
-        'text-primary': '#d7dbf0',
-        'text-secondary': '#8891bb',
-        'text-tertiary': '#565f8c',
-        accent: '#4d8dff',
+        'bg-base': '#210F13',
+        'bg-surface': '#320B21',
+        'bg-surface-raised': '#490C19',
+        border: '#82545D',
+        'border-strong': '#B59D9F',
+        'text-primary': '#B59D9F',
+        'text-secondary': '#B59D9FBF',
+        'text-tertiary': '#B59D9F80',
+        accent: '#B59D9F',
+        'accent-fill': '#991E34',
       },
       chrome: {
-        'input-bg': '#0d1224',
-        'input-border-focus': '#4d8dff',
-        'hover-bg': '#131a33',
-        danger: '#f2555a',
-        success: '#3ddc84',
+        'input-bg': '#320B21',
+        'input-border-focus': '#B59D9F',
+        'hover-bg': '#490C19',
+        danger: '#991E34',
+        success: '#B59D9F',
+        'secondary-accent': '#B59D9F',
       },
     },
     light: {
       read: {
-        'bg-base': '#f6f7fb',
-        'bg-surface': '#ffffff',
-        'bg-surface-raised': '#eceffa',
-        border: '#d7dceb',
-        'border-strong': '#b3bcdb',
-        'text-primary': '#10142a',
-        'text-secondary': '#4b5170',
-        'text-tertiary': '#767c9c',
-        accent: '#2955d9',
+        'bg-base': '#FAF4F5',
+        'bg-surface': '#FFFFFF',
+        'bg-surface-raised': '#F3E7E9',
+        border: '#B59D9F',
+        'border-strong': '#82545D',
+        'text-primary': '#210F13',
+        'text-secondary': '#490C19',
+        'text-tertiary': '#82545D',
+        accent: '#991E34',
+        'accent-fill': '#991E34',
       },
       chrome: {
-        'input-bg': '#ffffff',
-        'input-border-focus': '#2955d9',
-        'hover-bg': '#eceffa',
-        danger: '#c0342f',
-        success: '#1f9d5c',
+        'input-bg': '#FFFFFF',
+        'input-border-focus': '#991E34',
+        'hover-bg': '#F3E7E9',
+        danger: '#991E34',
+        success: '#210F13',
+        'secondary-accent': '#991E34',
       },
     },
   },
@@ -68,6 +72,7 @@ export const catppuccinTheme: ThemePack = {
         'text-secondary': '#a6adc8',
         'text-tertiary': '#6c7086',
         accent: '#89b4fa',
+        'accent-fill': '#89b4fa',
       },
       chrome: {
         'input-bg': '#181825',
@@ -75,6 +80,7 @@ export const catppuccinTheme: ThemePack = {
         'hover-bg': '#313244',
         danger: '#f38ba8',
         success: '#a6e3a1',
+        'secondary-accent': '#89b4fa',
       },
     },
     light: {
@@ -88,6 +94,7 @@ export const catppuccinTheme: ThemePack = {
         'text-secondary': '#6c6f85',
         'text-tertiary': '#8c8fa1',
         accent: '#1e66f5',
+        'accent-fill': '#1e66f5',
       },
       chrome: {
         'input-bg': '#ffffff',
@@ -95,6 +102,7 @@ export const catppuccinTheme: ThemePack = {
         'hover-bg': '#e6e9ef',
         danger: '#d20f39',
         success: '#40a02b',
+        'secondary-accent': '#1e66f5',
       },
     },
   },
@@ -118,6 +126,7 @@ export const gruvboxTheme: ThemePack = {
         'text-secondary': '#bdae93',
         'text-tertiary': '#928374',
         accent: '#d79921',
+        'accent-fill': '#d79921',
       },
       chrome: {
         'input-bg': '#1d2021',
@@ -125,6 +134,7 @@ export const gruvboxTheme: ThemePack = {
         'hover-bg': '#3c3836',
         danger: '#cc241d',
         success: '#98971a',
+        'secondary-accent': '#d79921',
       },
     },
     light: {
@@ -138,6 +148,7 @@ export const gruvboxTheme: ThemePack = {
         'text-secondary': '#665c54',
         'text-tertiary': '#7c6f64',
         accent: '#af3a03',
+        'accent-fill': '#af3a03',
       },
       chrome: {
         'input-bg': '#ffffff',
@@ -145,6 +156,7 @@ export const gruvboxTheme: ThemePack = {
         'hover-bg': '#ebdbb2',
         danger: '#9d0006',
         success: '#79740e',
+        'secondary-accent': '#af3a03',
       },
     },
   },
@@ -168,6 +180,7 @@ export const solarizedTheme: ThemePack = {
         'text-secondary': '#839496',
         'text-tertiary': '#586e75',
         accent: '#268bd2',
+        'accent-fill': '#268bd2',
       },
       chrome: {
         'input-bg': '#073642',
@@ -175,6 +188,7 @@ export const solarizedTheme: ThemePack = {
         'hover-bg': '#0a4a5a',
         danger: '#dc322f',
         success: '#859900',
+        'secondary-accent': '#268bd2',
       },
     },
     light: {
@@ -188,6 +202,7 @@ export const solarizedTheme: ThemePack = {
         'text-secondary': '#657b83',
         'text-tertiary': '#93a1a1',
         accent: '#268bd2',
+        'accent-fill': '#268bd2',
       },
       chrome: {
         'input-bg': '#ffffff',
@@ -195,6 +210,7 @@ export const solarizedTheme: ThemePack = {
         'hover-bg': '#e4ddc4',
         danger: '#dc322f',
         success: '#859900',
+        'secondary-accent': '#268bd2',
       },
     },
   },
@@ -218,6 +234,7 @@ export const tokyoNightTheme: ThemePack = {
         'text-secondary': '#a9b1d6',
         'text-tertiary': '#565f89',
         accent: '#7aa2f7',
+        'accent-fill': '#7aa2f7',
       },
       chrome: {
         'input-bg': '#16161e',
@@ -239,6 +256,7 @@ export const tokyoNightTheme: ThemePack = {
         'text-secondary': '#5a4a78',
         'text-tertiary': '#848cb5',
         accent: '#2e7de9',
+        'accent-fill': '#2e7de9',
       },
       chrome: {
         'input-bg': '#ffffff',
@@ -270,6 +288,7 @@ export const nordTheme: ThemePack = {
         'text-secondary': '#d8dee9',
         'text-tertiary': '#4c566a',
         accent: '#88c0d0',
+        'accent-fill': '#88c0d0',
       },
       chrome: {
         'input-bg': '#242933',
@@ -277,6 +296,7 @@ export const nordTheme: ThemePack = {
         'hover-bg': '#3b4252',
         danger: '#bf616a',
         success: '#a3be8c',
+        'secondary-accent': '#88c0d0',
       },
     },
     light: {
@@ -290,6 +310,7 @@ export const nordTheme: ThemePack = {
         'text-secondary': '#4c566a',
         'text-tertiary': '#7b88a1',
         accent: '#5e81ac',
+        'accent-fill': '#5e81ac',
       },
       chrome: {
         'input-bg': '#ffffff',
@@ -297,6 +318,7 @@ export const nordTheme: ThemePack = {
         'hover-bg': '#e5e9f0',
         danger: '#b64752',
         success: '#7a9a5e',
+        'secondary-accent': '#5e81ac',
       },
     },
   },
@@ -320,6 +342,7 @@ export const draculaTheme: ThemePack = {
         'text-secondary': '#6272a4',
         'text-tertiary': '#4d5273',
         accent: '#bd93f9',
+        'accent-fill': '#bd93f9',
       },
       chrome: {
         'input-bg': '#21222c',
@@ -341,6 +364,7 @@ export const draculaTheme: ThemePack = {
         'text-secondary': '#4d4f6b',
         'text-tertiary': '#7b7d9e',
         accent: '#7841c9',
+        'accent-fill': '#7841c9',
       },
       chrome: {
         'input-bg': '#ffffff',
@@ -355,7 +379,7 @@ export const draculaTheme: ThemePack = {
 };
 
 export const themePacks: Record<ThemeId, ThemePack> = {
-  blogly: bloglyTheme,
+  pomegranate: pomegranateTheme,
   catppuccin: catppuccinTheme,
   gruvbox: gruvboxTheme,
   solarized: solarizedTheme,

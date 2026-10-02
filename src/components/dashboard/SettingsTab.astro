@@ -9,7 +9,7 @@ import { siteConfig } from '@/site.config';
 const themes = getAllThemes();
 
 const fontOptions = [
-  { id: 'monocraft', name: 'Monocraft', family: 'Monocraft, monospace', desc: 'Retro pixelated terminal monospace font (Blogly signature)' },
+  { id: 'consolas', name: 'Consolas', family: 'Consolas, "Courier New", Courier, monospace', desc: 'System monospace font stack (Pomegranate signature)' },
   { id: 'jetbrains-mono', name: 'JetBrains Mono', family: '"JetBrains Mono", monospace', desc: 'Modern developer monospace font with clear ligatures' },
   { id: 'fira-code', name: 'Fira Code', family: '"Fira Code", monospace', desc: 'Monospace font with programming ligatures' },
   { id: 'cascadia-code', name: 'Cascadia Code', family: '"Cascadia Code", monospace', desc: 'Modern monospace font designed by Microsoft' },
@@ -90,7 +90,7 @@ const deployTargets = siteConfig.deployTargets || {};
                 Font: <span class="text-read-text-primary">{t.fontFamily.split(',')[0]}</span>
               </div>
               <div class="text-[10px] text-read-text-tertiary font-mono pt-1">
-                <code>const site = new Blogly();</code>
+                <code>const site = new Pomegranate();</code>
               </div>
             </div>
           );
@@ -328,7 +328,7 @@ const deployTargets = siteConfig.deployTargets || {};
     <Panel title="Multi-Target Deployment (4 Targets)">
       <div class="space-y-6 text-xs">
         <p class="text-read-text-secondary leading-relaxed">
-          Publish your static Blogly articles to any of the four supported hosting targets. GitHub Pages is pre-configured and runs automatically on every commit.
+          Publish your static Pomegranate articles to any of the four supported hosting targets. GitHub Pages is pre-configured and runs automatically on every commit.
         </p>
 
         <!-- 1. GitHub Pages (Emphasized Target) -->
@@ -490,7 +490,7 @@ const deployTargets = siteConfig.deployTargets || {};
     <Panel title="Visitor Data Explainer">
       <div class="space-y-4 text-xs">
         <p class="text-read-text-secondary leading-relaxed">
-          Blogly is designed around a zero-knowledge, visitor-first privacy architecture:
+          Pomegranate is designed around a zero-knowledge, visitor-first privacy architecture:
         </p>
         <ul class="list-disc pl-4 space-y-1.5 text-read-text-secondary text-[11px]">
           <li><strong>Visitor Preferences</strong> (theme mode, active font, reading position, and highlights) live exclusively in the visitor's local browser (<code class="text-read-accent">localStorage</code>).</li>
@@ -693,7 +693,7 @@ const deployTargets = siteConfig.deployTargets || {};
         </div>
 
         <p class="text-read-text-secondary leading-relaxed">
-          2. Visit GitHub's device activation page and authorize Blogly:
+          2. Visit GitHub's device activation page and authorize Pomegranate:
         </p>
 
         <Button variant="primary" data-action="open-device-url" class="w-full justify-center">
@@ -746,8 +746,8 @@ const deployTargets = siteConfig.deployTargets || {};
     const fontCards = document.querySelectorAll('.font-card');
 
     function highlightActiveThemeAndFont() {
-      const currentTheme = document.documentElement.getAttribute('data-theme') || localStorage.getItem('blogly_theme') || 'blogly';
-      const currentFont = document.documentElement.getAttribute('data-font') || localStorage.getItem('blogly_font') || 'monocraft';
+      const currentTheme = document.documentElement.getAttribute('data-theme') || localStorage.getItem('pomegranate_theme') || 'pomegranate';
+      const currentFont = document.documentElement.getAttribute('data-font') || localStorage.getItem('pomegranate_font') || 'consolas';
 
       themeCards.forEach((c) => {
         const id = c.getAttribute('data-theme-id');
@@ -772,13 +772,13 @@ const deployTargets = siteConfig.deployTargets || {};
 
     themeCards.forEach((card) => {
       card.addEventListener('click', async () => {
-        const themeId = card.getAttribute('data-theme-id') || 'blogly';
+        const themeId = card.getAttribute('data-theme-id') || 'pomegranate';
         document.documentElement.setAttribute('data-theme', themeId);
-        localStorage.setItem('blogly_theme', themeId);
+        localStorage.setItem('pomegranate_theme', themeId);
         highlightActiveThemeAndFont();
         notify(`Switched theme to ${themeId}.`);
 
-        const currentFont = document.documentElement.getAttribute('data-font') || localStorage.getItem('blogly_font') || 'monocraft';
+        const currentFont = document.documentElement.getAttribute('data-font') || localStorage.getItem('pomegranate_font') || 'consolas';
         try {
           await fetch('/api/save-profile', {
             method: 'POST',
@@ -791,13 +791,13 @@ const deployTargets = siteConfig.deployTargets || {};
 
     fontCards.forEach((card) => {
       card.addEventListener('click', async () => {
-        const fontId = card.getAttribute('data-font-id') || 'monocraft';
+        const fontId = card.getAttribute('data-font-id') || 'consolas';
         document.documentElement.setAttribute('data-font', fontId);
-        localStorage.setItem('blogly_font', fontId);
+        localStorage.setItem('pomegranate_font', fontId);
         highlightActiveThemeAndFont();
         notify(`Switched typography font to ${fontId}.`);
 
-        const currentTheme = document.documentElement.getAttribute('data-theme') || localStorage.getItem('blogly_theme') || 'blogly';
+        const currentTheme = document.documentElement.getAttribute('data-theme') || localStorage.getItem('pomegranate_theme') || 'pomegranate';
         try {
           await fetch('/api/save-profile', {
             method: 'POST',
@@ -817,7 +817,7 @@ const deployTargets = siteConfig.deployTargets || {};
 
       // Initialize from localStorage if present
       try {
-        const raw = localStorage.getItem('blogly_features');
+        const raw = localStorage.getItem('pomegranate_features');
         if (raw) {
           const map = JSON.parse(raw);
           if (key && key in map) {
@@ -831,10 +831,10 @@ const deployTargets = siteConfig.deployTargets || {};
         const enabled = input.checked;
         let map: Record<string, boolean> = {};
         try {
-          map = JSON.parse(localStorage.getItem('blogly_features') || '{}');
+          map = JSON.parse(localStorage.getItem('pomegranate_features') || '{}');
         } catch {}
         map[key] = enabled;
-        localStorage.setItem('blogly_features', JSON.stringify(map));
+        localStorage.setItem('pomegranate_features', JSON.stringify(map));
 
         notify(`Feature "${key}" ${enabled ? 'enabled' : 'disabled'}. Live preview updated.`);
 
@@ -860,10 +860,10 @@ const deployTargets = siteConfig.deployTargets || {};
         const enabled = input.checked;
         let map: Record<string, boolean> = {};
         try {
-          map = JSON.parse(localStorage.getItem('blogly_privacy') || '{}');
+          map = JSON.parse(localStorage.getItem('pomegranate_privacy') || '{}');
         } catch {}
         map[key] = enabled;
-        localStorage.setItem('blogly_privacy', JSON.stringify(map));
+        localStorage.setItem('pomegranate_privacy', JSON.stringify(map));
 
         notify(`Privacy option "${key}" updated.`);
 
@@ -1134,17 +1134,17 @@ const deployTargets = siteConfig.deployTargets || {};
       const action = target.getAttribute('data-action');
 
       if (action === 'reset-appearance') {
-        document.documentElement.setAttribute('data-theme', 'blogly');
-        document.documentElement.setAttribute('data-font', 'monocraft');
-        localStorage.setItem('blogly_theme', 'blogly');
-        localStorage.setItem('blogly_font', 'monocraft');
+        document.documentElement.setAttribute('data-theme', 'pomegranate');
+        document.documentElement.setAttribute('data-font', 'consolas');
+        localStorage.setItem('pomegranate_theme', 'pomegranate');
+        localStorage.setItem('pomegranate_font', 'consolas');
         highlightActiveThemeAndFont();
-        notify('Appearance reset to Blogly default palette & Monocraft font.');
+        notify('Appearance reset to Pomegranate default palette & Consolas font.');
         try {
           await fetch('/api/save-profile', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ appearance: { theme: 'blogly', font: 'monocraft' } }),
+            body: JSON.stringify({ appearance: { theme: 'pomegranate', font: 'consolas' } }),
           });
         } catch {}
       } else if (action === 'refresh-posts-list') {
@@ -1230,10 +1230,10 @@ const deployTargets = siteConfig.deployTargets || {};
         const groqInp = document.getElementById('byok-groq-key') as HTMLInputElement | null;
         const key = (groqInp?.value || '').trim();
         if (key) {
-          localStorage.setItem('blogly_groq_api_key', key);
+          localStorage.setItem('pomegranate_groq_api_key', key);
           notify('Groq API Key safely saved to your browser localStorage! Tier 2 audio conversion is active.');
         } else {
-          localStorage.removeItem('blogly_groq_api_key');
+          localStorage.removeItem('pomegranate_groq_api_key');
           notify('Groq API Key cleared from browser localStorage.');
         }
       } else if (action === 'toggle-groq-key-visibility') {
@@ -1246,7 +1246,7 @@ const deployTargets = siteConfig.deployTargets || {};
       } else if (action === 'clear-groq-key') {
         const groqInp = document.getElementById('byok-groq-key') as HTMLInputElement | null;
         if (groqInp) groqInp.value = '';
-        localStorage.removeItem('blogly_groq_api_key');
+        localStorage.removeItem('pomegranate_groq_api_key');
         notify('Groq API Key cleared.');
       } else if (action === 'open-device-flow') {
         openDeviceFlowModal();
@@ -1294,7 +1294,7 @@ const deployTargets = siteConfig.deployTargets || {};
     // Load Groq API Key from localStorage
     const groqKeyInput = document.getElementById('byok-groq-key') as HTMLInputElement | null;
     if (groqKeyInput) {
-      const savedKey = localStorage.getItem('blogly_groq_api_key');
+      const savedKey = localStorage.getItem('pomegranate_groq_api_key');
       if (savedKey) {
         groqKeyInput.value = savedKey;
       }
@@ -1433,7 +1433,7 @@ const deployTargets = siteConfig.deployTargets || {};
     }
 
     async function disconnectGitHub() {
-      if (!confirm('Disconnect GitHub? This wipes your locally stored token in .blogly/auth.json.')) {
+      if (!confirm('Disconnect GitHub? This wipes your locally stored token in .pomegranate/auth.json.')) {
         return;
       }
       try {

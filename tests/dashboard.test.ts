@@ -12,7 +12,7 @@ describe('Phase 4: Dashboard Restructure Tests', () => {
 
     expect(result).toBeDefined();
     // Header brand and title
-    expect(result).toContain('Blogly Dashboard');
+    expect(result).toContain('Pomegranate Dashboard');
     expect(result).toContain('DEV // LOCALHOST');
 
     // Tab navigation buttons
@@ -59,7 +59,7 @@ describe('Phase 4: Dashboard Restructure Tests', () => {
     expect(result).toContain('Appearance &amp; Theming');
     expect(result).toContain('Active Theme Picker');
     expect(result).toContain('Typography / Font Picker');
-    expect(result).toContain('data-theme-id="blogly"');
+    expect(result).toContain('data-theme-id="pomegranate"');
     expect(result).toContain('data-theme-id="catppuccin"');
 
     // 2. Features toggles

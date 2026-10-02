@@ -158,7 +158,7 @@ export function findHighlightOffsets(
 }
 
 /**
- * Wraps text range spanning one or more text nodes in <mark class="blogly-highlight">.
+ * Wraps text range spanning one or more text nodes in <mark class="pomegranate-highlight">.
  * Never uses Range.surroundContents (which throws across element boundaries).
  */
 export function wrapOffsetsWithMark(
@@ -197,7 +197,7 @@ export function wrapOffsetsWithMark(
       const doc = parent.ownerDocument || (typeof document !== 'undefined' ? document : null);
       if (!doc) continue;
       const mark = doc.createElement('mark');
-      mark.className = 'blogly-highlight';
+      mark.className = 'pomegranate-highlight';
       mark.setAttribute('data-highlight-id', highlight.id);
       mark.setAttribute('tabindex', '0');
       mark.setAttribute('role', 'mark');
@@ -227,10 +227,10 @@ export function anchorHighlight(container: Element, highlight: StoredHighlight):
 }
 
 /**
- * Unwraps all rendered <mark class="blogly-highlight"> elements and normalizes text nodes.
+ * Unwraps all rendered <mark class="pomegranate-highlight"> elements and normalizes text nodes.
  */
 export function clearRenderedHighlights(container: Element): void {
-  const marks = Array.from(container.querySelectorAll('mark.blogly-highlight'));
+  const marks = Array.from(container.querySelectorAll('mark.pomegranate-highlight'));
   for (const mark of marks) {
     const parent = mark.parentNode;
     if (!parent) continue;
@@ -246,7 +246,7 @@ export function clearRenderedHighlights(container: Element): void {
  * Unwraps rendered marks for a specific highlight ID.
  */
 export function removeRenderedHighlight(container: Element, id: string): void {
-  const marks = Array.from(container.querySelectorAll(`mark.blogly-highlight[data-highlight-id="${id}"]`));
+  const marks = Array.from(container.querySelectorAll(`mark.pomegranate-highlight[data-highlight-id="${id}"]`));
   for (const mark of marks) {
     const parent = mark.parentNode;
     if (!parent) continue;

@@ -1,4 +1,4 @@
-# SPEC.md — Blogly (currently `glyph.sh` in code)
+# SPEC.md — Pomegranate (formerly Blogly / glyph.sh)
 
 > Describes the **target** product, per the pivot direction already decided.
 > Where current repo behavior differs, that gap is roadmap work, not a spec
@@ -13,7 +13,7 @@ algorithm/deplatforming), and weak support for technical content.
 give real ownership but demand ongoing technical maintenance (WordPress)
 or developer skill just to get started (raw SSGs).
 
-Blogly's position: **own your blog like a developer would, without
+Pomegranate's position: **own your blog like a developer would, without
 needing to be one.** Real files in the user's own GitHub repo (can't be
 taken down, paywalled, or deprioritized by someone else's algorithm), zero
 hosting cost (static output on GitHub Pages), zero ongoing maintenance
@@ -70,7 +70,7 @@ already know Markdown/Git":
   live only in the visitor's own browser; opt-in, cookie-free analytics
   toggle; a visible privacy note surfaced in the blog's own footer);
   **Advanced** (export site as zip, view/edit raw config, "undo my last
-  change" as a plain-language git-revert, reset theme/font to Blogly
+  change" as a plain-language git-revert, reset theme/font to Pomegranate
   defaults, custom domain, danger zone: disconnect GitHub / wipe local
   settings).
 
@@ -79,13 +79,13 @@ already know Markdown/Git":
   colors) and `chrome` tokens (dashboard-only: inputs, focus rings, hover,
   table rows, danger/success states) for both a `dark` and `light` mode —
   every theme, including community ones, must supply all four.
-- Default: **Blogly theme** — dark-blue "midnight ink" palette, Monocraft
-  font used everywhere (headings, UI, body — deliberately, not
-  selectively, per explicit decision), full terminal chrome. Both a dark
-  (default) and light variant, contrast-verified (WCAG AA).
+- Default: **Pomegranate theme** — deep burgundy/rose palette (§2 of
+  `DESIGN.md`), Consolas system font stack (`Consolas, "Courier New", Courier, monospace`)
+  used everywhere, full terminal chrome. Both a dark (default) and light
+  variant, contrast-verified (WCAG AA).
 - Community themes, v1: Catppuccin, Gruvbox, Solarized, Tokyo Night (all
   have official light+dark pairs) plus Nord and Dracula with
-  Blogly-designed light companions (neither has an official one).
+  Pomegranate-designed light companions (neither has an official one).
 - **Switching theme in Settings re-skins the entire local dashboard AND
   the published blog together** — one shared token/font system drives
   both surfaces; there is no separate "dashboard theme."
@@ -103,16 +103,16 @@ already know Markdown/Git":
 ### Branding
 - Free, open source, no paid tier, no license-gated feature removal.
   Attribution is achieved via multiple independent channels rather than
-  one enforceable mechanism: a theme-aware "built with Blogly" footer
+  one enforceable mechanism: a theme-aware "built with Pomegranate" footer
   badge, a `<meta name="generator">` tag, a small watermark baked into
-  auto-generated OG images, and an opt-in "Blogly showcase" listing
+  auto-generated OG images, and an opt-in "Pomegranate showcase" listing
   offered during onboarding.
 
 ## Architecture and major components
 
 See `AGENTS.md` for what exists today. Target-state additions not yet
 built: a landing-page OAuth relay (minimal hosted backend — the **only**
-piece of Blogly-operated infrastructure in the whole product); GitHub
+piece of Pomegranate-operated infrastructure in the whole product); GitHub
 Device Flow integration in the local dashboard for push-to-GitHub (no
 hosted backend); a theme-pack loader/schema replacing the current
 hardcoded Catppuccin CSS; a file-conversion dispatcher (Tesseract.js,
@@ -122,8 +122,8 @@ persistence; multi-target deploy buttons in the settings dashboard.
 
 ## Security and privacy requirements
 
-- The local dashboard must never depend on any Blogly-operated backend —
-  the only server Blogly runs is the landing-page OAuth relay, and it is
+- The local dashboard must never depend on any Pomegranate-operated backend —
+  the only server Pomegranate runs is the landing-page OAuth relay, and it is
   stateless (exchanges an OAuth code for a token, does not store user
   data).
 - The OAuth relay never receives or stores the user's GitHub token beyond
@@ -154,7 +154,7 @@ source of truth — do not introduce `package-lock.json` or `yarn.lock`).
   system (unlike Medium/Substack) — explicitly out of scope; the showcase
   page is opt-in cross-promotion, not a platform feed.
 - No built-in monetization/paywall features.
-- No hosted/managed version of Blogly itself (the product is "fork it and
+- No hosted/managed version of Pomegranate itself (the product is "fork it and
   run it," not a SaaS) — the OAuth relay is infrastructure to smooth
   onboarding, not a hosted product tier.
 - No automatic deploy-status sync for Vercel/Netlify/Cloudflare Pages in

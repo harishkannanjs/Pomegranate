@@ -43,7 +43,7 @@ try {
   <div class="flex flex-wrap items-center justify-between gap-3 p-3 bg-read-bg-surface-raised border border-read-border rounded-[2px]">
     <div class="flex items-center gap-2 text-xs font-mono">
       <span class="text-read-accent font-bold">$</span>
-      <span class="text-read-text-primary font-semibold">blogly upload --split-editor</span>
+      <span class="text-read-text-primary font-semibold">pomegranate upload --split-editor</span>
       <span id="editor-dirty-indicator" class="hidden text-read-accent text-[10px] px-1.5 py-0.2 border border-read-accent rounded-[2px]">[modified]</span>
     </div>
 
@@ -322,7 +322,7 @@ try {
             type="text"
             id="git-commit-msg-inp"
             class="w-full bg-read-bg-base border border-read-border px-3 py-1.5 text-read-text-primary text-xs focus:border-read-accent focus:outline-none"
-            placeholder="feat: publish new article via blogly dashboard"
+            placeholder="feat: publish new article via pomegranate dashboard"
           />
         </div>
 
@@ -359,7 +359,7 @@ try {
 
     let groqApiKey = '';
     if (isAudio) {
-      groqApiKey = localStorage.getItem('blogly_groq_api_key') || '';
+      groqApiKey = localStorage.getItem('pomegranate_groq_api_key') || '';
       if (!groqApiKey.trim()) {
         const goToSettings = confirm(
           'Add a Groq API key in Settings to convert audio files.\n\nWould you like to open Settings now to add your Groq API key?'
@@ -446,7 +446,7 @@ try {
       });
     } catch {
       throw new Error(
-        'Local conversion server unreachable. The multi-format file pipeline runs in your local Blogly author environment (`bun run dev`). Direct Markdown (.md/.mdx) editing is active.'
+        'Local conversion server unreachable. The multi-format file pipeline runs in your local Pomegranate author environment (`bun run dev`). Direct Markdown (.md/.mdx) editing is active.'
       );
     }
 
@@ -915,7 +915,7 @@ try {
         const msgInp = document.getElementById('git-commit-msg-inp') as HTMLInputElement | null;
         const statusLog = document.getElementById('git-push-status-log');
         const branch = branchSelect?.value || 'master';
-        const message = (msgInp?.value || '').trim() || 'feat(blog): publish writeup via blogly dashboard';
+        const message = (msgInp?.value || '').trim() || 'feat(blog): publish writeup via pomegranate dashboard';
 
         if (statusLog) {
           statusLog.classList.remove('hidden');
@@ -951,9 +951,9 @@ try {
 
     // Populate initial draft
     if (rawInput && !rawInput.value.trim()) {
-      rawInput.value = `# Welcome to Blogly Editor\n\nA distraction-free terminal-grade writing environment.\n\n- Write or paste Markdown on the left\n- View instant rendered output on the right\n- Click "Preview Blog site" to preview with your active theme\n- Click "Save Post" to store in repository and push to GitHub\n`;
-      if (titleInp && !titleInp.value) titleInp.value = 'Welcome to Blogly Editor';
-      if (filenameInp && !filenameInp.value) filenameInp.value = 'welcome-to-blogly-editor.md';
+      rawInput.value = `# Welcome to Pomegranate Editor\n\nA distraction-free terminal-grade writing environment.\n\n- Write or paste Markdown on the left\n- View instant rendered output on the right\n- Click "Preview Blog site" to preview with your active theme\n- Click "Save Post" to store in repository and push to GitHub\n`;
+      if (titleInp && !titleInp.value) titleInp.value = 'Welcome to Pomegranate Editor';
+      if (filenameInp && !filenameInp.value) filenameInp.value = 'welcome-to-pomegranate-editor.md';
       updateLivePreview();
     }
   }

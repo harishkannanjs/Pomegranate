@@ -245,7 +245,7 @@ const features = {
 
     function applyLiveFeatureToggles() {
       try {
-        const raw = localStorage.getItem('blogly_features');
+        const raw = localStorage.getItem('pomegranate_features');
         if (raw) {
           const map = JSON.parse(raw);
           for (const [key, enabled] of Object.entries(map)) {

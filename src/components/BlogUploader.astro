@@ -1439,7 +1439,7 @@ const isDevServer = import.meta.env.DEV;
             const rel = blog.slug ? `/blog/${blog.slug}` : `/blog/${blog.type === 'series' ? `series/${blog.seriesName}/` : 'standalone/'}${blog.filename.replace(/\.(md|mdx)$/i, '').toLowerCase()}`;
             const currentBase = window.location.pathname.startsWith('/glyph.sh')
               ? '/glyph.sh'
-              : (window.location.pathname.startsWith('/blogly') ? '/blogly' : '');
+              : (window.location.pathname.startsWith('/pomegranate') ? '/pomegranate' : '');
             blogUrl = currentBase ? `${currentBase}${rel}` : rel;
           }
           html += `
