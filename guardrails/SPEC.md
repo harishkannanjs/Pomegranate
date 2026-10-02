@@ -137,6 +137,10 @@ persistence; multi-target deploy buttons in the settings dashboard.
 - Tier 1 file conversion runs entirely on the user's own machine; Tier 2
   (audio, optionally advanced OCR) is opt-in, BYOK, with explicit consent
   shown before any file leaves the device.
+- The local dashboard (onboarding, File Upload tab, Settings tab) must be
+  structurally absent from the production build output — not hidden, not
+  unlinked, genuinely absent — and cannot produce any route, page, or client
+  bundle in the built site.
 - No sensitive identification numbers, financial account numbers, or
   similar are ever requested or stored by the product itself.
 
@@ -190,5 +194,9 @@ acceptable on its own:
 - The GitHub Pages deploy button requires no external sign-up and results
   in a live, reachable URL — verified by checking the deployed URL
   returns 200 after the workflow completes.
+- The local dashboard (onboarding, File Upload tab, Settings tab) must be
+  structurally absent from the production build output — not hidden, not
+  unlinked, genuinely absent — verified by inspecting `bun run build`'s
+  output directory.
 - `bun run astro check` and `bun run build` both succeed with zero errors
   on a clean checkout — verified by actually running them, not assumed.

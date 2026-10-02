@@ -5,14 +5,16 @@ import { siteConfig, getRelativePath } from '@/site.config';
 
 interface Props {
   activePath?: string;
+  isDev?: boolean;
 }
 
-const { activePath = '/' } = Astro.props;
-
+const { activePath = '/', isDev = import.meta.env.DEV } = Astro.props;
 const navLinks: { href: string; label: string }[] = [];
 const homeUrl = getRelativePath('/');
-const profileUrl = getRelativePath('/profile/');
-const isProfileActive = activePath === '/profile' || activePath === '/profile/' || activePath === profileUrl || activePath.startsWith(profileUrl);
+const targetProfileUrl = isDev ? getRelativePath('/profile/') : getRelativePath('/about/');
+const isProfileActive = isDev
+  ? activePath === '/profile' || activePath === '/profile/' || activePath === targetProfileUrl || activePath.startsWith(targetProfileUrl)
+  : activePath === '/about' || activePath === '/about/' || activePath === targetProfileUrl || activePath.startsWith(targetProfileUrl);
 const avatarSrc = siteConfig.avatar || siteConfig.logo ? getRelativePath(siteConfig.avatar || siteConfig.logo) : '';
 ---
 
@@ -63,14 +65,14 @@ const avatarSrc = siteConfig.avatar || siteConfig.logo ? getRelativePath(siteCon
       <ThemeToggle />
 
       <a
-        href={profileUrl}
+        href={targetProfileUrl}
         class={`flex items-center justify-center w-7 h-7 rounded-[2px] transition-colors border overflow-hidden ${
           isProfileActive
             ? 'border-primary text-primary bg-surface-container-high'
             : 'bg-surface-container border-outline-variant hover:border-primary text-on-surface-variant hover:text-primary'
         }`}
-        title="Profile"
-        aria-label="Profile"
+        title={isDev ? 'Dashboard' : 'About'}
+        aria-label={isDev ? 'Dashboard' : 'About'}
       >
         <img
           src={avatarSrc}

@@ -1,6 +1,6 @@
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import { describe, it, expect } from 'vitest';
-import ProfilePage from '../src/pages/profile.astro';
+import ProfilePage from '../src/dashboard/profile.astro';
 import FileUploadTab from '../src/components/dashboard/FileUploadTab.astro';
 import SettingsTab from '../src/components/dashboard/SettingsTab.astro';
 import { siteConfig } from '../src/site.config';

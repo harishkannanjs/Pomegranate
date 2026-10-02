@@ -1633,7 +1633,21 @@ function profileDevMiddleware() {
   };
 }
 
-// https://astro.build/config
+function devDashboardIntegration() {
+  return {
+    name: 'pomegranate-dev-dashboard',
+    hooks: {
+      'astro:config:setup'({ command, injectRoute }) {
+        if (command === 'dev') {
+          injectRoute({
+            pattern: '/profile',
+            entrypoint: './src/dashboard/profile.astro',
+          });
+        }
+      },
+    },
+  };
+}
 
 // https://astro.build/config
 export default defineConfig({
@@ -1644,6 +1658,7 @@ export default defineConfig({
     enabled: false,
   },
   integrations: [
+    devDashboardIntegration(),
     mdx({
       syntaxHighlight: 'shiki',
       shikiConfig: {

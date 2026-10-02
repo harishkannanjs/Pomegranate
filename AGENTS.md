@@ -72,12 +72,18 @@ before assuming current behavior is the target behavior.
   ambiguity or removal). Wrapped per text-node segment with `<mark>` to safely
   span inline formatting (bold, links, inline code). Accepted limitation:
   changing a published post's slug orphans its highlights in visitors' browsers.
-- **Local dashboard**: `src/pages/profile.astro` +
-  `src/components/ProfileEditor.astro` (author identity/social/bio editing)
-  and `src/components/BlogUploader.astro` (current content-intake —
-  presently a `.md`/`.mdx` drag-drop, NOT the planned universal
-  any-file-to-Markdown conversion pipeline with Tier 1/Tier 2 and a
-  raw/preview split — that's future work, not current behavior).
+- **Local dashboard & Dev-Only Route Boundary**: The authoring dashboard
+  lives in `src/dashboard/profile.astro` (outside `src/pages/`) alongside
+  `src/components/dashboard/FileUploadTab.astro` and
+  `src/components/dashboard/SettingsTab.astro`. It is NEVER a static route
+  in `src/pages/`. Instead, it is injected via Astro's `astro:config:setup`
+  hook (`devDashboardIntegration()` in `astro.config.mjs`) strictly when
+  `command === 'dev'`. In production builds (`bun run build`), the route is
+  never registered, preventing dashboard markup, settings, and client JS
+  from being bundled into `dist/`. Any new dashboard page, management tab, or
+  admin tool must be placed in `src/dashboard/` or injected via this dev-only
+  hook — never placed directly under `src/pages/`. The public blog's read-only
+  author view lives at `src/pages/about.astro` (`/about`).
 - **OG images**: build-time generation via `satori` + `@resvg/resvg-js`,
   wired in `src/lib/og-image.ts` and `src/pages/og/`.
 - **Search**: Pagefind (`pagefind@1.5.2`), indexed as a post-build step.
