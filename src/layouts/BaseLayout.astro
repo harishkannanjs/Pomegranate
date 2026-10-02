@@ -106,7 +106,17 @@ const resolvedOgImage = new URL(getRelativePath(image), Astro.site || Astro.url.
     <script is:inline>
       (function() {
         try {
-          const storedPrivacy = localStorage.getItem('pomegranate_privacy');
+          let storedPrivacy = localStorage.getItem('pomegranate_privacy');
+          if (!storedPrivacy) {
+            const legacyPrivacy = localStorage.getItem('blogly_privacy');
+            if (legacyPrivacy) {
+              storedPrivacy = legacyPrivacy;
+              try {
+                localStorage.setItem('pomegranate_privacy', legacyPrivacy);
+                localStorage.removeItem('blogly_privacy');
+              } catch {}
+            }
+          }
           const isEnabled = storedPrivacy ? JSON.parse(storedPrivacy).analytics : false;
           if (isEnabled && typeof window !== 'undefined') {
             window.dispatchEvent(new CustomEvent('pomegranate:analytics', {

@@ -361,6 +361,16 @@ try {
     if (isAudio) {
       groqApiKey = localStorage.getItem('pomegranate_groq_api_key') || '';
       if (!groqApiKey.trim()) {
+        const legacyKey = localStorage.getItem('blogly_groq_api_key') || '';
+        if (legacyKey.trim()) {
+          groqApiKey = legacyKey;
+          try {
+            localStorage.setItem('pomegranate_groq_api_key', legacyKey);
+            localStorage.removeItem('blogly_groq_api_key');
+          } catch {}
+        }
+      }
+      if (!groqApiKey.trim()) {
         const goToSettings = confirm(
           'Add a Groq API key in Settings to convert audio files.\n\nWould you like to open Settings now to add your Groq API key?'
         );

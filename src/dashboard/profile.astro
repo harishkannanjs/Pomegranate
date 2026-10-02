@@ -323,6 +323,7 @@ const dashboardTabs = [
 
     function switchActiveTab(targetId: string) {
       localStorage.setItem('pomegranate_active_tab', targetId);
+      localStorage.removeItem('blogly_active_tab');
 
       tabTriggers.forEach((btn) => {
         const id = btn.getAttribute('data-tab-id');
@@ -389,7 +390,17 @@ const dashboardTabs = [
     const urlParams = new URLSearchParams(window.location.search);
     const queryTab = urlParams.get('tab');
     const defaultTab = 'file-upload';
-    const storedTab = localStorage.getItem('pomegranate_active_tab');
+    let storedTab = localStorage.getItem('pomegranate_active_tab');
+    if (!storedTab) {
+      const legacyTab = localStorage.getItem('blogly_active_tab');
+      if (legacyTab) {
+        storedTab = legacyTab;
+        try {
+          localStorage.setItem('pomegranate_active_tab', legacyTab);
+          localStorage.removeItem('blogly_active_tab');
+        } catch {}
+      }
+    }
     const initialTab =
       queryTab && tabPanels[queryTab]
         ? queryTab

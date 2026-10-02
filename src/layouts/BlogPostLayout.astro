@@ -245,7 +245,17 @@ const features = {
 
     function applyLiveFeatureToggles() {
       try {
-        const raw = localStorage.getItem('pomegranate_features');
+        let raw = localStorage.getItem('pomegranate_features');
+        if (!raw) {
+          const legacyRaw = localStorage.getItem('blogly_features');
+          if (legacyRaw) {
+            raw = legacyRaw;
+            try {
+              localStorage.setItem('pomegranate_features', legacyRaw);
+              localStorage.removeItem('blogly_features');
+            } catch {}
+          }
+        }
         if (raw) {
           const map = JSON.parse(raw);
           for (const [key, enabled] of Object.entries(map)) {

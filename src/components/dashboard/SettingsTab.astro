@@ -746,8 +746,31 @@ const deployTargets = siteConfig.deployTargets || {};
     const fontCards = document.querySelectorAll('.font-card');
 
     function highlightActiveThemeAndFont() {
-      const currentTheme = document.documentElement.getAttribute('data-theme') || localStorage.getItem('pomegranate_theme') || 'pomegranate';
-      const currentFont = document.documentElement.getAttribute('data-font') || localStorage.getItem('pomegranate_font') || 'consolas';
+      let currentTheme = document.documentElement.getAttribute('data-theme') || localStorage.getItem('pomegranate_theme');
+      if (!currentTheme) {
+        const legacyTheme = localStorage.getItem('blogly_theme');
+        if (legacyTheme) {
+          currentTheme = legacyTheme === 'blogly' ? 'pomegranate' : legacyTheme;
+          try {
+            localStorage.setItem('pomegranate_theme', currentTheme);
+            localStorage.removeItem('blogly_theme');
+          } catch {}
+        }
+      }
+      if (!currentTheme) currentTheme = 'pomegranate';
+
+      let currentFont = document.documentElement.getAttribute('data-font') || localStorage.getItem('pomegranate_font');
+      if (!currentFont) {
+        const legacyFont = localStorage.getItem('blogly_font');
+        if (legacyFont) {
+          currentFont = legacyFont === 'monocraft' ? 'consolas' : legacyFont;
+          try {
+            localStorage.setItem('pomegranate_font', currentFont);
+            localStorage.removeItem('blogly_font');
+          } catch {}
+        }
+      }
+      if (!currentFont) currentFont = 'consolas';
 
       themeCards.forEach((c) => {
         const id = c.getAttribute('data-theme-id');
@@ -775,6 +798,7 @@ const deployTargets = siteConfig.deployTargets || {};
         const themeId = card.getAttribute('data-theme-id') || 'pomegranate';
         document.documentElement.setAttribute('data-theme', themeId);
         localStorage.setItem('pomegranate_theme', themeId);
+        localStorage.removeItem('blogly_theme');
         highlightActiveThemeAndFont();
         notify(`Switched theme to ${themeId}.`);
 
@@ -794,6 +818,7 @@ const deployTargets = siteConfig.deployTargets || {};
         const fontId = card.getAttribute('data-font-id') || 'consolas';
         document.documentElement.setAttribute('data-font', fontId);
         localStorage.setItem('pomegranate_font', fontId);
+        localStorage.removeItem('blogly_font');
         highlightActiveThemeAndFont();
         notify(`Switched typography font to ${fontId}.`);
 
@@ -815,9 +840,19 @@ const deployTargets = siteConfig.deployTargets || {};
       if (!input) return;
       const key = toggleEl.getAttribute('data-feature-key');
 
-      // Initialize from localStorage if present
+      // Initialize from localStorage if present (with fallback to legacy blogly_features)
       try {
-        const raw = localStorage.getItem('pomegranate_features');
+        let raw = localStorage.getItem('pomegranate_features');
+        if (!raw) {
+          const legacyRaw = localStorage.getItem('blogly_features');
+          if (legacyRaw) {
+            raw = legacyRaw;
+            try {
+              localStorage.setItem('pomegranate_features', legacyRaw);
+              localStorage.removeItem('blogly_features');
+            } catch {}
+          }
+        }
         if (raw) {
           const map = JSON.parse(raw);
           if (key && key in map) {
@@ -831,10 +866,11 @@ const deployTargets = siteConfig.deployTargets || {};
         const enabled = input.checked;
         let map: Record<string, boolean> = {};
         try {
-          map = JSON.parse(localStorage.getItem('pomegranate_features') || '{}');
+          map = JSON.parse(localStorage.getItem('pomegranate_features') || localStorage.getItem('blogly_features') || '{}');
         } catch {}
         map[key] = enabled;
         localStorage.setItem('pomegranate_features', JSON.stringify(map));
+        localStorage.removeItem('blogly_features');
 
         notify(`Feature "${key}" ${enabled ? 'enabled' : 'disabled'}. Live preview updated.`);
 
@@ -855,15 +891,37 @@ const deployTargets = siteConfig.deployTargets || {};
       if (!input) return;
       const key = toggleEl.getAttribute('data-privacy-key');
 
+      // Initialize from localStorage if present (with fallback to legacy blogly_privacy)
+      try {
+        let raw = localStorage.getItem('pomegranate_privacy');
+        if (!raw) {
+          const legacyRaw = localStorage.getItem('blogly_privacy');
+          if (legacyRaw) {
+            raw = legacyRaw;
+            try {
+              localStorage.setItem('pomegranate_privacy', legacyRaw);
+              localStorage.removeItem('blogly_privacy');
+            } catch {}
+          }
+        }
+        if (raw) {
+          const map = JSON.parse(raw);
+          if (key && key in map) {
+            input.checked = Boolean(map[key]);
+          }
+        }
+      } catch {}
+
       input.addEventListener('change', async () => {
         if (!key) return;
         const enabled = input.checked;
         let map: Record<string, boolean> = {};
         try {
-          map = JSON.parse(localStorage.getItem('pomegranate_privacy') || '{}');
+          map = JSON.parse(localStorage.getItem('pomegranate_privacy') || localStorage.getItem('blogly_privacy') || '{}');
         } catch {}
         map[key] = enabled;
         localStorage.setItem('pomegranate_privacy', JSON.stringify(map));
+        localStorage.removeItem('blogly_privacy');
 
         notify(`Privacy option "${key}" updated.`);
 
@@ -1138,6 +1196,8 @@ const deployTargets = siteConfig.deployTargets || {};
         document.documentElement.setAttribute('data-font', 'consolas');
         localStorage.setItem('pomegranate_theme', 'pomegranate');
         localStorage.setItem('pomegranate_font', 'consolas');
+        localStorage.removeItem('blogly_theme');
+        localStorage.removeItem('blogly_font');
         highlightActiveThemeAndFont();
         notify('Appearance reset to Pomegranate default palette & Consolas font.');
         try {
@@ -1231,9 +1291,11 @@ const deployTargets = siteConfig.deployTargets || {};
         const key = (groqInp?.value || '').trim();
         if (key) {
           localStorage.setItem('pomegranate_groq_api_key', key);
+          localStorage.removeItem('blogly_groq_api_key');
           notify('Groq API Key safely saved to your browser localStorage! Tier 2 audio conversion is active.');
         } else {
           localStorage.removeItem('pomegranate_groq_api_key');
+          localStorage.removeItem('blogly_groq_api_key');
           notify('Groq API Key cleared from browser localStorage.');
         }
       } else if (action === 'toggle-groq-key-visibility') {
@@ -1247,6 +1309,7 @@ const deployTargets = siteConfig.deployTargets || {};
         const groqInp = document.getElementById('byok-groq-key') as HTMLInputElement | null;
         if (groqInp) groqInp.value = '';
         localStorage.removeItem('pomegranate_groq_api_key');
+        localStorage.removeItem('blogly_groq_api_key');
         notify('Groq API Key cleared.');
       } else if (action === 'open-device-flow') {
         openDeviceFlowModal();
@@ -1291,10 +1354,20 @@ const deployTargets = siteConfig.deployTargets || {};
       }
     });
 
-    // Load Groq API Key from localStorage
+    // Load Groq API Key from localStorage (with fallback to legacy blogly_groq_api_key)
     const groqKeyInput = document.getElementById('byok-groq-key') as HTMLInputElement | null;
     if (groqKeyInput) {
-      const savedKey = localStorage.getItem('pomegranate_groq_api_key');
+      let savedKey = localStorage.getItem('pomegranate_groq_api_key');
+      if (!savedKey) {
+        const legacyKey = localStorage.getItem('blogly_groq_api_key');
+        if (legacyKey) {
+          savedKey = legacyKey;
+          try {
+            localStorage.setItem('pomegranate_groq_api_key', legacyKey);
+            localStorage.removeItem('blogly_groq_api_key');
+          } catch {}
+        }
+      }
       if (savedKey) {
         groqKeyInput.value = savedKey;
       }

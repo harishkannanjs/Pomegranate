@@ -71,7 +71,17 @@ const showFooterPrivacyNote = siteConfig.privacy?.footerNote !== false;
   <script is:inline>
     function updateFooterPrivacy() {
       try {
-        const raw = localStorage.getItem('pomegranate_privacy');
+        let raw = localStorage.getItem('pomegranate_privacy');
+        if (!raw) {
+          const legacyRaw = localStorage.getItem('blogly_privacy');
+          if (legacyRaw) {
+            raw = legacyRaw;
+            try {
+              localStorage.setItem('pomegranate_privacy', legacyRaw);
+              localStorage.removeItem('blogly_privacy');
+            } catch {}
+          }
+        }
         if (raw) {
           const p = JSON.parse(raw);
           const noteEl = document.querySelector('[data-footer-privacy-note]');
