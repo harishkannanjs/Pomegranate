@@ -1,0 +1,619 @@
+---
+import { getAllThemes } from '@/lib/themes';
+import { siteConfig } from '@/site.config';
+
+interface Props {
+  initialProfile?: Record<string, any>;
+}
+
+const { initialProfile = {} } = Astro.props;
+const themes = getAllThemes();
+
+const defaultAuthor = initialProfile.author || siteConfig.author || 'Your Name';
+const defaultHandle = initialProfile.handle || siteConfig.handle || '@yourhandle';
+const defaultRole = initialProfile.role || siteConfig.role || 'Security Researcher & Systems Developer';
+const defaultTitle = initialProfile.title || siteConfig.title || 'Pomegranate';
+const defaultDesc = initialProfile.description || siteConfig.description || 'A terminal-inspired technical blog and research platform.';
+const defaultTheme = initialProfile.appearance?.theme || 'pomegranate';
+const defaultMode = initialProfile.appearance?.mode || 'dark';
+const defaultFont = initialProfile.appearance?.font || 'Consolas';
+const isCompleted = initialProfile.onboardingCompleted === true;
+---
+
+<div
+  id="onboarding-wizard-overlay"
+  class={`fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-y-auto font-mono transition-opacity duration-300 ${isCompleted ? 'hidden' : ''}`}
+  data-onboarding-completed={isCompleted ? 'true' : 'false'}
+>
+  <div class="relative w-full max-w-3xl bg-read-bg-surface border border-read-border rounded-[2px] shadow-2xl overflow-hidden my-auto flex flex-col">
+    <!-- Top Header & Progress -->
+    <div class="px-6 py-4 border-b border-read-border bg-read-bg-base flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="text-read-accent font-bold">&gt;</span>
+        <span class="text-read-text-primary font-semibold text-[14px]">pomegranate_ setup</span>
+        <span class="text-[10px] px-1.5 py-0.5 border border-read-border rounded-[2px] text-read-accent bg-read-bg-surface uppercase">
+          Guided Onboarding
+        </span>
+      </div>
+      <div class="flex items-center gap-3">
+        <span id="wizard-step-indicator" class="text-[11px] text-read-text-tertiary">Step 1 of 4</span>
+        <button
+          type="button"
+          id="btn-wizard-skip"
+          class="text-[11px] text-read-text-tertiary hover:text-read-text-primary transition-colors cursor-pointer underline underline-offset-2"
+        >
+          Skip setup
+        </button>
+      </div>
+    </div>
+
+    <!-- Progress Track -->
+    <div class="w-full bg-read-bg-base h-1 overflow-hidden">
+      <div id="wizard-progress-bar" class="h-full bg-read-accent transition-all duration-300 w-1/4"></div>
+    </div>
+
+    <!-- Wizard Form Body -->
+    <form id="onboarding-form" class="p-6 sm:p-8 space-y-6 flex-1">
+      <!-- STEP 1: IDENTITY -->
+      <div id="wizard-step-1" class="wizard-step space-y-5">
+        <div>
+          <span class="text-[11px] text-read-accent uppercase tracking-wider font-semibold">01 // Author Identity</span>
+          <h2 class="text-[20px] font-bold text-read-text-primary mt-1">Who is publishing here?</h2>
+          <p class="text-[12px] text-read-text-secondary mt-1">
+            These coordinates populate your article bylines, about page, metadata, and RSS feeds.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+          <div class="space-y-1.5">
+            <label for="wizard-author-name" class="block text-[11px] text-read-text-tertiary uppercase">Author / Pen Name</label>
+            <input
+              type="text"
+              id="wizard-author-name"
+              name="author"
+              value={defaultAuthor === 'Your Name' ? '' : defaultAuthor}
+              placeholder="e.g. Harish Kannan"
+              required
+              class="w-full bg-read-bg-base border border-read-border focus:border-read-accent text-read-text-primary px-3 py-2 text-[13px] rounded-[2px] outline-none transition-colors"
+            />
+          </div>
+
+          <div class="space-y-1.5">
+            <label for="wizard-author-handle" class="block text-[11px] text-read-text-tertiary uppercase">Handle (@username)</label>
+            <input
+              type="text"
+              id="wizard-author-handle"
+              name="handle"
+              value={defaultHandle === '@yourhandle' ? '' : defaultHandle}
+              placeholder="e.g. @harish"
+              required
+              class="w-full bg-read-bg-base border border-read-border focus:border-read-accent text-read-text-primary px-3 py-2 text-[13px] rounded-[2px] outline-none transition-colors"
+            />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="space-y-1.5">
+            <label for="wizard-blog-title" class="block text-[11px] text-read-text-tertiary uppercase">Publication Title</label>
+            <input
+              type="text"
+              id="wizard-blog-title"
+              name="title"
+              value={defaultTitle}
+              placeholder="e.g. Pomegranate or The Binary Journal"
+              required
+              class="w-full bg-read-bg-base border border-read-border focus:border-read-accent text-read-text-primary px-3 py-2 text-[13px] rounded-[2px] outline-none transition-colors"
+            />
+          </div>
+
+          <div class="space-y-1.5">
+            <label for="wizard-author-role" class="block text-[11px] text-read-text-tertiary uppercase">Role / Focus Area</label>
+            <input
+              type="text"
+              id="wizard-author-role"
+              name="role"
+              value={defaultRole}
+              placeholder="e.g. Security Researcher & Systems Developer"
+              class="w-full bg-read-bg-base border border-read-border focus:border-read-accent text-read-text-primary px-3 py-2 text-[13px] rounded-[2px] outline-none transition-colors"
+            />
+          </div>
+        </div>
+
+        <div class="space-y-1.5">
+          <label for="wizard-blog-desc" class="block text-[11px] text-read-text-tertiary uppercase">Publication Bio / Description</label>
+          <textarea
+            id="wizard-blog-desc"
+            name="description"
+            rows="2"
+            placeholder="Brief mission statement or overview of topics you publish."
+            class="w-full bg-read-bg-base border border-read-border focus:border-read-accent text-read-text-primary px-3 py-2 text-[13px] rounded-[2px] outline-none transition-colors resize-none"
+          >{defaultDesc}</textarea>
+        </div>
+      </div>
+
+      <!-- STEP 2: APPEARANCE (THEME & FONT) -->
+      <div id="wizard-step-2" class="wizard-step space-y-5 hidden">
+        <div>
+          <span class="text-[11px] text-read-accent uppercase tracking-wider font-semibold">02 // Visual Signature</span>
+          <h2 class="text-[20px] font-bold text-read-text-primary mt-1">Choose your palette & typography</h2>
+          <p class="text-[12px] text-read-text-secondary mt-1">
+            Pomegranate features 7 high-contrast terminal palettes. Switching themes applies live across your blog.
+          </p>
+        </div>
+
+        <!-- Theme Selection Grid -->
+        <div class="space-y-2">
+          <label class="block text-[11px] text-read-text-tertiary uppercase">Theme Palette</label>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5" id="wizard-theme-grid">
+            {themes.map((t) => {
+              const darkRead = t.tokens.dark.read;
+              const isSelected = t.id === defaultTheme;
+              return (
+                <button
+                  type="button"
+                  data-wizard-theme={t.id}
+                  class={`wizard-theme-card p-3 border rounded-[2px] text-left transition-all cursor-pointer flex flex-col justify-between h-20 ${
+                    isSelected
+                      ? 'border-read-accent bg-read-bg-base shadow-sm ring-1 ring-read-accent'
+                      : 'border-read-border bg-read-bg-base hover:border-read-border-strong'
+                  }`}
+                >
+                  <div class="flex items-center justify-between">
+                    <span class="text-[12px] font-semibold text-read-text-primary capitalize">{t.name}</span>
+                    <span class="text-[9px] text-read-text-tertiary uppercase">{t.mode}</span>
+                  </div>
+                  <div class="flex items-center gap-1.5 mt-2">
+                    <span class="w-3.5 h-3.5 rounded-full border border-read-border" style={`background-color: ${darkRead['bg-base']};`} title="Background"></span>
+                    <span class="w-3.5 h-3.5 rounded-full border border-read-border" style={`background-color: ${darkRead.accent};`} title="Accent"></span>
+                    <span class="w-3.5 h-3.5 rounded-full border border-read-border" style={`background-color: ${darkRead['text-primary']};`} title="Text"></span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <!-- Typography & Mode Selection -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+          <div class="space-y-1.5">
+            <label for="wizard-font-select" class="block text-[11px] text-read-text-tertiary uppercase">Monospace Typography</label>
+            <select
+              id="wizard-font-select"
+              name="font"
+              class="w-full bg-read-bg-base border border-read-border focus:border-read-accent text-read-text-primary px-3 py-2 text-[13px] rounded-[2px] outline-none transition-colors cursor-pointer"
+            >
+              <option value="Consolas" selected={defaultFont === 'Consolas'}>Consolas (Pomegranate Default)</option>
+              <option value="JetBrains Mono" selected={defaultFont === 'JetBrains Mono'}>JetBrains Mono (Ligatures)</option>
+              <option value="Fira Code" selected={defaultFont === 'Fira Code'}>Fira Code</option>
+              <option value="Monocraft" selected={defaultFont === 'Monocraft'}>Monocraft (Pixel Art)</option>
+              <option value="ui-monospace, monospace" selected={defaultFont === 'ui-monospace, monospace'}>System Monospace</option>
+            </select>
+          </div>
+
+          <div class="space-y-1.5">
+            <label class="block text-[11px] text-read-text-tertiary uppercase">Initial Color Mode</label>
+            <div class="flex items-center gap-2 pt-0.5">
+              <button
+                type="button"
+                id="wizard-mode-dark"
+                class={`flex-1 py-1.5 px-3 border rounded-[2px] text-[12px] font-medium transition-colors cursor-pointer ${
+                  defaultMode === 'dark' ? 'border-read-accent bg-read-accent text-[#FDF8F5] font-bold' : 'border-read-border bg-read-bg-base text-read-text-secondary'
+                }`}
+              >
+                &gt; Dark Mode
+              </button>
+              <button
+                type="button"
+                id="wizard-mode-light"
+                class={`flex-1 py-1.5 px-3 border rounded-[2px] text-[12px] font-medium transition-colors cursor-pointer ${
+                  defaultMode === 'light' ? 'border-read-accent bg-read-accent text-[#FDF8F5] font-bold' : 'border-read-border bg-read-bg-base text-read-text-secondary'
+                }`}
+              >
+                # Light Mode
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Preview Strip -->
+        <div class="p-3 bg-read-bg-base border border-read-border rounded-[2px] text-[12px] flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-read-accent font-bold">&gt;_</span>
+            <span class="text-read-text-primary font-semibold">Active Theme:</span>
+            <span id="wizard-active-theme-label" class="text-read-accent font-bold capitalize">Pomegranate</span>
+            <span class="text-read-text-tertiary">·</span>
+            <span id="wizard-active-font-label" class="text-read-text-secondary">Consolas</span>
+          </div>
+          <span class="text-[10px] text-read-text-tertiary uppercase">Live Previewing</span>
+        </div>
+      </div>
+
+      <!-- STEP 3: VISITOR FEATURES -->
+      <div id="wizard-step-3" class="wizard-step space-y-5 hidden">
+        <div>
+          <span class="text-[11px] text-read-accent uppercase tracking-wider font-semibold">03 // Reader Experience</span>
+          <h2 class="text-[20px] font-bold text-read-text-primary mt-1">Configure visitor reader tools</h2>
+          <p class="text-[12px] text-read-text-secondary mt-1">
+            Choose which reader tools are enabled by default. Visitors can use them in their own browser with zero tracking.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+          <label class="flex items-start gap-3 p-3 bg-read-bg-base border border-read-border rounded-[2px] hover:border-read-border-strong cursor-pointer transition-colors">
+            <input type="checkbox" name="feature_highlighter" checked class="mt-1 accent-primary" />
+            <div>
+              <div class="text-[13px] font-semibold text-read-text-primary">Passage Highlighter</div>
+              <div class="text-[11px] text-read-text-secondary mt-0.5 leading-snug">
+                Client-side text highlighting persisted locally in visitor's browser.
+              </div>
+            </div>
+          </label>
+
+          <label class="flex items-start gap-3 p-3 bg-read-bg-base border border-read-border rounded-[2px] hover:border-read-border-strong cursor-pointer transition-colors">
+            <input type="checkbox" name="feature_readerMode" checked class="mt-1 accent-primary" />
+            <div>
+              <div class="text-[13px] font-semibold text-read-text-primary">Eye Comfort (Reader Mode)</div>
+              <div class="text-[11px] text-read-text-secondary mt-0.5 leading-snug">
+                Distraction-free reading view with reduced blue light palette.
+              </div>
+            </div>
+          </label>
+
+          <label class="flex items-start gap-3 p-3 bg-read-bg-base border border-read-border rounded-[2px] hover:border-read-border-strong cursor-pointer transition-colors">
+            <input type="checkbox" name="feature_audioReader" checked class="mt-1 accent-primary" />
+            <div>
+              <div class="text-[13px] font-semibold text-read-text-primary">Audio Reader (Listen)</div>
+              <div class="text-[11px] text-read-text-secondary mt-0.5 leading-snug">
+                Client-side synthesized speech player to listen to your posts.
+              </div>
+            </div>
+          </label>
+
+          <label class="flex items-start gap-3 p-3 bg-read-bg-base border border-read-border rounded-[2px] hover:border-read-border-strong cursor-pointer transition-colors">
+            <input type="checkbox" name="feature_tableOfContents" checked class="mt-1 accent-primary" />
+            <div>
+              <div class="text-[13px] font-semibold text-read-text-primary">Table of Contents</div>
+              <div class="text-[11px] text-read-text-secondary mt-0.5 leading-snug">
+                Sticky sidebar rail and inline navigation for technical posts.
+              </div>
+            </div>
+          </label>
+
+          <label class="flex items-start gap-3 p-3 bg-read-bg-base border border-read-border rounded-[2px] hover:border-read-border-strong cursor-pointer transition-colors">
+            <input type="checkbox" name="feature_copyMarkdown" checked class="mt-1 accent-primary" />
+            <div>
+              <div class="text-[13px] font-semibold text-read-text-primary">Copy as Markdown</div>
+              <div class="text-[11px] text-read-text-secondary mt-0.5 leading-snug">
+                One-click button for engineers to copy article Markdown source.
+              </div>
+            </div>
+          </label>
+
+          <label class="flex items-start gap-3 p-3 bg-read-bg-base border border-read-border rounded-[2px] hover:border-read-border-strong cursor-pointer transition-colors">
+            <input type="checkbox" name="feature_textMagnifier" checked class="mt-1 accent-primary" />
+            <div>
+              <div class="text-[13px] font-semibold text-read-text-primary">Text Magnifier</div>
+              <div class="text-[11px] text-read-text-secondary mt-0.5 leading-snug">
+                Hover magnifier to inspect dense terminal dumps and code lines.
+              </div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- STEP 4: REVIEW & LAUNCH -->
+      <div id="wizard-step-4" class="wizard-step space-y-5 hidden">
+        <div>
+          <span class="text-[11px] text-read-accent uppercase tracking-wider font-semibold">04 // Ready to Author</span>
+          <h2 class="text-[20px] font-bold text-read-text-primary mt-1">Review setup and open dashboard</h2>
+          <p class="text-[12px] text-read-text-secondary mt-1">
+            Everything is configured. You can modify these settings anytime in the Settings tab.
+          </p>
+        </div>
+
+        <div class="p-4 bg-read-bg-base border border-read-border rounded-[2px] space-y-3 text-[12px]">
+          <div class="flex items-center justify-between pb-2 border-b border-read-border">
+            <span class="text-read-text-tertiary uppercase text-[10px]">Author Identity</span>
+            <span id="review-author" class="font-semibold text-read-text-primary">Your Name (@yourhandle)</span>
+          </div>
+          <div class="flex items-center justify-between pb-2 border-b border-read-border">
+            <span class="text-read-text-tertiary uppercase text-[10px]">Blog Title</span>
+            <span id="review-title" class="font-semibold text-read-text-primary">Pomegranate</span>
+          </div>
+          <div class="flex items-center justify-between pb-2 border-b border-read-border">
+            <span class="text-read-text-tertiary uppercase text-[10px]">Active Theme & Mode</span>
+            <span id="review-theme" class="font-semibold text-read-accent capitalize">Pomegranate (dark)</span>
+          </div>
+          <div class="flex items-center justify-between pb-2 border-b border-read-border">
+            <span class="text-read-text-tertiary uppercase text-[10px]">Typography</span>
+            <span id="review-font" class="font-semibold text-read-text-secondary">Consolas</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-read-text-tertiary uppercase text-[10px]">Deployment Target</span>
+            <span class="font-semibold text-read-text-primary">GitHub Pages</span>
+          </div>
+        </div>
+
+        <div class="p-3 bg-read-accent/10 border border-read-accent/30 rounded-[2px] flex items-center gap-2.5 text-[12px] text-read-text-primary">
+          <span class="text-read-accent font-bold text-sm">✓</span>
+          <span>Zero external servers required. Your content lives 100% in your local Git repository.</span>
+        </div>
+      </div>
+
+      <!-- Action Navigation Buttons -->
+      <div class="pt-4 border-t border-read-border flex items-center justify-between gap-4">
+        <button
+          type="button"
+          id="btn-wizard-prev"
+          class="px-4 py-2 bg-read-bg-base border border-read-border hover:border-read-border-strong text-read-text-secondary hover:text-read-text-primary text-[12px] rounded-[2px] transition-colors cursor-pointer hidden"
+        >
+          ← Back
+        </button>
+
+        <div class="flex items-center gap-3 ml-auto">
+          <button
+            type="button"
+            id="btn-wizard-next"
+            class="px-5 py-2 bg-read-accent hover:opacity-90 text-[#FDF8F5] font-bold text-[12px] rounded-[2px] transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
+          >
+            <span>Next Step</span>
+            <span>→</span>
+          </button>
+
+          <button
+            type="button"
+            id="btn-wizard-finish"
+            class="px-6 py-2 bg-read-accent hover:opacity-90 text-[#FDF8F5] font-bold text-[12px] rounded-[2px] transition-all cursor-pointer flex items-center gap-2 shadow-sm hidden"
+          >
+            <span>Initialize Blog &amp; Launch Dashboard</span>
+            <span>&gt;_</span>
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function initOnboardingWizard() {
+    const overlay = document.getElementById('onboarding-wizard-overlay');
+    if (!overlay) return;
+
+    let currentStep = 1;
+    const totalSteps = 4;
+
+    const stepIndicator = document.getElementById('wizard-step-indicator');
+    const progressBar = document.getElementById('wizard-progress-bar');
+    const btnPrev = document.getElementById('btn-wizard-prev');
+    const btnNext = document.getElementById('btn-wizard-next');
+    const btnFinish = document.getElementById('btn-wizard-finish');
+    const btnSkip = document.getElementById('btn-wizard-skip');
+
+    let selectedTheme = localStorage.getItem('theme-pack') || 'pomegranate';
+    let selectedMode = localStorage.getItem('mode') || 'dark';
+    let selectedFont = 'Consolas';
+
+    // Theme card selection
+    const themeCards = document.querySelectorAll('[data-wizard-theme]');
+    themeCards.forEach((card) => {
+      card.addEventListener('click', () => {
+        const themeId = card.getAttribute('data-wizard-theme');
+        if (!themeId) return;
+
+        selectedTheme = themeId;
+        themeCards.forEach((c) => {
+          c.classList.remove('border-read-accent', 'shadow-sm', 'ring-1', 'ring-read-accent');
+          c.classList.add('border-read-border');
+        });
+        card.classList.add('border-read-accent', 'shadow-sm', 'ring-1', 'ring-read-accent');
+        card.classList.remove('border-read-border');
+
+        // Apply live preview to document
+        document.documentElement.setAttribute('data-theme', themeId);
+        localStorage.setItem('theme-pack', themeId);
+
+        const label = document.getElementById('wizard-active-theme-label');
+        if (label) label.textContent = themeId;
+      });
+    });
+
+    // Mode toggles
+    const modeDarkBtn = document.getElementById('wizard-mode-dark');
+    const modeLightBtn = document.getElementById('wizard-mode-light');
+
+    function updateModeUI(mode: string) {
+      selectedMode = mode;
+      document.documentElement.setAttribute('data-mode', mode);
+      if (mode === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.documentElement.classList.remove('light');
+        modeDarkBtn?.classList.add('border-read-accent', 'bg-read-accent', 'text-[#FDF8F5]', 'font-bold');
+        modeDarkBtn?.classList.remove('border-read-border', 'bg-read-bg-base', 'text-read-text-secondary');
+        modeLightBtn?.classList.remove('border-read-accent', 'bg-read-accent', 'text-[#FDF8F5]', 'font-bold');
+        modeLightBtn?.classList.add('border-read-border', 'bg-read-bg-base', 'text-read-text-secondary');
+      } else {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.classList.add('light');
+        modeLightBtn?.classList.add('border-read-accent', 'bg-read-accent', 'text-[#FDF8F5]', 'font-bold');
+        modeLightBtn?.classList.remove('border-read-border', 'bg-read-bg-base', 'text-read-text-secondary');
+        modeDarkBtn?.classList.remove('border-read-accent', 'bg-read-accent', 'text-[#FDF8F5]', 'font-bold');
+        modeDarkBtn?.classList.add('border-read-border', 'bg-read-bg-base', 'text-read-text-secondary');
+      }
+      localStorage.setItem('mode', mode);
+    }
+
+    modeDarkBtn?.addEventListener('click', () => updateModeUI('dark'));
+    modeLightBtn?.addEventListener('click', () => updateModeUI('light'));
+
+    // Font selection
+    const fontSelect = document.getElementById('wizard-font-select') as HTMLSelectElement | null;
+    fontSelect?.addEventListener('change', () => {
+      selectedFont = fontSelect.value;
+      const label = document.getElementById('wizard-active-font-label');
+      if (label) label.textContent = selectedFont;
+    });
+
+    function showStep(step: number) {
+      currentStep = step;
+      for (let s = 1; s <= totalSteps; s++) {
+        const stepEl = document.getElementById(`wizard-step-${s}`);
+        if (stepEl) {
+          if (s === step) {
+            stepEl.classList.remove('hidden');
+          } else {
+            stepEl.classList.add('hidden');
+          }
+        }
+      }
+
+      if (stepIndicator) stepIndicator.textContent = `Step ${step} of ${totalSteps}`;
+      if (progressBar) progressBar.style.width = `${(step / totalSteps) * 100}%`;
+
+      if (btnPrev) {
+        if (step === 1) {
+          btnPrev.classList.add('hidden');
+        } else {
+          btnPrev.classList.remove('hidden');
+        }
+      }
+
+      if (btnNext && btnFinish) {
+        if (step === totalSteps) {
+          btnNext.classList.add('hidden');
+          btnFinish.classList.remove('hidden');
+          populateReview();
+        } else {
+          btnNext.classList.remove('hidden');
+          btnFinish.classList.add('hidden');
+        }
+      }
+    }
+
+    function populateReview() {
+      const authorVal = (document.getElementById('wizard-author-name') as HTMLInputElement)?.value || 'Author';
+      const handleVal = (document.getElementById('wizard-author-handle') as HTMLInputElement)?.value || '@author';
+      const titleVal = (document.getElementById('wizard-blog-title') as HTMLInputElement)?.value || 'Pomegranate';
+
+      const revAuthor = document.getElementById('review-author');
+      const revTitle = document.getElementById('review-title');
+      const revTheme = document.getElementById('review-theme');
+      const revFont = document.getElementById('review-font');
+
+      if (revAuthor) revAuthor.textContent = `${authorVal} (${handleVal})`;
+      if (revTitle) revTitle.textContent = titleVal;
+      if (revTheme) revTheme.textContent = `${selectedTheme} (${selectedMode})`;
+      if (revFont) revFont.textContent = selectedFont;
+    }
+
+    btnNext?.addEventListener('click', () => {
+      if (currentStep === 1) {
+        const authorInput = document.getElementById('wizard-author-name') as HTMLInputElement;
+        const handleInput = document.getElementById('wizard-author-handle') as HTMLInputElement;
+        if (!authorInput?.value.trim()) {
+          authorInput?.focus();
+          return;
+        }
+        if (!handleInput?.value.trim()) {
+          handleInput?.focus();
+          return;
+        }
+      }
+      if (currentStep < totalSteps) {
+        showStep(currentStep + 1);
+      }
+    });
+
+    btnPrev?.addEventListener('click', () => {
+      if (currentStep > 1) {
+        showStep(currentStep - 1);
+      }
+    });
+
+    async function saveAndFinish(skip: boolean = false) {
+      if (!overlay) return;
+
+      const author = (document.getElementById('wizard-author-name') as HTMLInputElement)?.value || 'Your Name';
+      const handle = (document.getElementById('wizard-author-handle') as HTMLInputElement)?.value || '@yourhandle';
+      const title = (document.getElementById('wizard-blog-title') as HTMLInputElement)?.value || 'Pomegranate';
+      const role = (document.getElementById('wizard-author-role') as HTMLInputElement)?.value || 'Security Researcher & Systems Developer';
+      const description = (document.getElementById('wizard-blog-desc') as HTMLTextAreaElement)?.value || '';
+
+      const features: Record<string, boolean> = {
+        highlighter: (document.querySelector('input[name="feature_highlighter"]') as HTMLInputElement)?.checked ?? true,
+        readerMode: (document.querySelector('input[name="feature_readerMode"]') as HTMLInputElement)?.checked ?? true,
+        audioReader: (document.querySelector('input[name="feature_audioReader"]') as HTMLInputElement)?.checked ?? true,
+        tableOfContents: (document.querySelector('input[name="feature_tableOfContents"]') as HTMLInputElement)?.checked ?? true,
+        copyMarkdown: (document.querySelector('input[name="feature_copyMarkdown"]') as HTMLInputElement)?.checked ?? true,
+        textMagnifier: (document.querySelector('input[name="feature_textMagnifier"]') as HTMLInputElement)?.checked ?? true,
+      };
+
+      const payload = skip
+        ? { onboardingCompleted: true }
+        : {
+            author,
+            handle,
+            title,
+            role,
+            description,
+            onboardingCompleted: true,
+            appearance: {
+              theme: selectedTheme,
+              mode: selectedMode,
+              font: selectedFont,
+            },
+            features,
+          };
+
+      try {
+        await fetch('/api/save-profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+      } catch (e) {
+        console.warn('Could not save to /api/save-profile:', e);
+      }
+
+      localStorage.setItem('pomegranate_onboarding_completed', 'true');
+      if (!skip) {
+        localStorage.setItem('theme-pack', selectedTheme);
+        localStorage.setItem('mode', selectedMode);
+        localStorage.setItem('pomegranate_features', JSON.stringify(features));
+      }
+
+      overlay.classList.add('opacity-0', 'pointer-events-none');
+      setTimeout(() => {
+        if (overlay) overlay.classList.add('hidden');
+        // Clean URL params if ?onboarding=true
+        const url = new URL(window.location.href);
+        if (url.searchParams.has('onboarding')) {
+          url.searchParams.delete('onboarding');
+          window.history.replaceState({}, '', url.pathname + url.search);
+        }
+      }, 300);
+    }
+
+    btnFinish?.addEventListener('click', () => saveAndFinish(false));
+    btnSkip?.addEventListener('click', () => saveAndFinish(true));
+
+    // Check trigger condition
+    const urlParams = new URLSearchParams(window.location.search);
+    const forceWizard = urlParams.get('onboarding') === 'true';
+    const storedCompleted = localStorage.getItem('pomegranate_onboarding_completed') === 'true';
+    const isCompletedAttr = overlay.getAttribute('data-onboarding-completed') === 'true';
+
+    if (forceWizard || (!storedCompleted && !isCompletedAttr)) {
+      overlay.classList.remove('hidden');
+      showStep(1);
+    } else {
+      overlay.classList.add('hidden');
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initOnboardingWizard);
+  } else {
+    initOnboardingWizard();
+  }
+  document.addEventListener('astro:page-load', initOnboardingWizard);
+</script>

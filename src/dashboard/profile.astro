@@ -6,6 +6,8 @@ import TagBadge from '@/components/TagBadge.astro';
 import FileUploadTab from '@/components/dashboard/FileUploadTab.astro';
 import SettingsTab from '@/components/dashboard/SettingsTab.astro';
 import TabBar from '@/components/chrome/TabBar.astro';
+import OnboardingWizard from '@/components/dashboard/OnboardingWizard.astro';
+import profileData from '../../profile.json';
 import { siteConfig, getRelativePath } from '@/site.config';
 import { getReadingTime } from '@/lib/reading-time';
 
@@ -54,6 +56,7 @@ const dashboardTabs = [
 ---
 
 <BaseLayout title="Pomegranate Dashboard" activePath="/profile">
+  <OnboardingWizard initialProfile={profileData} />
   <div class="max-w-[1040px] mx-auto px-4 md:px-8 py-8 font-mono space-y-6">
     <!-- Dashboard Top Header Bar & Mode-Aware TabBar -->
     <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-read-border">

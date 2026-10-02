@@ -51,9 +51,14 @@ const deployTargets = siteConfig.deployTargets || {};
         <span class="text-read-accent font-bold">&gt;</span>
         <h2 class="text-base font-bold text-read-text-primary">Appearance &amp; Theming</h2>
       </div>
-      <Button variant="secondary" data-action="reset-appearance" shortcut="Reset">
-        Reset to Defaults
-      </Button>
+      <div class="flex items-center gap-2">
+        <Button variant="secondary" data-action="rerun-wizard" shortcut="Wizard">
+          Setup Wizard
+        </Button>
+        <Button variant="secondary" data-action="reset-appearance" shortcut="Reset">
+          Reset to Defaults
+        </Button>
+      </div>
     </div>
 
     <Panel title="Active Theme Picker">
@@ -1310,7 +1315,8 @@ const deployTargets = siteConfig.deployTargets || {};
         if (groqInp) groqInp.value = '';
         localStorage.removeItem('pomegranate_groq_api_key');
         localStorage.removeItem('blogly_groq_api_key');
-        notify('Groq API Key cleared.');
+      } else if (action === 'rerun-wizard') {
+        window.location.href = '/profile/?onboarding=true';
       } else if (action === 'open-device-flow') {
         openDeviceFlowModal();
       } else if (action === 'close-device-flow-modal') {

@@ -51,6 +51,7 @@ export interface SiteConfig {
   features?: FeaturesConfig;
   privacy?: PrivacyConfig;
   deployTargets?: DeployTargetsConfig;
+  onboardingCompleted?: boolean;
 }
 
 function extractGithubUsername(githubUrl?: string, handle?: string): string {
@@ -107,6 +108,7 @@ export const siteConfig: SiteConfig = {
     ...((profileData as any).privacy || {}),
   },
   deployTargets: (profileData as any).deployTargets || {},
+  onboardingCompleted: Boolean((profileData as any).onboardingCompleted),
 };
 
 /**

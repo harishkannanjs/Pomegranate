@@ -157,7 +157,27 @@ function profileDevMiddleware() {
           }
         } else {
           // Dev mode on localhost (base is root):
-          // If developer enters /glyph.sh or /glyph.sh/... on localhost, forward to root route
+          // Check if author has completed first-run onboarding workflow
+          if (pathname === '/' || pathname === '') {
+            let needsOnboarding = false;
+            try {
+              const pPath = path.resolve(process.cwd(), 'profile.json');
+              if (fs.existsSync(pPath)) {
+                const pData = JSON.parse(fs.readFileSync(pPath, 'utf-8'));
+                if (pData.onboardingCompleted !== true) {
+                  needsOnboarding = true;
+                }
+              }
+            } catch {}
+
+            if (needsOnboarding && !query.includes('preview=true')) {
+              res.writeHead(302, { Location: `/profile/?onboarding=true` });
+              res.end();
+              return;
+            }
+          }
+
+          // If developer enters subpath on localhost, forward to root route
           if (productionBase && (pathname === productionBase || pathname.startsWith(`${productionBase}/`))) {
             const forwardPath = pathname.slice(productionBase.length) || '/';
             res.writeHead(302, { Location: `${forwardPath}${query}` });
