@@ -10,7 +10,9 @@ node_modules/
 .env.*
 !.env.example
 
-# Pomegranate Local Authentication & Credentials (never committable)
+# Pomegranate & Legacy Local Authentication & Credentials (never committable)
+.blogly/
+.blogly*.json
 .pomegranate/
 .pomegranate*.json
 

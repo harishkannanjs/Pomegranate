@@ -56,6 +56,8 @@ export const DEFAULT_SCOPES = 'repo workflow read:user';
 
 export const AUTH_DIR = path.resolve(process.cwd(), '.pomegranate');
 export const AUTH_FILE = path.resolve(AUTH_DIR, 'auth.json');
+export const LEGACY_AUTH_DIR = path.resolve(process.cwd(), '.blogly');
+export const LEGACY_AUTH_FILE = path.resolve(LEGACY_AUTH_DIR, 'auth.json');
 
 /**
  * Path to store uncommitted local authentication token.
@@ -96,14 +98,37 @@ export function saveAuthToken(data: StoredAuth): void {
  */
 export function readStoredAuth(): StoredAuth | null {
   const filePath = getAuthFilePath();
-  if (!fs.existsSync(filePath)) return null;
-  try {
-    const raw = fs.readFileSync(filePath, 'utf-8');
-    const parsed = JSON.parse(raw);
-    if (parsed && typeof parsed.accessToken === 'string' && parsed.accessToken.trim()) {
-      return parsed as StoredAuth;
-    }
-  } catch {}
+  if (fs.existsSync(filePath)) {
+    try {
+      const raw = fs.readFileSync(filePath, 'utf-8');
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed.accessToken === 'string' && parsed.accessToken.trim()) {
+        return parsed as StoredAuth;
+      }
+    } catch {}
+  }
+
+  // Check legacy .blogly/auth.json for backward compatibility migration
+  if (fs.existsSync(LEGACY_AUTH_FILE)) {
+    try {
+      const raw = fs.readFileSync(LEGACY_AUTH_FILE, 'utf-8');
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed.accessToken === 'string' && parsed.accessToken.trim()) {
+        const auth = parsed as StoredAuth;
+        try {
+          saveAuthToken(auth);
+          fs.unlinkSync(LEGACY_AUTH_FILE);
+          try {
+            if (fs.readdirSync(LEGACY_AUTH_DIR).length === 0) {
+              fs.rmdirSync(LEGACY_AUTH_DIR);
+            }
+          } catch {}
+        } catch {}
+        return auth;
+      }
+    } catch {}
+  }
+
   return null;
 }
 
@@ -124,6 +149,16 @@ export function clearAuthToken(): void {
   if (fs.existsSync(filePath)) {
     try {
       fs.unlinkSync(filePath);
+    } catch {}
+  }
+  if (fs.existsSync(LEGACY_AUTH_FILE)) {
+    try {
+      fs.unlinkSync(LEGACY_AUTH_FILE);
+      try {
+        if (fs.readdirSync(LEGACY_AUTH_DIR).length === 0) {
+          fs.rmdirSync(LEGACY_AUTH_DIR);
+        }
+      } catch {}
     } catch {}
   }
 }

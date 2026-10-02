@@ -7,9 +7,12 @@ import {
   getAuthStatus,
   clearAuthToken,
   saveAuthToken,
+  readStoredAuth,
   setupOrCheckGitHubPages,
   AUTH_DIR,
   AUTH_FILE,
+  LEGACY_AUTH_DIR,
+  LEGACY_AUTH_FILE,
 } from '../src/lib/github-device-flow';
 import { experimental_AstroContainer as AstroContainer } from 'astro/container';
 import SettingsTab from '../src/components/dashboard/SettingsTab.astro';
@@ -36,6 +39,8 @@ describe('Phase 7: Device Flow & Multi-Target Deployment Tests', () => {
 
       expect(gitignoreContent).toMatch(/\.pomegranate\//);
       expect(gitignoreContent).toMatch(/\.pomegranate\*\.json/);
+      expect(gitignoreContent).toMatch(/\.blogly\//);
+      expect(gitignoreContent).toMatch(/\.blogly\*\.json/);
     });
 
     it('safely stores token with restrictive file permissions (0o600) and wipes it on disconnect', () => {
@@ -57,6 +62,39 @@ describe('Phase 7: Device Flow & Multi-Target Deployment Tests', () => {
       expect(parsed.username).toBe('test-author');
 
       // Verify clearAuthToken wipes the file
+      clearAuthToken();
+      expect(fs.existsSync(AUTH_FILE)).toBe(false);
+    });
+
+    it('seamlessly loads and auto-migrates legacy credentials from .blogly/auth.json', () => {
+      // Ensure clean state
+      clearAuthToken();
+
+      if (!fs.existsSync(LEGACY_AUTH_DIR)) {
+        fs.mkdirSync(LEGACY_AUTH_DIR, { recursive: true });
+      }
+      const legacyRecord = {
+        accessToken: 'gho_legacy_token_67890',
+        tokenType: 'bearer',
+        scope: 'repo workflow read:user',
+        updatedAt: 1700000000000,
+        username: 'legacy-author',
+      };
+      fs.writeFileSync(LEGACY_AUTH_FILE, JSON.stringify(legacyRecord, null, 2), 'utf-8');
+
+      expect(fs.existsSync(AUTH_FILE)).toBe(false);
+      expect(fs.existsSync(LEGACY_AUTH_FILE)).toBe(true);
+
+      const auth = readStoredAuth();
+      expect(auth).not.toBeNull();
+      expect(auth?.accessToken).toBe('gho_legacy_token_67890');
+      expect(auth?.username).toBe('legacy-author');
+
+      // Verify it was migrated to AUTH_FILE (.pomegranate/auth.json) and removed from LEGACY_AUTH_FILE
+      expect(fs.existsSync(AUTH_FILE)).toBe(true);
+      expect(fs.existsSync(LEGACY_AUTH_FILE)).toBe(false);
+
+      // Verify clearAuthToken cleans up everything
       clearAuthToken();
       expect(fs.existsSync(AUTH_FILE)).toBe(false);
     });

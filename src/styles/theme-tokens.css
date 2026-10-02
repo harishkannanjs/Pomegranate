@@ -17,7 +17,8 @@
 }
 
 /* Theme Fonts */
-html[data-theme="pomegranate"] {
+html[data-theme="pomegranate"],
+html[data-theme="blogly"] {
   --font-theme: Consolas, "Courier New", Courier, monospace;
 }
 html[data-theme="catppuccin"],
@@ -46,7 +47,9 @@ html[data-theme="dracula"] {
 
 /* Pomegranate - Dark */
 html[data-theme="pomegranate"][data-mode="dark"],
-html[data-theme="pomegranate"].dark {
+html[data-theme="pomegranate"].dark,
+html[data-theme="blogly"][data-mode="dark"],
+html[data-theme="blogly"].dark {
   --read-bg-base: #210F13;
   --read-bg-surface: #320B21;
   --read-bg-surface-raised: #490C19;
@@ -68,14 +71,19 @@ html[data-theme="pomegranate"].dark {
 
 /* Underline links on dark mode per OSC-8 convention */
 html[data-theme="pomegranate"][data-mode="dark"] a:not([class*="no-underline"]),
-html[data-theme="pomegranate"].dark a:not([class*="no-underline"]) {
+html[data-theme="pomegranate"].dark a:not([class*="no-underline"]),
+html[data-theme="blogly"][data-mode="dark"] a:not([class*="no-underline"]),
+html[data-theme="blogly"].dark a:not([class*="no-underline"]) {
   text-decoration: underline;
 }
 
 /* Pomegranate - Light */
 html[data-theme="pomegranate"][data-mode="light"],
 html[data-theme="pomegranate"].light,
-html[data-theme="pomegranate"]:not(.dark) {
+html[data-theme="pomegranate"]:not(.dark),
+html[data-theme="blogly"][data-mode="light"],
+html[data-theme="blogly"].light,
+html[data-theme="blogly"]:not(.dark) {
   --read-bg-base: #FAF4F5;
   --read-bg-surface: #FFFFFF;
   --read-bg-surface-raised: #F3E7E9;
@@ -431,26 +439,31 @@ html {
 /* ========================================================================= */
 html[data-theme="pomegranate"] .chrome-std,
 html[data-theme="pomegranate"] .chrome-std-inline,
-html[data-theme="pomegranate"] .chrome-std-block {
+html[data-theme="pomegranate"] .chrome-std-block,
+html[data-theme="blogly"] .chrome-std,
+html[data-theme="blogly"] .chrome-std-inline,
+html[data-theme="blogly"] .chrome-std-block {
   display: none !important;
 }
 
-html[data-theme="pomegranate"] .chrome-tui-inline {
+html[data-theme="pomegranate"] .chrome-tui-inline,
+html[data-theme="blogly"] .chrome-tui-inline {
   display: inline-flex !important;
 }
-html[data-theme="pomegranate"] .chrome-tui-block {
+html[data-theme="pomegranate"] .chrome-tui-block,
+html[data-theme="blogly"] .chrome-tui-block {
   display: block !important;
 }
 
-html:not([data-theme="pomegranate"]) .chrome-tui,
-html:not([data-theme="pomegranate"]) .chrome-tui-inline,
-html:not([data-theme="pomegranate"]) .chrome-tui-block {
+html:not([data-theme="pomegranate"]):not([data-theme="blogly"]) .chrome-tui,
+html:not([data-theme="pomegranate"]):not([data-theme="blogly"]) .chrome-tui-inline,
+html:not([data-theme="pomegranate"]):not([data-theme="blogly"]) .chrome-tui-block {
   display: none !important;
 }
 
-html:not([data-theme="pomegranate"]) .chrome-std-inline {
+html:not([data-theme="pomegranate"]):not([data-theme="blogly"]) .chrome-std-inline {
   display: inline-flex !important;
 }
-html:not([data-theme="pomegranate"]) .chrome-std-block {
+html:not([data-theme="pomegranate"]):not([data-theme="blogly"]) .chrome-std-block {
   display: block !important;
 }

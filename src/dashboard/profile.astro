@@ -332,17 +332,17 @@ const dashboardTabs = [
         if (btn.classList.contains('chrome-tui-inline') || btn.closest('.chrome-tui-inline')) {
           if (isActive) {
             btn.classList.add(
-              'bg-read-accent',
-              'text-read-bg-base',
-              'border-read-accent',
+              'bg-read-accent-fill',
+              'text-[#FDF8F5]',
+              'border-read-accent-fill',
               'font-bold'
             );
             btn.classList.remove('border-read-border-strong', 'text-read-text-secondary');
           } else {
             btn.classList.remove(
-              'bg-read-accent',
-              'text-read-bg-base',
-              'border-read-accent',
+              'bg-read-accent-fill',
+              'text-[#FDF8F5]',
+              'border-read-accent-fill',
               'font-bold'
             );
             btn.classList.add('border-read-border-strong', 'text-read-text-secondary');

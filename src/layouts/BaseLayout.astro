@@ -66,7 +66,11 @@ const resolvedOgImage = new URL(getRelativePath(image), Astro.site || Astro.url.
     <script is:inline>
       (function() {
         const savedMode = localStorage.getItem('mode') || localStorage.getItem('theme') || 'dark';
-        const savedThemePack = localStorage.getItem('theme-pack') || document.documentElement.getAttribute('data-theme') || 'catppuccin';
+        let savedThemePack = localStorage.getItem('theme-pack') || document.documentElement.getAttribute('data-theme') || 'catppuccin';
+        if (savedThemePack === 'blogly') {
+          savedThemePack = 'pomegranate';
+          try { localStorage.setItem('theme-pack', 'pomegranate'); } catch (_) {}
+        }
         const isDark = savedMode !== 'light';
         document.documentElement.setAttribute('data-theme', savedThemePack);
         document.documentElement.setAttribute('data-mode', isDark ? 'dark' : 'light');
@@ -80,7 +84,11 @@ const resolvedOgImage = new URL(getRelativePath(image), Astro.site || Astro.url.
       })();
       document.addEventListener('astro:after-swap', () => {
         const savedMode = localStorage.getItem('mode') || localStorage.getItem('theme') || 'dark';
-        const savedThemePack = localStorage.getItem('theme-pack') || 'catppuccin';
+        let savedThemePack = localStorage.getItem('theme-pack') || 'catppuccin';
+        if (savedThemePack === 'blogly') {
+          savedThemePack = 'pomegranate';
+          try { localStorage.setItem('theme-pack', 'pomegranate'); } catch (_) {}
+        }
         const isDark = savedMode !== 'light';
         document.documentElement.setAttribute('data-theme', savedThemePack);
         document.documentElement.setAttribute('data-mode', isDark ? 'dark' : 'light');

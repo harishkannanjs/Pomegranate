@@ -94,6 +94,7 @@ describe('Theme Pack Architecture', () => {
 
   it('getTheme helper retrieves theme or falls back to default', () => {
     expect(getTheme('dracula').id).toBe('dracula');
+    expect(getTheme('blogly').id).toBe('pomegranate');
     expect(getTheme('non-existent').id).toBe(DEFAULT_THEME_ID);
     expect(getTheme(null).id).toBe(DEFAULT_THEME_ID);
   });

@@ -23,6 +23,7 @@ import {
   clearHighlights,
   validateHighlight,
   getStorageKey,
+  getLegacyStorageKey,
   getSafeLocalStorage,
   MAX_HIGHLIGHTS_PER_POST,
 } from '../src/lib/highlighter/storage';
@@ -524,6 +525,38 @@ describe('Phase 8: Highlighter Tests', () => {
       const clearRes = clearHighlights('test-post');
       expect(clearRes.success).toBe(true);
       expect(loadHighlights('test-post').length).toBe(0);
+    });
+
+    it('seamlessly loads and auto-migrates legacy highlights from blogly: prefix', () => {
+      expect(getLegacyStorageKey('test-post')).toBe('blogly:highlights:test-post');
+
+      const legacyHighlights = [
+        {
+          id: 'legacy-1',
+          text: 'Legacy highlight text',
+          contextBefore: 'before',
+          contextAfter: 'after',
+          color: 'default',
+          createdAt: '2026-09-01T00:00:00.000Z',
+        },
+      ];
+      mockStorage['blogly:highlights:test-post'] = JSON.stringify(legacyHighlights);
+
+      expect(mockStorage['pomegranate:highlights:test-post']).toBeUndefined();
+
+      const loaded = loadHighlights('test-post');
+      expect(loaded.length).toBe(1);
+      expect(loaded[0].id).toBe('legacy-1');
+      expect(loaded[0].text).toBe('Legacy highlight text');
+
+      expect(mockStorage['pomegranate:highlights:test-post']).toBeDefined();
+      expect(mockStorage['blogly:highlights:test-post']).toBeUndefined();
+
+      // clearHighlights removes both keys
+      mockStorage['blogly:highlights:test-post'] = JSON.stringify(legacyHighlights);
+      clearHighlights('test-post');
+      expect(mockStorage['pomegranate:highlights:test-post']).toBeUndefined();
+      expect(mockStorage['blogly:highlights:test-post']).toBeUndefined();
     });
   });
 

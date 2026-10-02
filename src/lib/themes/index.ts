@@ -8,6 +8,9 @@ export * from './packs';
 export const DEFAULT_THEME_ID: ThemeId = 'catppuccin';
 
 export function getTheme(id?: string | null): ThemePack {
+  if (id === 'blogly') {
+    return themePacks.pomegranate;
+  }
   if (id && id in themePacks) {
     return themePacks[id as ThemeId];
   }

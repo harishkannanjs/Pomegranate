@@ -59,7 +59,11 @@ const themes = getAllThemes();
     if (!button || !menu) return;
 
     // Load saved or attribute theme
-    const savedTheme = localStorage.getItem('theme-pack') || document.documentElement.getAttribute('data-theme') || 'catppuccin';
+    let savedTheme = localStorage.getItem('theme-pack') || document.documentElement.getAttribute('data-theme') || 'catppuccin';
+    if (savedTheme === 'blogly') {
+      savedTheme = 'pomegranate';
+      try { localStorage.setItem('theme-pack', 'pomegranate'); } catch (_) {}
+    }
     document.documentElement.setAttribute('data-theme', savedTheme);
     const matchingOpt = Array.from(options).find((opt) => opt.getAttribute('data-theme-id') === savedTheme);
     const displayName = matchingOpt ? matchingOpt.getAttribute('data-theme-name') : savedTheme;
