@@ -65,7 +65,14 @@ const Tag = href ? 'a' : 'button';
 >
   <slot />
   {shortcut && (
-    <kbd class="ml-1.5 px-1.5 py-0.5 text-[10px] uppercase font-mono rounded bg-read-bg-base/40 text-read-text-secondary border border-read-border">
+    <kbd
+      class:list={[
+        'ml-1.5 px-1.5 py-0.5 text-[10px] uppercase font-mono rounded select-none transition-colors',
+        variant === 'primary' || variant === 'danger'
+          ? 'bg-black/30 text-white border border-white/20'
+          : 'bg-read-bg-base/40 text-read-text-secondary border border-read-border',
+      ]}
+    >
       {shortcut}
     </kbd>
   )}
