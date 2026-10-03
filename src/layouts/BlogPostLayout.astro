@@ -75,7 +75,7 @@ const features = {
     </div>
   )}
 
-  <div class="max-w-[1040px] mx-auto px-4 md:px-8 py-8">
+  <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- Directory of the blog -->
     <div class="flex items-center gap-1.5 text-[11px] text-outline mb-4 font-mono overflow-x-auto whitespace-nowrap">
       <span class="text-primary font-bold">&gt;</span>
@@ -97,12 +97,12 @@ const features = {
     <!-- Main layout (content + sticky TOC) -->
     <div
       id="blog-post-grid"
-      class={`relative grid grid-cols-1 ${features.tableOfContents ? 'lg:grid-cols-[1fr_240px]' : 'max-w-[760px] mx-auto'} gap-10`}
+      class={`relative grid grid-cols-1 ${features.tableOfContents ? 'lg:grid-cols-[1fr_280px] xl:grid-cols-[1fr_320px]' : 'max-w-[960px] mx-auto'} gap-8 xl:gap-12 items-start`}
     >
       <!-- Article Column -->
       <article
         id="blog-post-article"
-        class={features.tableOfContents ? 'max-w-[680px] w-full min-w-0' : 'max-w-[760px] w-full min-w-0 mx-auto'}
+        class={features.tableOfContents ? 'max-w-[960px] xl:max-w-[1040px] w-full min-w-0' : 'max-w-[960px] w-full min-w-0 mx-auto'}
         data-pagefind-body
       >
         <!-- Header -->
@@ -273,15 +273,15 @@ const features = {
               const article = document.getElementById('blog-post-article');
               if (grid && article) {
                 if (enabled) {
-                  grid.classList.add('lg:grid-cols-[1fr_240px]');
-                  grid.classList.remove('max-w-[760px]', 'mx-auto');
-                  article.classList.add('max-w-[680px]');
-                  article.classList.remove('max-w-[760px]', 'mx-auto');
+                  grid.classList.add('lg:grid-cols-[1fr_280px]', 'xl:grid-cols-[1fr_320px]');
+                  grid.classList.remove('max-w-[960px]', 'mx-auto');
+                  article.classList.add('max-w-[960px]', 'xl:max-w-[1040px]');
+                  article.classList.remove('max-w-[960px]', 'mx-auto');
                 } else {
-                  grid.classList.remove('lg:grid-cols-[1fr_240px]');
-                  grid.classList.add('max-w-[760px]', 'mx-auto');
-                  article.classList.remove('max-w-[680px]');
-                  article.classList.add('max-w-[760px]', 'mx-auto');
+                  grid.classList.remove('lg:grid-cols-[1fr_280px]', 'xl:grid-cols-[1fr_320px]');
+                  grid.classList.add('max-w-[960px]', 'mx-auto');
+                  article.classList.remove('max-w-[960px]', 'xl:max-w-[1040px]');
+                  article.classList.add('max-w-[960px]', 'mx-auto');
                 }
               }
             }

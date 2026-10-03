@@ -57,7 +57,7 @@ const dashboardTabs = [
 
 <BaseLayout title="Pomegranate Dashboard" activePath="/profile">
   <OnboardingWizard initialProfile={profileData} />
-  <div class="max-w-[1040px] mx-auto px-4 md:px-8 py-8 font-mono space-y-6">
+  <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-8 font-mono space-y-6">
     <!-- Dashboard Top Header Bar & Mode-Aware TabBar -->
     <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-read-border">
       <div class="flex items-center gap-2">
@@ -85,7 +85,7 @@ const dashboardTabs = [
     </div>
 
     <!-- Tab 3: Public Profile View (Visitor Perspective & Published Feed) -->
-    <div id="tab-content-public-profile" class="hidden max-w-[760px] mx-auto space-y-10">
+    <div id="tab-content-public-profile" class="hidden w-full space-y-8">
       <!-- Public Profile Context -->
       <section class="flex flex-col space-y-3">
         <div class="flex items-center gap-2 text-read-accent text-[13px]">
@@ -227,90 +227,105 @@ const dashboardTabs = [
         </div>
       </section>
 
-      <!-- Author's Blog Series -->
-      {seriesMap.size > 0 && (
-        <section class="space-y-4 pt-4 border-t border-read-border">
-          <div class="flex items-center gap-2 text-[11px] text-read-text-tertiary uppercase tracking-wider">
-            <span class="text-read-accent font-bold">&gt;</span>
-            <span>Featured Writing Series</span>
+      <!-- Main Content & Sidebar Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] xl:grid-cols-[1fr_400px] gap-8 xl:gap-12 items-start pt-6 border-t border-read-border">
+        <!-- Left Column: Published Posts Feed -->
+        <section class="space-y-4 min-w-0">
+          <div class="flex items-center justify-between text-[11px] text-read-text-tertiary uppercase tracking-wider pb-2 border-b border-read-border">
+            <div class="flex items-center gap-2">
+              <span class="text-read-accent font-bold">&gt;</span>
+              <span class="text-read-text-primary font-semibold">Published Articles</span>
+            </div>
+            <span class="text-read-text-tertiary font-mono text-[11px]">
+              {userPosts.length} entries
+            </span>
           </div>
 
-          <div class="space-y-3">
-            {[...seriesMap.entries()].map(([seriesName, data]) => (
-              <div class="p-3.5 bg-read-bg-surface border border-read-border rounded-[2px] space-y-2">
-                <div class="flex items-center justify-between text-[12px] gap-2">
-                  <span class="text-read-text-primary font-semibold break-words">
-                    '{seriesName}'
-                  </span>
-                  <span class="text-read-text-tertiary text-[11px] shrink-0">
-                    {data.posts.length} {data.posts.length === 1 ? 'part' : 'parts'} published
-                    {data.total > data.posts.length
-                      ? ` (${data.posts.length}/${data.total} total)`
-                      : ''}
-                  </span>
-                </div>
-                <div class="flex flex-wrap gap-2 pt-1">
-                  {data.posts
-                    .sort((a, b) => (a.data.seriesPart || 0) - (b.data.seriesPart || 0))
-                    .map((p) => {
-                      const slug = p.id.replace(/\.(md|mdx)$/, '');
-                      const totalPart = p.data.seriesTotal || data.total;
-                      return (
-                        <a
-                          href={getRelativePath(`/blog/${slug}`)}
-                          class="px-2.5 py-1 bg-read-bg-base border border-read-border hover:border-read-accent text-read-text-secondary hover:text-read-accent text-[11px] rounded-[2px] transition-colors flex items-center gap-1.5"
-                        >
-                          <span class="text-read-accent font-bold">
-                            [{p.data.seriesPart}
-                            {totalPart ? `/${totalPart}` : ''}]
-                          </span>
-                          <span class="truncate max-w-[200px] sm:max-w-[300px]">
-                            {p.data.title}
-                          </span>
-                        </a>
-                      );
-                    })}
-                </div>
-              </div>
+          <div class="flex flex-col space-y-6">
+            {userPosts.map((post, idx) => (
+              <PostCard post={post} showDivider={idx > 0} />
             ))}
+            {userPosts.length === 0 && (
+              <div class="p-8 text-center text-read-text-tertiary font-mono text-[13px] border border-read-border">
+                No posts published in this buffer yet.
+              </div>
+            )}
           </div>
         </section>
-      )}
 
-      <!-- Topics Covered by this Author -->
-      <section class="space-y-4 pt-4 border-t border-read-border">
-        <div class="flex items-center justify-between text-[11px] text-read-text-tertiary uppercase tracking-wider">
-          <div class="flex items-center gap-2">
-            <span class="text-read-accent font-bold">&gt;</span>
-            <span>Topics &amp; Tags</span>
+        <!-- Right Column: Series and Topics Sidebar -->
+        <aside class="space-y-6 w-full lg:sticky lg:top-20">
+          <!-- Author's Blog Series -->
+          {seriesMap.size > 0 && (
+            <div class="p-4 bg-read-bg-surface border border-read-border rounded-[2px] space-y-3">
+              <div class="flex items-center justify-between pb-2 border-b border-read-border text-[11px] text-read-text-tertiary uppercase tracking-wider">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-read-accent font-bold">&gt;</span>
+                  <span class="text-read-text-primary font-semibold">Writing Series</span>
+                </div>
+                <span class="text-[10px]">{seriesMap.size} active</span>
+              </div>
+
+              <div class="space-y-3">
+                {[...seriesMap.entries()].map(([seriesName, data]) => (
+                  <div class="p-3 bg-read-bg-base border border-read-border rounded-[2px] space-y-2">
+                    <div class="flex items-center justify-between text-[12px] gap-2">
+                      <span class="text-read-text-primary font-semibold break-words">
+                        '{seriesName}'
+                      </span>
+                      <span class="text-read-text-tertiary text-[11px] shrink-0">
+                        {data.posts.length} {data.posts.length === 1 ? 'part' : 'parts'} published
+                        {data.total > data.posts.length
+                          ? ` (${data.posts.length}/${data.total} total)`
+                          : ''}
+                      </span>
+                    </div>
+                    <div class="flex flex-wrap gap-1.5 pt-1">
+                      {data.posts
+                        .sort((a, b) => (a.data.seriesPart || 0) - (b.data.seriesPart || 0))
+                        .map((p) => {
+                          const slug = p.id.replace(/\.(md|mdx)$/, '');
+                          const totalPart = p.data.seriesTotal || data.total;
+                          return (
+                            <a
+                              href={getRelativePath(`/blog/${slug}`)}
+                              class="px-2 py-0.5 bg-read-bg-surface border border-read-border hover:border-read-accent text-read-text-secondary hover:text-read-accent text-[11px] rounded-[2px] transition-colors flex items-center gap-1"
+                            >
+                              <span class="text-read-accent font-bold">
+                                [{p.data.seriesPart}
+                                {totalPart ? `/${totalPart}` : ''}]
+                              </span>
+                              <span class="truncate max-w-[160px] sm:max-w-[220px]">
+                                {p.data.title}
+                              </span>
+                            </a>
+                          );
+                        })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <!-- Topics Covered by this Author -->
+          <div class="p-4 bg-read-bg-surface border border-read-border rounded-[2px] space-y-3">
+            <div class="flex items-center justify-between pb-2 border-b border-read-border text-[11px] text-read-text-tertiary uppercase tracking-wider">
+              <div class="flex items-center gap-1.5">
+                <span class="text-read-accent font-bold">&gt;</span>
+                <span class="text-read-text-primary font-semibold">Topics &amp; Tags</span>
+              </div>
+              <span class="text-[10px] text-read-text-tertiary">[filter]</span>
+            </div>
+
+            <div class="flex flex-wrap gap-1.5">
+              {authorTags.map(([tag, count]) => (
+                <TagBadge tag={tag} count={count} size="sm" />
+              ))}
+            </div>
           </div>
-        </div>
-
-        <div class="flex flex-wrap gap-2">
-          {authorTags.map(([tag, count]) => (
-            <TagBadge tag={tag} count={count} size="md" />
-          ))}
-        </div>
-      </section>
-
-      <!-- Author's Blog Articles Feed -->
-      <section class="space-y-4 pt-4 border-t border-read-border">
-        <div class="flex items-center justify-between text-[11px] text-read-text-tertiary uppercase tracking-wider">
-          <div class="flex items-center gap-2">
-            <span class="text-read-accent font-bold">&gt;</span>
-            <span>Published Posts</span>
-          </div>
-          <span class="text-read-text-tertiary font-mono text-[11px]">
-            {userPosts.length} entries
-          </span>
-        </div>
-
-        <div class="flex flex-col space-y-6">
-          {userPosts.map((post, idx) => (
-            <PostCard post={post} showDivider={idx > 0} />
-          ))}
-        </div>
-      </section>
+        </aside>
+      </div>
     </div>
   </div>
 </BaseLayout>

@@ -2,50 +2,303 @@
 import { getCollection } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import PostCard from '@/components/PostCard.astro';
+import TagBadge from '@/components/TagBadge.astro';
+import { siteConfig, getRelativePath } from '@/site.config';
+import { getReadingTime } from '@/lib/reading-time';
 
 // Fetch all published posts sorted by date descending
 const allPosts = await getCollection('blog', ({ data }) => !data.draft);
 allPosts.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+
+// Compute summary stats
+const totalWords = allPosts.reduce(
+  (acc, post) => acc + (post.data.words || getReadingTime(post.body || '').words),
+  0
+);
+
+// Collect series information
+const seriesMap = new Map<string, { total: number; posts: typeof allPosts }>();
+allPosts.forEach((post) => {
+  if (post.data.series) {
+    if (!seriesMap.has(post.data.series)) {
+      seriesMap.set(post.data.series, { total: post.data.seriesTotal || 0, posts: [] });
+    }
+    const current = seriesMap.get(post.data.series)!;
+    if (post.data.seriesTotal && post.data.seriesTotal > current.total) {
+      current.total = post.data.seriesTotal;
+    }
+    current.posts.push(post);
+  }
+});
+
+// Collect top tags
+const tagCounts: Record<string, number> = {};
+allPosts.forEach((post) => {
+  (post.data.tags || []).forEach((tag) => {
+    tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+  });
+});
+const topTags = Object.entries(tagCounts)
+  .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+  .slice(0, 10);
+
+const isDev = import.meta.env.DEV;
+const targetProfileUrl = isDev ? getRelativePath('/profile/') : getRelativePath('/about/');
+const avatarSrc = siteConfig.avatar || siteConfig.logo ? getRelativePath(siteConfig.avatar || siteConfig.logo) : '';
 ---
 
 <BaseLayout title="Home" activePath="/">
-  <div class="max-w-[720px] mx-auto px-4 md:px-0 py-8">
-    <div class="flex flex-col w-full">
-      <!-- Clean Posts Terminal Context -->
-      <div class="flex items-center justify-between py-4 mb-6 border-b border-outline-variant font-mono text-[12px]">
-        <div class="flex items-center gap-2 text-primary">
-          <span class="font-bold">&gt;</span>
-          <span class="text-on-surface font-semibold tracking-tight">Recent Articles</span>
+  <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-8 font-mono">
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] xl:grid-cols-[1fr_400px] gap-8 xl:gap-12 items-start w-full">
+      <!-- Main Content: Articles Stream -->
+      <div class="flex flex-col w-full min-w-0">
+        <!-- Clean Posts Terminal Context -->
+        <div class="flex items-center justify-between py-3 mb-6 border-b border-outline-variant text-[12px]">
+          <div class="flex items-center gap-2 text-primary">
+            <span class="font-bold">&gt;</span>
+            <span class="text-on-surface font-semibold tracking-tight">Recent Articles</span>
+          </div>
+          <div class="flex items-center gap-2 text-outline text-[11px]">
+            <span>{allPosts.length} {allPosts.length === 1 ? 'entry' : 'entries'}</span>
+            <span class="text-outline-variant">·</span>
+            <span class="text-primary font-semibold">[buffer: active]</span>
+          </div>
         </div>
-        <span class="text-outline text-[11px]">{allPosts.length} entries</span>
+
+        <!-- Post List -->
+        <div class="flex flex-col space-y-6">
+          {allPosts.map((post, idx) => (
+            <PostCard post={post} showDivider={idx > 0} />
+          ))}
+          {allPosts.length === 0 && (
+            <div class="p-8 text-center text-outline font-mono text-[13px] border border-outline-variant">
+              No posts published in this buffer yet.
+            </div>
+          )}
+        </div>
+
+        <!-- Bottom Buffer Bar & Search Shortcut -->
+        <div class="mt-8 p-3 bg-surface-container-low border border-outline-variant rounded-[2px] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-[11px] font-mono">
+          <div class="flex items-center gap-2 text-on-surface-variant">
+            <span class="text-primary font-bold">&gt;_</span>
+            <span>Press <kbd class="px-1.5 py-0.5 bg-surface-container-high text-primary rounded-[2px] border border-outline-variant font-bold">/</kbd> anywhere to search articles, series &amp; tags</span>
+          </div>
+          <button
+            type="button"
+            data-open-search
+            class="text-outline hover:text-primary transition-colors cursor-pointer text-left sm:text-right shrink-0"
+          >
+            [Open Shell]
+          </button>
+        </div>
       </div>
 
-      <!-- Post List -->
-      <div class="flex flex-col space-y-6">
-        {allPosts.map((post, idx) => (
-          <PostCard post={post} showDivider={idx > 0} />
-        ))}
-        {allPosts.length === 0 && (
-          <div class="p-8 text-center text-outline font-mono text-[13px] border border-outline-variant">
-            No posts published in this buffer yet.
+      <!-- Right Column: Terminal Sidebar Rail -->
+      <aside class="w-full space-y-6 lg:sticky lg:top-20">
+        <!-- Author Profile Terminal Box -->
+        <div class="p-4 bg-surface-container-low border border-outline-variant rounded-[2px] space-y-4">
+          <div class="flex items-center justify-between pb-2 border-b border-outline-variant text-[11px] text-outline uppercase tracking-wider">
+            <div class="flex items-center gap-1.5">
+              <span class="text-primary font-bold">&gt;</span>
+              <span>Author Profile</span>
+            </div>
+            <a href={targetProfileUrl} class="text-outline hover:text-primary transition-colors">
+              [Details]
+            </a>
+          </div>
+
+          <div class="flex items-start gap-3.5">
+            <div class="w-12 h-12 bg-surface border border-outline-variant relative overflow-hidden select-none flex flex-col items-center justify-center rounded-[2px] shrink-0">
+              {avatarSrc ? (
+                <img
+                  src={avatarSrc}
+                  alt={`${siteConfig.author} avatar`}
+                  class="w-full h-full object-cover"
+                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+                />
+              ) : null}
+              <div
+                class={`flex flex-col items-center justify-center w-full h-full p-1 ${avatarSrc ? 'hidden' : ''}`}
+              >
+                <span class="text-primary text-[14px] font-bold leading-none">&gt;_</span>
+              </div>
+            </div>
+
+            <div class="flex-1 min-w-0">
+              <a href={targetProfileUrl} class="hover:text-primary transition-colors">
+                <h3 class="text-[14px] text-on-surface font-semibold tracking-tight truncate">
+                  {siteConfig.author || siteConfig.name}
+                </h3>
+              </a>
+              <p class="text-[11px] text-primary truncate">{siteConfig.handle || '@author'}</p>
+              {siteConfig.role && (
+                <p class="text-[11px] text-outline truncate mt-0.5">{siteConfig.role}</p>
+              )}
+            </div>
+          </div>
+
+          {siteConfig.description && (
+            <p class="text-[12px] text-on-surface-variant leading-relaxed line-clamp-3">
+              {siteConfig.description}
+            </p>
+          )}
+
+          <!-- Coordinates Links -->
+          <div class="pt-2 border-t border-outline-variant flex flex-wrap items-center gap-3 text-[11px] text-on-surface-variant">
+            {siteConfig.githubUrl && (
+              <a
+                href={siteConfig.githubUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="hover:text-primary hover:underline underline-offset-4 transition-colors"
+              >
+                GitHub
+              </a>
+            )}
+            {siteConfig.twitterUrl && (
+              <>
+                <span class="text-outline-variant">·</span>
+                <a
+                  href={siteConfig.twitterUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="hover:text-primary hover:underline underline-offset-4 transition-colors"
+                >
+                  Twitter
+                </a>
+              </>
+            )}
+            {siteConfig.email && (
+              <>
+                <span class="text-outline-variant">·</span>
+                <a
+                  href={`mailto:${siteConfig.email}`}
+                  class="hover:text-primary hover:underline underline-offset-4 transition-colors"
+                >
+                  Email
+                </a>
+              </>
+            )}
+            <span class="text-outline-variant">·</span>
+            <a
+              href={getRelativePath('/feed.xml')}
+              class="text-primary hover:underline underline-offset-4 transition-colors"
+            >
+              RSS
+            </a>
+          </div>
+        </div>
+
+        <!-- Activity Telemetry Stats -->
+        <div class="p-4 bg-surface-container-low border border-outline-variant rounded-[2px] space-y-3">
+          <div class="flex items-center gap-1.5 pb-2 border-b border-outline-variant text-[11px] text-outline uppercase tracking-wider">
+            <span class="text-primary font-bold">&gt;</span>
+            <span>Blog Telemetry</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 text-[11px]">
+            <div class="p-2 bg-surface border border-outline-variant rounded-[2px]">
+              <div class="text-[10px] text-outline uppercase">Articles</div>
+              <div class="text-[16px] text-primary font-bold mt-0.5">{allPosts.length}</div>
+            </div>
+            <div class="p-2 bg-surface border border-outline-variant rounded-[2px]">
+              <div class="text-[10px] text-outline uppercase">Series</div>
+              <div class="text-[16px] text-on-surface font-bold mt-0.5">{seriesMap.size}</div>
+            </div>
+            <div class="p-2 bg-surface border border-outline-variant rounded-[2px]">
+              <div class="text-[10px] text-outline uppercase">Topics</div>
+              <div class="text-[16px] text-on-surface font-bold mt-0.5">{Object.keys(tagCounts).length}</div>
+            </div>
+            <div class="p-2 bg-surface border border-outline-variant rounded-[2px]">
+              <div class="text-[10px] text-outline uppercase">Total Words</div>
+              <div class="text-[16px] text-outline font-bold mt-0.5">~{totalWords.toLocaleString()}</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Featured Writing Series (if any) -->
+        {seriesMap.size > 0 && (
+          <div class="p-4 bg-surface-container-low border border-outline-variant rounded-[2px] space-y-3">
+            <div class="flex items-center justify-between pb-2 border-b border-outline-variant text-[11px] text-outline uppercase tracking-wider">
+              <div class="flex items-center gap-1.5">
+                <span class="text-primary font-bold">&gt;</span>
+                <span>Writing Series</span>
+              </div>
+              <span class="text-[10px]">{seriesMap.size} active</span>
+            </div>
+
+            <div class="space-y-2.5">
+              {[...seriesMap.entries()].slice(0, 3).map(([seriesName, data]) => (
+                <div class="p-2.5 bg-surface border border-outline-variant rounded-[2px] space-y-1.5">
+                  <div class="flex items-center justify-between text-[11px] gap-2">
+                    <span class="text-on-surface font-semibold truncate">'{seriesName}'</span>
+                    <span class="text-outline text-[10px] shrink-0">
+                      {data.posts.length} {data.posts.length === 1 ? 'part' : 'parts'}
+                    </span>
+                  </div>
+                  <div class="flex flex-wrap gap-1.5 pt-0.5">
+                    {data.posts
+                      .sort((a, b) => (a.data.seriesPart || 0) - (b.data.seriesPart || 0))
+                      .slice(0, 4)
+                      .map((p) => {
+                        const slug = p.id.replace(/\.(md|mdx)$/, '');
+                        return (
+                          <a
+                            href={getRelativePath(`/blog/${slug}`)}
+                            class="px-1.5 py-0.5 bg-surface-container border border-outline-variant hover:border-primary text-on-surface-variant hover:text-primary text-[10px] rounded-[2px] transition-colors"
+                            title={p.data.title}
+                          >
+                            Part {p.data.seriesPart || 1}
+                          </a>
+                        );
+                      })}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
-      </div>
 
-      <!-- Bottom Buffer Bar & Search Shortcut -->
-      <div class="mt-8 p-3 bg-surface-container-low border border-outline-variant rounded-[2px] flex items-center justify-between text-[11px] font-mono">
-        <div class="flex items-center gap-2 text-on-surface-variant">
-          <span class="text-primary font-bold">&gt;_</span>
-          <span>Press <kbd class="px-1.5 py-0.5 bg-surface-container-high text-primary rounded-[2px] border border-outline-variant">/</kbd> anywhere to search articles, series &amp; tags</span>
+        <!-- Topics & Tag Cloud -->
+        {topTags.length > 0 && (
+          <div class="p-4 bg-surface-container-low border border-outline-variant rounded-[2px] space-y-3">
+            <div class="flex items-center justify-between pb-2 border-b border-outline-variant text-[11px] text-outline uppercase tracking-wider">
+              <div class="flex items-center gap-1.5">
+                <span class="text-primary font-bold">&gt;</span>
+                <span>Topics &amp; Tags</span>
+              </div>
+              <span class="text-[10px] text-outline">[filter]</span>
+            </div>
+
+            <div class="flex flex-wrap gap-1.5">
+              {topTags.map(([tag, count]) => (
+                <TagBadge tag={tag} count={count} size="sm" />
+              ))}
+            </div>
+          </div>
+        )}
+
+        <!-- Terminal Keyboard Cheatsheet -->
+        <div class="p-3 bg-surface-container-lowest border border-outline-variant rounded-[2px] space-y-1.5 text-[11px] text-outline">
+          <div class="text-primary font-bold flex items-center gap-1.5">
+            <span>&gt;_</span>
+            <span>Keyboard Shortcuts</span>
+          </div>
+          <div class="flex items-center justify-between pt-1">
+            <span>Search articles &amp; tags</span>
+            <kbd class="px-1 bg-surface-container border border-outline-variant text-primary rounded-[2px]">/</kbd>
+          </div>
+          <div class="flex items-center justify-between">
+            <span>Eye comfort reader mode</span>
+            <kbd class="px-1 bg-surface-container border border-outline-variant text-primary rounded-[2px]">Alt+R</kbd>
+          </div>
+          <div class="flex items-center justify-between">
+            <span>Command palette</span>
+            <kbd class="px-1 bg-surface-container border border-outline-variant text-primary rounded-[2px]">Ctrl+K</kbd>
+          </div>
         </div>
-        <button
-          type="button"
-          data-open-search
-          class="text-outline hover:text-primary transition-colors cursor-pointer"
-        >
-          [Open Shell]
-        </button>
-      </div>
+      </aside>
     </div>
   </div>
 </BaseLayout>
+

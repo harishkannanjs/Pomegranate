@@ -66,7 +66,7 @@ const deployTargets = siteConfig.deployTargets || {};
         Select a theme-pack to restyle the entire reading experience and dashboard simultaneously.
       </p>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3" id="theme-selector-grid">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3" id="theme-selector-grid">
         {themes.map((t) => {
           const darkRead = t.tokens.dark.read;
           return (
@@ -108,7 +108,7 @@ const deployTargets = siteConfig.deployTargets || {};
         Choose the typography stylesheet for blog content and interface elements.
       </p>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="font-selector-grid">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3" id="font-selector-grid">
         {fontOptions.map((f) => (
           <div
             data-font-id={f.id}

@@ -1,6 +1,6 @@
 {
-  "author": "Your Name",
-  "handle": "@yourhandle",
+  "author": "Harish",
+  "handle": "@harishkannanjs",
   "avatar": "/profile-logo.png",
   "logo": "/profile-logo.png",
   "role": "Security Researcher & Systems Developer",
@@ -19,5 +19,18 @@
     "category": "General",
     "categoryId": ""
   },
-  "onboardingCompleted": false
+  "onboardingCompleted": true,
+  "appearance": {
+    "theme": "pomegranate",
+    "mode": "dark",
+    "font": "Consolas"
+  },
+  "features": {
+    "highlighter": true,
+    "readerMode": true,
+    "audioReader": true,
+    "tableOfContents": true,
+    "copyMarkdown": true,
+    "textMagnifier": true
+  }
 }
