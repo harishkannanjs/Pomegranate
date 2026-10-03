@@ -85,7 +85,7 @@ describe('Theme Switching Regression Tests (14 States)', () => {
   });
 
   describe('Mode-Aware Chrome Components Rendering', () => {
-    it('renders Button with TUI bracketed and Standard rounded sub-templates', async () => {
+    it('renders Button with TUI bracketed and Standard rounded sub-templates with thick border', async () => {
       const container = await AstroContainer.create();
       const html = await container.renderToString(Button, {
         props: { variant: 'primary', shortcut: '^S' },
@@ -93,18 +93,20 @@ describe('Theme Switching Regression Tests (14 States)', () => {
       });
 
       expect(html).toContain('chrome-tui-inline');
+      expect(html).toContain('border-2');
       expect(html).toContain('chrome-std-inline');
       expect(html).toContain('Save');
       expect(html).toContain('^S');
     });
 
-    it('renders Toggle with TUI [ Y ]/[ N ] and Standard sliding pill sub-templates', async () => {
+    it('renders Toggle with TUI [ Y ]/[ N ] and Standard sliding pill sub-templates with thick border', async () => {
       const container = await AstroContainer.create();
       const html = await container.renderToString(Toggle, {
         props: { label: 'Enable Feature', checked: true },
       });
 
       expect(html).toContain('chrome-tui-inline');
+      expect(html).toContain('border-2');
       expect(html).toContain('[ Y ]');
       expect(html).toContain('[ N ]');
       expect(html).toContain('chrome-std-inline');
@@ -126,7 +128,7 @@ describe('Theme Switching Regression Tests (14 States)', () => {
       expect(radioHtml).toContain('( )');
     });
 
-    it('renders Panel with TUI titled-border and Standard rounded card sub-templates', async () => {
+    it('renders Panel with TUI titled-border and Standard rounded card sub-templates with thick border', async () => {
       const container = await AstroContainer.create();
       const html = await container.renderToString(Panel, {
         props: { title: 'Settings' },
@@ -134,6 +136,7 @@ describe('Theme Switching Regression Tests (14 States)', () => {
       });
 
       expect(html).toContain('chrome-tui-block');
+      expect(html).toContain('border-2');
       expect(html).toContain('┌─');
       expect(html).toContain('Settings');
       expect(html).toContain('─┐');
@@ -141,7 +144,7 @@ describe('Theme Switching Regression Tests (14 States)', () => {
       expect(html).toContain('Panel Body');
     });
 
-    it('renders TabBar with TUI multiplexer and Standard pill tabs', async () => {
+    it('renders TabBar with TUI multiplexer and Standard pill tabs with thick border', async () => {
       const container = await AstroContainer.create();
       const html = await container.renderToString(TabBar, {
         props: {
@@ -153,6 +156,7 @@ describe('Theme Switching Regression Tests (14 States)', () => {
       });
 
       expect(html).toContain('chrome-tui-inline');
+      expect(html).toContain('border-2');
       expect(html).toContain('[1');
       expect(html).toContain('File Upload');
       expect(html).toContain('chrome-std-inline');
@@ -185,6 +189,17 @@ describe('Theme Switching Regression Tests (14 States)', () => {
       expect(html).toContain('chrome-std-inline');
       expect(html).toContain('animate-spin');
       expect(html).toContain('Converting document');
+    });
+
+    it('BaseLayout defaults to theme="pomegranate" and mode="dark" on first load', async () => {
+      const container = await AstroContainer.create();
+      const html = await container.renderToString(BaseLayout, {
+        slots: { default: '<div>Default Layout</div>' },
+      });
+
+      expect(html).toContain('data-theme="pomegranate"');
+      expect(html).toContain('data-mode="dark"');
+      expect(html).toContain('class="dark"');
     });
   });
 });

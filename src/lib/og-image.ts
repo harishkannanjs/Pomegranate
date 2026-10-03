@@ -42,7 +42,7 @@ export async function generateOgImage({
   themeId,
 }: OgImageOptions): Promise<Buffer> {
   const { fontData, fontBoldData } = loadFonts();
-  const activeTheme = getTheme(themeId || 'catppuccin');
+  const activeTheme = getTheme(themeId || 'pomegranate');
   const tokens = activeTheme.tokens.dark.read;
 
   const formattedDate = pubDate

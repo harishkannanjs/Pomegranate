@@ -24,7 +24,7 @@ const { tabs, class: className = '' } = Astro.props;
         href={tab.href}
         data-tab-id={tab.id}
         class:list={[
-          'px-3 py-1.5 transition-colors flex items-center gap-1.5 rounded-none border',
+          'px-3 py-1.5 transition-colors flex items-center gap-1.5 rounded-none border-2',
           tab.active
             ? 'bg-read-accent-fill text-[#FDF8F5] border-read-accent-fill font-bold'
             : 'border-read-border-strong text-read-text-secondary hover:text-read-text-primary hover:bg-read-bg-surface-raised',

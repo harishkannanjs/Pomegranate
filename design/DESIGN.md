@@ -25,7 +25,8 @@ visual language, not the required literacy to use it.
 
 - **Sharp corners, always.** `border-radius: 0` everywhere except the two
   named exceptions below. No box-shadows — elevation is a background-color
-  step plus a 1px border, nothing else.
+  step plus a prominent 2px border for crisp, authentic terminal UI framing
+  (`border-width: 2px`), nothing else.
 - **Titled panel borders** — every major panel has its section name
   embedded in its top border:
   ```

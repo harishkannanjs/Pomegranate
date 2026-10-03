@@ -25,7 +25,7 @@ const isCompleted = initialProfile.onboardingCompleted === true;
   class={`fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-y-auto font-mono transition-opacity duration-300 ${isCompleted ? 'hidden' : ''}`}
   data-onboarding-completed={isCompleted ? 'true' : 'false'}
 >
-  <div class="relative w-full max-w-3xl bg-read-bg-surface border border-read-border rounded-[2px] shadow-2xl overflow-hidden my-auto flex flex-col">
+  <div class="relative w-full max-w-3xl bg-read-bg-surface border-2 border-read-border-strong rounded-[2px] shadow-2xl overflow-hidden my-auto flex flex-col">
     <!-- Top Header & Progress -->
     <div class="px-6 py-4 border-b border-read-border bg-read-bg-base flex items-center justify-between">
       <div class="flex items-center gap-2">

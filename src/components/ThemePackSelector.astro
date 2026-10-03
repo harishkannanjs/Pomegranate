@@ -60,7 +60,7 @@ const themes = getAllThemes();
     if (!button || !menu) return;
 
     // Load saved or attribute theme
-    let savedTheme = localStorage.getItem('theme-pack') || document.documentElement.getAttribute('data-theme') || 'catppuccin';
+    let savedTheme = localStorage.getItem('theme-pack') || document.documentElement.getAttribute('data-theme') || 'pomegranate';
     if (savedTheme === 'blogly') {
       savedTheme = 'pomegranate';
       try { localStorage.setItem('theme-pack', 'pomegranate'); } catch (_) {}

@@ -51,20 +51,26 @@ const {
 </div>
 
 <style>
-  /* TUI Mode Input styling: under html[data-theme="pomegranate"] */
-  html[data-theme="pomegranate"] .chrome-input-container {
-    border: 1px solid var(--read-border-strong);
+  /* TUI Mode Input styling: under html[data-theme="pomegranate"] and default */
+  html[data-theme="pomegranate"] .chrome-input-container,
+  html[data-theme="blogly"] .chrome-input-container,
+  html:not([data-theme]) .chrome-input-container {
+    border: 2px solid var(--read-border-strong);
     background-color: var(--read-bg-base);
     padding: 0.5rem 0.75rem;
     font-family: var(--font-theme, monospace);
     font-size: 0.75rem;
     border-radius: 0;
   }
-  html[data-theme="pomegranate"] .chrome-input-container:focus-within {
+  html[data-theme="pomegranate"] .chrome-input-container:focus-within,
+  html[data-theme="blogly"] .chrome-input-container:focus-within,
+  html:not([data-theme]) .chrome-input-container:focus-within {
     border-color: var(--read-accent);
-    outline: 1px solid var(--read-accent);
+    outline: 2px solid var(--read-accent);
   }
-  html[data-theme="pomegranate"] .chrome-input-field {
+  html[data-theme="pomegranate"] .chrome-input-field,
+  html[data-theme="blogly"] .chrome-input-field,
+  html:not([data-theme]) .chrome-input-field {
     font-family: var(--font-theme, monospace);
     font-size: 0.75rem;
   }

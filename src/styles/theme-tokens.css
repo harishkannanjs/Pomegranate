@@ -13,16 +13,16 @@
 
 /* Default font fallback */
 :root {
-  --font-theme: 'JetBrains Mono', monospace;
+  --font-theme: Consolas, "Courier New", Courier, monospace;
 }
 
 /* Theme Fonts */
 html[data-theme="pomegranate"],
-html[data-theme="blogly"] {
+html[data-theme="blogly"],
+html:not([data-theme]) {
   --font-theme: Consolas, "Courier New", Courier, monospace;
 }
-html[data-theme="catppuccin"],
-html:not([data-theme]) {
+html[data-theme="catppuccin"] {
   --font-theme: 'JetBrains Mono', monospace;
 }
 html[data-theme="gruvbox"] {
@@ -45,7 +45,9 @@ html[data-theme="dracula"] {
 /* 1. Pomegranate (TUI Mode)                                                 */
 /* ========================================================================= */
 
-/* Pomegranate - Dark */
+/* Pomegranate - Dark (Default) */
+:root,
+html:not([data-theme]),
 html[data-theme="pomegranate"][data-mode="dark"],
 html[data-theme="pomegranate"].dark,
 html[data-theme="blogly"][data-mode="dark"],
@@ -442,28 +444,66 @@ html[data-theme="pomegranate"] .chrome-std-inline,
 html[data-theme="pomegranate"] .chrome-std-block,
 html[data-theme="blogly"] .chrome-std,
 html[data-theme="blogly"] .chrome-std-inline,
-html[data-theme="blogly"] .chrome-std-block {
+html[data-theme="blogly"] .chrome-std-block,
+html:not([data-theme]) .chrome-std,
+html:not([data-theme]) .chrome-std-inline,
+html:not([data-theme]) .chrome-std-block {
   display: none !important;
 }
 
 html[data-theme="pomegranate"] .chrome-tui-inline,
-html[data-theme="blogly"] .chrome-tui-inline {
+html[data-theme="blogly"] .chrome-tui-inline,
+html:not([data-theme]) .chrome-tui-inline {
   display: inline-flex !important;
 }
 html[data-theme="pomegranate"] .chrome-tui-block,
-html[data-theme="blogly"] .chrome-tui-block {
+html[data-theme="blogly"] .chrome-tui-block,
+html:not([data-theme]) .chrome-tui-block {
   display: block !important;
 }
 
-html:not([data-theme="pomegranate"]):not([data-theme="blogly"]) .chrome-tui,
-html:not([data-theme="pomegranate"]):not([data-theme="blogly"]) .chrome-tui-inline,
-html:not([data-theme="pomegranate"]):not([data-theme="blogly"]) .chrome-tui-block {
+html[data-theme]:not([data-theme="pomegranate"]):not([data-theme="blogly"]) .chrome-tui,
+html[data-theme]:not([data-theme="pomegranate"]):not([data-theme="blogly"]) .chrome-tui-inline,
+html[data-theme]:not([data-theme="pomegranate"]):not([data-theme="blogly"]) .chrome-tui-block {
   display: none !important;
 }
 
-html:not([data-theme="pomegranate"]):not([data-theme="blogly"]) .chrome-std-inline {
+html[data-theme]:not([data-theme="pomegranate"]):not([data-theme="blogly"]) .chrome-std-inline {
   display: inline-flex !important;
 }
-html:not([data-theme="pomegranate"]):not([data-theme="blogly"]) .chrome-std-block {
+html[data-theme]:not([data-theme="pomegranate"]):not([data-theme="blogly"]) .chrome-std-block {
   display: block !important;
+}
+
+/* ========================================================================= */
+/* Pomegranate TUI Mode — Thicker Crisp Box & Frame Borders                  */
+/* ========================================================================= */
+html[data-theme="pomegranate"] .chrome-tui-block,
+html[data-theme="blogly"] .chrome-tui-block,
+html:not([data-theme]) .chrome-tui-block {
+  border-width: 2px !important;
+}
+
+html[data-theme="pomegranate"] .theme-card,
+html[data-theme="blogly"] .theme-card,
+html:not([data-theme]) .theme-card {
+  border-width: 2px !important;
+}
+
+html[data-theme="pomegranate"] .split-editor-container,
+html[data-theme="blogly"] .split-editor-container,
+html:not([data-theme]) .split-editor-container {
+  border-width: 2px !important;
+}
+
+html[data-theme="pomegranate"] #file-dropzone,
+html[data-theme="blogly"] #file-dropzone,
+html:not([data-theme]) #file-dropzone {
+  border-width: 2px !important;
+}
+
+html[data-theme="pomegranate"] pre,
+html[data-theme="blogly"] pre,
+html:not([data-theme]) pre {
+  border-width: 2px !important;
 }

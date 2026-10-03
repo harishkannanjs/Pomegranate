@@ -5,7 +5,7 @@ export * from './types';
 export * from './schema';
 export * from './packs';
 
-export const DEFAULT_THEME_ID: ThemeId = 'catppuccin';
+export const DEFAULT_THEME_ID: ThemeId = 'pomegranate';
 
 export function getTheme(id?: string | null): ThemePack {
   if (id === 'blogly') {

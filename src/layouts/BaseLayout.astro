@@ -26,7 +26,7 @@ const {
   article = false,
   pubDate,
   activePath = Astro.url.pathname,
-  theme = 'catppuccin',
+  theme = 'pomegranate',
   mode = 'dark',
 } = Astro.props;
 
@@ -66,7 +66,7 @@ const resolvedOgImage = new URL(getRelativePath(image), Astro.site || Astro.url.
     <script is:inline>
       (function() {
         const savedMode = localStorage.getItem('mode') || localStorage.getItem('theme') || 'dark';
-        let savedThemePack = localStorage.getItem('theme-pack') || document.documentElement.getAttribute('data-theme') || 'catppuccin';
+        let savedThemePack = localStorage.getItem('theme-pack') || document.documentElement.getAttribute('data-theme') || 'pomegranate';
         if (savedThemePack === 'blogly') {
           savedThemePack = 'pomegranate';
           try { localStorage.setItem('theme-pack', 'pomegranate'); } catch (_) {}
@@ -84,7 +84,7 @@ const resolvedOgImage = new URL(getRelativePath(image), Astro.site || Astro.url.
       })();
       document.addEventListener('astro:after-swap', () => {
         const savedMode = localStorage.getItem('mode') || localStorage.getItem('theme') || 'dark';
-        let savedThemePack = localStorage.getItem('theme-pack') || 'catppuccin';
+        let savedThemePack = localStorage.getItem('theme-pack') || 'pomegranate';
         if (savedThemePack === 'blogly') {
           savedThemePack = 'pomegranate';
           try { localStorage.setItem('theme-pack', 'pomegranate'); } catch (_) {}
