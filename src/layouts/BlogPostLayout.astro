@@ -108,16 +108,16 @@ const features = {
         <!-- Header -->
         <header class="mb-8 font-mono">
           <h1
-            class="text-[26px] sm:text-[28px] text-on-surface mb-3 font-semibold tracking-tight leading-snug font-mono break-words"
+            class="text-[26px] sm:text-[30px] text-on-surface mb-3 font-semibold tracking-tight leading-snug font-mono break-words"
             transition:name={`post-title-${slug}`}
             data-pagefind-meta="title"
           >
             {post.data.title}
           </h1>
 
-          <!-- Meta bar -->
-          <div class="relative text-[13px] text-on-surface-variant flex flex-wrap items-center gap-x-3 gap-y-1 py-1 mb-4">
-            <span># Published {pubDateStr}</span>
+          <!-- Meta bar (Bear Blog clean typography) -->
+          <div class="relative text-[12px] text-outline flex flex-wrap items-center gap-x-3 gap-y-1 py-0.5 mb-4 font-mono">
+            <span>Published {pubDateStr}</span>
             {updatedDateStr && (
               <>
                 <span class="text-outline-variant">·</span>
@@ -125,7 +125,7 @@ const features = {
               </>
             )}
             <span class="text-outline-variant">·</span>
-            <span>{reading.text}</span>
+            <span class="text-on-surface-variant">{reading.text}</span>
             {post.data.changelog && post.data.changelog.length > 0 && (
               <>
                 <span class="text-outline-variant">·</span>
@@ -135,7 +135,7 @@ const features = {
           </div>
 
           <!-- Top Bar Section: Tags -> Play Audio -> Copy Link -> Copy as Markdown -->
-          <div class="flex items-center justify-between flex-wrap gap-3 py-2 bg-surface-container-low px-3 rounded-[2px] border border-outline-variant">
+          <div class="flex items-center justify-between flex-wrap gap-3 py-2 px-3 bg-surface-container-low/60 rounded-[2px] border border-outline-variant/60 my-4">
             <!-- Left: Tags -->
             <div class="flex items-center gap-1.5 flex-wrap">
               {post.data.tags.map((tag) => (

@@ -164,20 +164,20 @@ const authorTags = Object.entries(tagCounts).sort((a, b) => b[1] - a[1] || a[0].
     <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] xl:grid-cols-[1fr_400px] gap-8 xl:gap-12 items-start pt-6 border-t border-read-border">
       <!-- Left Column: Published Posts Feed -->
       <section class="space-y-4 min-w-0">
-        <div class="flex items-center justify-between text-[11px] text-read-text-tertiary uppercase tracking-wider pb-2 border-b border-read-border">
+        <div class="flex items-center justify-between text-[11px] text-read-text-tertiary uppercase tracking-wider pb-2 border-b border-read-border/40">
           <div class="flex items-center gap-2">
             <span class="text-read-accent font-bold">&gt;</span>
-            <span class="text-read-text-primary font-semibold">Published Articles</span>
+            <span class="text-read-text-primary font-semibold">Published Posts</span>
           </div>
           <span class="text-read-text-tertiary font-mono text-[11px]">{userPosts.length} entries</span>
         </div>
 
-        <div class="flex flex-col space-y-6">
-          {userPosts.map((post, idx) => (
-            <PostCard post={post} showDivider={idx > 0} />
+        <div class="flex flex-col">
+          {userPosts.map((post) => (
+            <PostCard post={post} />
           ))}
           {userPosts.length === 0 && (
-            <div class="p-8 text-center text-read-text-tertiary font-mono text-[13px] border border-read-border">
+            <div class="py-12 text-center text-read-text-tertiary font-mono text-[13px]">
               No posts published in this buffer yet.
             </div>
           )}

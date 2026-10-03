@@ -40,7 +40,7 @@ allPosts.forEach((post) => {
 });
 const topTags = Object.entries(tagCounts)
   .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-  .slice(0, 10);
+  .slice(0, 12);
 
 const isDev = import.meta.env.DEV;
 const targetProfileUrl = isDev ? getRelativePath('/profile/') : getRelativePath('/about/');
@@ -49,102 +49,47 @@ const avatarSrc = siteConfig.avatar || siteConfig.logo ? getRelativePath(siteCon
 
 <BaseLayout title="Home" activePath="/">
   <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-8 font-mono">
-    <div class="grid grid-cols-1 lg:grid-cols-[1fr_360px] xl:grid-cols-[1fr_400px] gap-8 xl:gap-12 items-start w-full">
-      <!-- Main Content: Articles Stream -->
+    <div class="grid grid-cols-1 lg:grid-cols-[1fr_340px] xl:grid-cols-[1fr_380px] gap-10 xl:gap-14 items-start w-full">
+      <!-- Main Content: Intro & Articles Stream -->
       <div class="flex flex-col w-full min-w-0">
-        <!-- Clean Posts Terminal Context -->
-        <div class="flex items-center justify-between py-3 mb-6 border-b border-outline-variant text-[12px]">
-          <div class="flex items-center gap-2 text-primary">
-            <span class="font-bold">&gt;</span>
-            <span class="text-on-surface font-semibold tracking-tight">Recent Articles</span>
-          </div>
-          <div class="flex items-center gap-2 text-outline text-[11px]">
-            <span>{allPosts.length} {allPosts.length === 1 ? 'entry' : 'entries'}</span>
-            <span class="text-outline-variant">·</span>
-            <span class="text-primary font-semibold">[buffer: active]</span>
-          </div>
-        </div>
-
-        <!-- Post List -->
-        <div class="flex flex-col space-y-6">
-          {allPosts.map((post, idx) => (
-            <PostCard post={post} showDivider={idx > 0} />
-          ))}
-          {allPosts.length === 0 && (
-            <div class="p-8 text-center text-outline font-mono text-[13px] border border-outline-variant">
-              No posts published in this buffer yet.
-            </div>
-          )}
-        </div>
-
-        <!-- Bottom Buffer Bar & Search Shortcut -->
-        <div class="mt-8 p-3 bg-surface-container-low border border-outline-variant rounded-[2px] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-[11px] font-mono">
-          <div class="flex items-center gap-2 text-on-surface-variant">
-            <span class="text-primary font-bold">&gt;_</span>
-            <span>Press <kbd class="px-1.5 py-0.5 bg-surface-container-high text-primary rounded-[2px] border border-outline-variant font-bold">/</kbd> anywhere to search articles, series &amp; tags</span>
-          </div>
-          <button
-            type="button"
-            data-open-search
-            class="text-outline hover:text-primary transition-colors cursor-pointer text-left sm:text-right shrink-0"
-          >
-            [Open Shell]
-          </button>
-        </div>
-      </div>
-
-      <!-- Right Column: Terminal Sidebar Rail -->
-      <aside class="w-full space-y-6 lg:sticky lg:top-20">
-        <!-- Author Profile Terminal Box -->
-        <div class="p-4 bg-surface-container-low border border-outline-variant rounded-[2px] space-y-4">
-          <div class="flex items-center justify-between pb-2 border-b border-outline-variant text-[11px] text-outline uppercase tracking-wider">
-            <div class="flex items-center gap-1.5">
-              <span class="text-primary font-bold">&gt;</span>
-              <span>Author Profile</span>
-            </div>
-            <a href={targetProfileUrl} class="text-outline hover:text-primary transition-colors">
-              [Details]
-            </a>
-          </div>
-
-          <div class="flex items-start gap-3.5">
-            <div class="w-12 h-12 bg-surface border border-outline-variant relative overflow-hidden select-none flex flex-col items-center justify-center rounded-[2px] shrink-0">
-              {avatarSrc ? (
+        <!-- Bear Blog Minimalist Author Greeting & Manifesto -->
+        <header class="pb-7 mb-7 border-b border-outline-variant/40 space-y-3">
+          <div class="flex items-center gap-3">
+            {avatarSrc && (
+              <div class="w-10 h-10 rounded-[2px] border border-outline-variant overflow-hidden shrink-0 bg-surface-container">
                 <img
                   src={avatarSrc}
                   alt={`${siteConfig.author} avatar`}
                   class="w-full h-full object-cover"
-                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
                 />
-              ) : null}
-              <div
-                class={`flex flex-col items-center justify-center w-full h-full p-1 ${avatarSrc ? 'hidden' : ''}`}
-              >
-                <span class="text-primary text-[14px] font-bold leading-none">&gt;_</span>
               </div>
-            </div>
-
-            <div class="flex-1 min-w-0">
-              <a href={targetProfileUrl} class="hover:text-primary transition-colors">
-                <h3 class="text-[14px] text-on-surface font-semibold tracking-tight truncate">
+            )}
+            <div class="min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-primary font-bold select-none">&gt;</span>
+                <h1 class="text-on-surface font-semibold text-[17px] sm:text-[19px] tracking-tight">
                   {siteConfig.author || siteConfig.name}
-                </h3>
-              </a>
-              <p class="text-[11px] text-primary truncate">{siteConfig.handle || '@author'}</p>
+                </h1>
+                {siteConfig.handle && (
+                  <span class="text-outline text-[12px] font-mono">({siteConfig.handle})</span>
+                )}
+              </div>
               {siteConfig.role && (
-                <p class="text-[11px] text-outline truncate mt-0.5">{siteConfig.role}</p>
+                <p class="text-[12px] text-primary font-medium mt-0.5 tracking-wide">
+                  {siteConfig.role}
+                </p>
               )}
             </div>
           </div>
 
           {siteConfig.description && (
-            <p class="text-[12px] text-on-surface-variant leading-relaxed line-clamp-3">
+            <p class="text-[13px] text-on-surface-variant leading-relaxed max-w-[700px]">
               {siteConfig.description}
             </p>
           )}
 
-          <!-- Coordinates Links -->
-          <div class="pt-2 border-t border-outline-variant flex flex-wrap items-center gap-3 text-[11px] text-on-surface-variant">
+          <!-- Minimalist Coordinates Line -->
+          <div class="flex items-center gap-3 pt-1 text-[11px] text-outline flex-wrap font-mono">
             {siteConfig.githubUrl && (
               <a
                 href={siteConfig.githubUrl}
@@ -152,7 +97,7 @@ const avatarSrc = siteConfig.avatar || siteConfig.logo ? getRelativePath(siteCon
                 rel="noopener noreferrer"
                 class="hover:text-primary hover:underline underline-offset-4 transition-colors"
               >
-                GitHub
+                github
               </a>
             )}
             {siteConfig.twitterUrl && (
@@ -164,7 +109,7 @@ const avatarSrc = siteConfig.avatar || siteConfig.logo ? getRelativePath(siteCon
                   rel="noopener noreferrer"
                   class="hover:text-primary hover:underline underline-offset-4 transition-colors"
                 >
-                  Twitter
+                  twitter
                 </a>
               </>
             )}
@@ -175,7 +120,7 @@ const avatarSrc = siteConfig.avatar || siteConfig.logo ? getRelativePath(siteCon
                   href={`mailto:${siteConfig.email}`}
                   class="hover:text-primary hover:underline underline-offset-4 transition-colors"
                 >
-                  Email
+                  email
                 </a>
               </>
             )}
@@ -184,59 +129,101 @@ const avatarSrc = siteConfig.avatar || siteConfig.logo ? getRelativePath(siteCon
               href={getRelativePath('/feed.xml')}
               class="text-primary hover:underline underline-offset-4 transition-colors"
             >
-              RSS
+              rss
+            </a>
+            <span class="text-outline-variant">·</span>
+            <a
+              href={targetProfileUrl}
+              class="text-outline hover:text-primary hover:underline underline-offset-4 transition-colors"
+            >
+              {isDev ? 'dashboard' : 'about'}
             </a>
           </div>
-        </div>
+        </header>
 
-        <!-- Activity Telemetry Stats -->
-        <div class="p-4 bg-surface-container-low border border-outline-variant rounded-[2px] space-y-3">
-          <div class="flex items-center gap-1.5 pb-2 border-b border-outline-variant text-[11px] text-outline uppercase tracking-wider">
+        <!-- Clean Posts Section Header (Bear Blog aesthetic) -->
+        <div class="flex items-center justify-between pb-3 mb-2 border-b border-outline-variant/40 text-[11px] font-mono uppercase tracking-wider text-outline">
+          <div class="flex items-center gap-2">
             <span class="text-primary font-bold">&gt;</span>
-            <span>Blog Telemetry</span>
+            <span class="text-on-surface font-semibold lowercase text-[13px]">Recent Articles</span>
           </div>
-
-          <div class="grid grid-cols-2 gap-2 text-[11px]">
-            <div class="p-2 bg-surface border border-outline-variant rounded-[2px]">
-              <div class="text-[10px] text-outline uppercase">Articles</div>
-              <div class="text-[16px] text-primary font-bold mt-0.5">{allPosts.length}</div>
-            </div>
-            <div class="p-2 bg-surface border border-outline-variant rounded-[2px]">
-              <div class="text-[10px] text-outline uppercase">Series</div>
-              <div class="text-[16px] text-on-surface font-bold mt-0.5">{seriesMap.size}</div>
-            </div>
-            <div class="p-2 bg-surface border border-outline-variant rounded-[2px]">
-              <div class="text-[10px] text-outline uppercase">Topics</div>
-              <div class="text-[16px] text-on-surface font-bold mt-0.5">{Object.keys(tagCounts).length}</div>
-            </div>
-            <div class="p-2 bg-surface border border-outline-variant rounded-[2px]">
-              <div class="text-[10px] text-outline uppercase">Total Words</div>
-              <div class="text-[16px] text-outline font-bold mt-0.5">~{totalWords.toLocaleString()}</div>
-            </div>
+          <div class="flex items-center gap-2">
+            <span>{allPosts.length} {allPosts.length === 1 ? 'entry' : 'entries'}</span>
+            <span class="text-outline-variant">·</span>
+            <span class="text-primary font-semibold">[live]</span>
           </div>
         </div>
+
+        <!-- Post List (Date-anchored, calm, breathable) -->
+        <div class="flex flex-col">
+          {allPosts.map((post) => (
+            <PostCard post={post} />
+          ))}
+          {allPosts.length === 0 && (
+            <div class="py-12 text-center text-outline font-mono text-[13px]">
+              No posts published in this buffer yet.
+            </div>
+          )}
+        </div>
+
+        <!-- Bottom Search & Prompt Bar -->
+        <div class="mt-8 pt-4 border-t border-outline-variant/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-[11px] font-mono text-outline">
+          <div class="flex items-center gap-2 text-on-surface-variant">
+            <span class="text-primary font-bold">&gt;_</span>
+            <span>Type <kbd class="px-1.5 py-0.5 bg-surface-container border border-outline-variant text-primary rounded-[2px] font-bold">/</kbd> anywhere to search articles &amp; tags</span>
+          </div>
+          <button
+            type="button"
+            data-open-search
+            class="text-primary hover:underline underline-offset-4 transition-colors cursor-pointer text-left sm:text-right shrink-0"
+          >
+            [Search Shell]
+          </button>
+        </div>
+      </div>
+
+      <!-- Right Column: Minimalist Typographic Rail -->
+      <aside class="w-full space-y-8 lg:sticky lg:top-20 pt-1">
+        <!-- Topics & Tags -->
+        {topTags.length > 0 && (
+          <div class="space-y-3">
+            <div class="flex items-center justify-between pb-2 border-b border-outline-variant/40 text-[11px] font-mono uppercase tracking-wider text-outline">
+              <div class="flex items-center gap-1.5">
+                <span class="text-primary font-bold">&gt;</span>
+                <span class="text-on-surface font-semibold lowercase text-[12px]">Topics &amp; Tags</span>
+              </div>
+              <span class="text-[10px] text-outline">[filter]</span>
+            </div>
+
+            <div class="flex flex-wrap gap-1.5 pt-0.5">
+              {topTags.map(([tag, count]) => (
+                <TagBadge tag={tag} count={count} size="sm" />
+              ))}
+            </div>
+          </div>
+        )}
 
         <!-- Featured Writing Series (if any) -->
         {seriesMap.size > 0 && (
-          <div class="p-4 bg-surface-container-low border border-outline-variant rounded-[2px] space-y-3">
-            <div class="flex items-center justify-between pb-2 border-b border-outline-variant text-[11px] text-outline uppercase tracking-wider">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between pb-2 border-b border-outline-variant/40 text-[11px] font-mono uppercase tracking-wider text-outline">
               <div class="flex items-center gap-1.5">
                 <span class="text-primary font-bold">&gt;</span>
-                <span>Writing Series</span>
+                <span class="text-on-surface font-semibold lowercase text-[12px]">Writing Series</span>
               </div>
               <span class="text-[10px]">{seriesMap.size} active</span>
             </div>
 
-            <div class="space-y-2.5">
+            <div class="space-y-2">
               {[...seriesMap.entries()].slice(0, 3).map(([seriesName, data]) => (
-                <div class="p-2.5 bg-surface border border-outline-variant rounded-[2px] space-y-1.5">
+                <div class="p-2.5 bg-surface-container-low border border-outline-variant/60 rounded-[2px] space-y-1.5">
                   <div class="flex items-center justify-between text-[11px] gap-2">
-                    <span class="text-on-surface font-semibold truncate">'{seriesName}'</span>
+                    <span class="text-on-surface font-medium truncate">'{seriesName}'</span>
                     <span class="text-outline text-[10px] shrink-0">
                       {data.posts.length} {data.posts.length === 1 ? 'part' : 'parts'}
                     </span>
                   </div>
-                  <div class="flex flex-wrap gap-1.5 pt-0.5">
+                  <div class="flex flex-wrap gap-1 pt-0.5">
                     {data.posts
                       .sort((a, b) => (a.data.seriesPart || 0) - (b.data.seriesPart || 0))
                       .slice(0, 4)
@@ -245,7 +232,7 @@ const avatarSrc = siteConfig.avatar || siteConfig.logo ? getRelativePath(siteCon
                         return (
                           <a
                             href={getRelativePath(`/blog/${slug}`)}
-                            class="px-1.5 py-0.5 bg-surface-container border border-outline-variant hover:border-primary text-on-surface-variant hover:text-primary text-[10px] rounded-[2px] transition-colors"
+                            class="px-1.5 py-0.5 bg-surface border border-outline-variant hover:border-primary text-on-surface-variant hover:text-primary text-[10px] rounded-[2px] transition-colors"
                             title={p.data.title}
                           >
                             Part {p.data.seriesPart || 1}
@@ -259,42 +246,35 @@ const avatarSrc = siteConfig.avatar || siteConfig.logo ? getRelativePath(siteCon
           </div>
         )}
 
-        <!-- Topics & Tag Cloud -->
-        {topTags.length > 0 && (
-          <div class="p-4 bg-surface-container-low border border-outline-variant rounded-[2px] space-y-3">
-            <div class="flex items-center justify-between pb-2 border-b border-outline-variant text-[11px] text-outline uppercase tracking-wider">
-              <div class="flex items-center gap-1.5">
-                <span class="text-primary font-bold">&gt;</span>
-                <span>Topics &amp; Tags</span>
-              </div>
-              <span class="text-[10px] text-outline">[filter]</span>
-            </div>
-
-            <div class="flex flex-wrap gap-1.5">
-              {topTags.map(([tag, count]) => (
-                <TagBadge tag={tag} count={count} size="sm" />
-              ))}
-            </div>
+        <!-- Quiet Telemetry & Privacy -->
+        <div class="pt-4 border-t border-outline-variant/30 space-y-2 text-[11px] text-outline font-mono">
+          <div class="flex items-center justify-between">
+            <span>Published articles</span>
+            <span class="text-on-surface font-semibold">{allPosts.length}</span>
           </div>
-        )}
+          <div class="flex items-center justify-between">
+            <span>Total words</span>
+            <span class="text-on-surface font-semibold">~{totalWords.toLocaleString()}</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span>Privacy stance</span>
+            <span class="text-primary font-semibold">Zero cookies · No trackers</span>
+          </div>
+        </div>
 
         <!-- Terminal Keyboard Cheatsheet -->
-        <div class="p-3 bg-surface-container-lowest border border-outline-variant rounded-[2px] space-y-1.5 text-[11px] text-outline">
-          <div class="text-primary font-bold flex items-center gap-1.5">
+        <div class="p-2.5 bg-surface-container-lowest border border-outline-variant/50 rounded-[2px] space-y-1.5 text-[11px] text-outline font-mono">
+          <div class="text-primary font-semibold flex items-center gap-1.5">
             <span>&gt;_</span>
-            <span>Keyboard Shortcuts</span>
+            <span>Shortcuts</span>
           </div>
-          <div class="flex items-center justify-between pt-1">
-            <span>Search articles &amp; tags</span>
+          <div class="flex items-center justify-between pt-0.5">
+            <span>Search</span>
             <kbd class="px-1 bg-surface-container border border-outline-variant text-primary rounded-[2px]">/</kbd>
           </div>
           <div class="flex items-center justify-between">
-            <span>Eye comfort reader mode</span>
+            <span>Eye comfort</span>
             <kbd class="px-1 bg-surface-container border border-outline-variant text-primary rounded-[2px]">Alt+R</kbd>
-          </div>
-          <div class="flex items-center justify-between">
-            <span>Command palette</span>
-            <kbd class="px-1 bg-surface-container border border-outline-variant text-primary rounded-[2px]">Ctrl+K</kbd>
           </div>
         </div>
       </aside>

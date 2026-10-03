@@ -9,9 +9,13 @@ interface Props {
 }
 
 const { activePath = '/', isDev = import.meta.env.DEV } = Astro.props;
-const navLinks: { href: string; label: string }[] = [];
 const homeUrl = getRelativePath('/');
 const targetProfileUrl = isDev ? getRelativePath('/profile/') : getRelativePath('/about/');
+const navLinks: { href: string; label: string }[] = [
+  { href: homeUrl, label: 'home' },
+  { href: targetProfileUrl, label: isDev ? 'dashboard' : 'about' },
+  { href: getRelativePath('/feed.xml'), label: 'rss' },
+];
 const isProfileActive = isDev
   ? activePath === '/profile' || activePath === '/profile/' || activePath === targetProfileUrl || activePath.startsWith(targetProfileUrl)
   : activePath === '/about' || activePath === '/about/' || activePath === targetProfileUrl || activePath.startsWith(targetProfileUrl);

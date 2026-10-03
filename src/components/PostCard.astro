@@ -15,67 +15,69 @@ const postUrl = getRelativePath(`/blog/${slug}`);
 const reading = getReadingTime(post.body || '');
 
 const pubDateStr = new Date(post.data.pubDate).toISOString().split('T')[0];
-const catCommand = `cat ${pubDateStr}-${slug}.md`;
 ---
 
-<article class="group relative flex flex-col pt-6 pb-9 bg-surface transition-colors">
-  {showDivider && (
-    <div class="h-[1px] w-full bg-outline-variant/60 mb-8 group-first:hidden"></div>
-  )}
+<article
+  class:list={[
+    'group relative flex flex-col py-6 transition-colors',
+    showDivider ? 'border-b border-outline-variant/30 last:border-b-0' : '',
+  ]}
+>
+  <div class="sm:flex sm:items-start sm:gap-6 w-full">
+    <!-- Date Column (Bear Blog aesthetic) -->
+    <time datetime={pubDateStr} class="text-outline text-[12px] font-mono shrink-0 sm:w-28 pt-0.5 select-none block mb-1 sm:mb-0">
+      {pubDateStr}
+    </time>
 
-  <!-- Metadata Bar: terminal command + reading time + tags -->
-  <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-on-surface-variant mb-2 font-mono max-w-full overflow-hidden">
-    <span class="text-primary font-bold select-none shrink-0">$</span>
-    <span
-      class="text-primary truncate max-w-[280px] sm:max-w-[540px] md:max-w-[640px] inline-block align-middle"
-      title={catCommand}
-    >
-      {catCommand}
-    </span>
-    <span class="text-outline shrink-0">·</span>
-    <span class="text-outline shrink-0">{reading.text}</span>
-    <span class="text-outline shrink-0">·</span>
-    <div class="flex items-center gap-1.5 flex-wrap">
-      {post.data.tags.slice(0, 3).map((tag) => (
-        <TagBadge tag={tag} />
-      ))}
-      {post.data.tags.length > 3 && (
-        <span class="text-[10px] text-outline">+{post.data.tags.length - 3}</span>
-      )}
+    <!-- Main Post Content -->
+    <div class="flex-1 min-w-0">
+      <!-- Title Link with View Transition -->
+      <a class="block group/title mb-1.5" href={postUrl}>
+        <h2
+          class="text-[17px] sm:text-[19px] font-semibold tracking-tight leading-snug font-mono text-on-surface group-hover/title:text-primary transition-colors break-words"
+          transition:name={`post-title-${slug}`}
+        >
+          {post.data.title}
+        </h2>
+      </a>
+
+      <!-- Excerpt / Summary -->
+      <p class="text-[13px] text-on-surface-variant leading-relaxed mb-3 font-mono break-words">
+        {post.data.description}
+      </p>
+
+      <!-- Subtle Metadata Row: Reading Time / Tags / Series / Read Link -->
+      <div class="flex items-center gap-3 text-[11px] font-mono text-outline flex-wrap">
+        <span class="text-primary font-bold shrink-0 select-none">$</span>
+        <span class="text-on-surface-variant shrink-0">{reading.text}</span>
+        <span class="text-outline-variant">·</span>
+        
+        <div class="flex items-center gap-1.5 flex-wrap">
+          {post.data.tags.slice(0, 3).map((tag) => (
+            <TagBadge tag={tag} size="sm" />
+          ))}
+          {post.data.tags.length > 3 && (
+            <span class="text-[10px] text-outline">+{post.data.tags.length - 3}</span>
+          )}
+        </div>
+
+        {post.data.series && (
+          <>
+            <span class="text-outline-variant">·</span>
+            <span class="text-outline text-[10px] truncate max-w-[240px]">
+              [{post.data.series} · part {post.data.seriesPart}/{post.data.seriesTotal || '?'}]
+            </span>
+          </>
+        )}
+
+        <a
+          class="inline-flex items-center gap-1 text-primary hover:underline underline-offset-4 ml-auto font-medium"
+          href={postUrl}
+        >
+          <span>read</span>
+          <span class="font-bold transition-transform group-hover/title:translate-x-0.5">→</span>
+        </a>
+      </div>
     </div>
-  </div>
-
-  <!-- Title Link with View Transition -->
-  <a class="block group-hover:text-primary transition-colors text-on-surface mb-2" href={postUrl}>
-    <h2
-      class="text-[20px] font-semibold tracking-tight leading-snug font-mono break-words"
-      transition:name={`post-title-${slug}`}
-    >
-      {post.data.title}
-    </h2>
-  </a>
-
-  <!-- Excerpt / Summary -->
-  <p class="text-[14px] text-on-surface-variant leading-relaxed mb-4 font-mono break-words">
-    {post.data.description}
-  </p>
-
-  <!-- Bottom CTA & Meta -->
-  <div class="flex items-center gap-4 text-[12px] font-mono">
-    <a
-      class="inline-flex items-center gap-1 text-primary hover:underline underline-offset-4"
-      href={postUrl}
-    >
-      <span>read post</span>
-      <span class="font-bold transition-transform group-hover:translate-x-0.5">→</span>
-    </a>
-    {post.data.series && (
-      <>
-        <span class="text-outline-variant">|</span>
-        <span class="text-outline font-mono text-[11px] truncate max-w-[320px]">
-          [Series: '{post.data.series}' · Part {post.data.seriesPart}/{post.data.seriesTotal || '?'}]
-        </span>
-      </>
-    )}
   </div>
 </article>
